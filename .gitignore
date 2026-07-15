@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+.env
+
+# Next.js
+node_modules/
+.next/
+out/
+build/
+.DS_Store
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# Docker
+postgres_data/
+redis_data/
+
+# Application Specific
+worker_repos/
+test_repos/
+*.db
+*.sqlite3
+codebeast.db
