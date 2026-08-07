@@ -94,12 +94,14 @@ def evaluate_repo(self, repo_url: str):
     redis_client = redis.from_url(redis_url)
     
     def broadcast_update(status, payload={}):
-        redis_client.publish("job_updates", json.dumps({
+        msg = json.dumps({
             "task_id": task_id,
             "repo_url": repo_url,
             "status": status,
             **payload
-        }))
+        })
+        redis_client.publish("job_updates", msg)
+        redis_client.set("last_eval_task", msg)
     
     db = SessionLocal()
     job = db.query(AnalysisJob).filter(AnalysisJob.id == task_id).first()

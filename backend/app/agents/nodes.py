@@ -247,6 +247,7 @@ async def database_agent_node(state: AgentState) -> dict:
             return {"db_report": report}
         except Exception as e2:
             print(f"Database Agent Fallback Failed: {e2}")
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "database_agent")
             return {"db_report": {"error": "Database Agent unreachable."}}
 
 async def gemini_supervisor_node(state: AgentState) -> dict:
@@ -294,6 +295,7 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
             return {"final_report": report}
         except Exception as e2:
             print(f"Supervisor Fallback Failed: {e2}")
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "gemini_supervisor")
             score = det_score.get("score", 0) if isinstance(det_score, dict) else 0
             return {"final_report": {
                 "executive_summary": "Offline Mode: Full AI synthesis was unavailable due to network or quota errors. This report was generated using the deterministic scoring engine.",
