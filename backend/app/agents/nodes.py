@@ -212,11 +212,11 @@ async def testing_agent_node(state: AgentState) -> dict:
         return {"testing_report": {"error": "Testing Agent unreachable."}}
 
 async def database_agent_node(state: AgentState) -> dict:
-    print("-> Running Database Agent (gemini-2.5-flash)...")
+    print("-> Running Database Agent (gemini-2.0-flash)...")
     task_id = state.get("task_id")
     repo_url = state.get("repo_url", "")
     broadcast_agent_status(task_id, repo_url, "AgentRunning", "database_agent")
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.1, api_key=os.getenv("GEMINI_API_KEY"))
+    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.1, api_key=os.getenv("GEMINI_API_KEY"))
     parser = JsonOutputParser(pydantic_object=DatabaseReport)
     
     prompt = ChatPromptTemplate.from_messages([
@@ -253,9 +253,9 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
     db_rep = state.get("db_report", {})
     det_score = state.get("deterministic_score_result", {})
     
-    # We use gemini-2.5-flash to stay within free tier quotas
+    # We use gemini-2.0-flash to stay within free tier quotas
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash", 
+        model="gemini-2.0-flash", 
         temperature=0.2,
         api_key=os.getenv("GEMINI_API_KEY")
     )
