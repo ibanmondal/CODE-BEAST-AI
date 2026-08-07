@@ -34,6 +34,14 @@ class CodeBERTEmbedder(Embeddings):
         return self.embed_documents([text])[0]
 
 
+_SHARED_CODEBERT = None
+
+def get_shared_codebert():
+    global _SHARED_CODEBERT
+    if _SHARED_CODEBERT is None:
+        _SHARED_CODEBERT = CodeBERTEmbedder()
+    return _SHARED_CODEBERT
+
 class SimilarityEngine:
     def __init__(self, templates_faiss_path: str = "./mock_templates_db"):
         self.templates_faiss_path = Path(templates_faiss_path)
@@ -45,7 +53,7 @@ class SimilarityEngine:
         self.js_language = tree_sitter.Language(tsjavascript.language())
         self.js_parser = tree_sitter.Parser(self.js_language)
         
-        self.embedder = CodeBERTEmbedder()
+        self.embedder = get_shared_codebert()
         
         # In a real scenario, this DB is pre-built with known templates
         if self.templates_faiss_path.exists():

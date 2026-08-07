@@ -6,12 +6,19 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
+_GLOBAL_EMBEDDINGS = None
+
+def get_shared_embeddings():
+    global _GLOBAL_EMBEDDINGS
+    if _GLOBAL_EMBEDDINGS is None:
+        _GLOBAL_EMBEDDINGS = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    return _GLOBAL_EMBEDDINGS
+
 class ContextBuilder:
     def __init__(self, repo_path: str):
         self.repo_path = Path(repo_path)
         self.ignore_dirs = {'.git', 'node_modules', 'venv', '.venv', '__pycache__', 'dist', 'build'}
-        # Load local embeddings model. This will download on first run.
-        self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        self.embeddings = get_shared_embeddings()
         
     def _build_tree(self) -> str:
         """Generates a text representation of the directory tree."""

@@ -1,6 +1,10 @@
 import os
 import json
 import redis
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from langchain_ollama import ChatOllama
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
@@ -96,11 +100,10 @@ def retrieve_code_snippets(faiss_path: str, query: str) -> str:
 # --- Nodes ---
 
 async def security_agent_node(state: AgentState) -> dict:
-    print("-> Running Security Agent (qwen2.5-coder)...")
+    print("-> Running Security Agent (Groq / Ollama fallback)...")
     task_id = state.get("task_id")
     repo_url = state.get("repo_url", "")
     broadcast_agent_status(task_id, repo_url, "AgentRunning", "security_agent")
-    llm = ChatOllama(model="qwen2.5-coder", temperature=0.1, format="json")
     parser = JsonOutputParser(pydantic_object=SecurityReport)
     
     prompt = ChatPromptTemplate.from_messages([
@@ -108,28 +111,39 @@ async def security_agent_node(state: AgentState) -> dict:
         ("user", "Repository Context:\n{context}\n\nRelevant Code Snippets:\n{snippets}")
     ])
     
-    chain = prompt | llm | parser
+    faiss_path = state.get("context", {}).get("faiss_index_path", "")
+    snippets = retrieve_code_snippets(faiss_path, "authentication authorization passwords tokens secrets API keys SQL database queries permissions")
+    invoke_data = {
+        "context": format_context(state),
+        "snippets": snippets,
+        "format_instructions": parser.get_format_instructions()
+    }
     
+    # Try Groq first for ultra-fast evaluation
     try:
-        faiss_path = state.get("context", {}).get("faiss_index_path", "")
-        snippets = retrieve_code_snippets(faiss_path, "authentication authorization passwords tokens secrets API keys SQL database queries permissions")
-        report = await chain.ainvoke({
-            "context": format_context(state),
-            "snippets": snippets,
-            "format_instructions": parser.get_format_instructions()
-        })
+        llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
+        chain = prompt | llm | parser
+        report = await chain.ainvoke(invoke_data)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "security_agent")
         return {"security_report": report}
     except Exception as e:
-        print(f"Security Agent Failed: {e}")
-        return {"security_report": {"error": "Offline Mode: Security Agent unreachable."}}
+        print(f"Security Agent Groq failed ({e}), falling back to Ollama...")
+        try:
+            llm_fallback = ChatOllama(model="qwen2.5-coder", temperature=0.1, format="json")
+            chain = prompt | llm_fallback | parser
+            report = await chain.ainvoke(invoke_data)
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "security_agent")
+            return {"security_report": report}
+        except Exception as e2:
+            print(f"Security Agent Fallback Failed: {e2}")
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "security_agent")
+            return {"security_report": {"error": "Offline Mode: Security Agent unreachable."}}
 
 async def architecture_agent_node(state: AgentState) -> dict:
-    print("-> Running Architecture Agent (deepseek-coder)...")
+    print("-> Running Architecture Agent (Groq / Ollama fallback)...")
     task_id = state.get("task_id")
     repo_url = state.get("repo_url", "")
     broadcast_agent_status(task_id, repo_url, "AgentRunning", "architecture_agent")
-    llm = ChatOllama(model="deepseek-coder", temperature=0.1, format="json")
     parser = JsonOutputParser(pydantic_object=ArchitectureReport)
     
     prompt = ChatPromptTemplate.from_messages([
@@ -137,28 +151,38 @@ async def architecture_agent_node(state: AgentState) -> dict:
         ("user", "Repository Context:\n{context}\n\nRelevant Code Snippets:\n{snippets}")
     ])
     
-    chain = prompt | llm | parser
+    faiss_path = state.get("context", {}).get("faiss_index_path", "")
+    snippets = retrieve_code_snippets(faiss_path, "class interface architecture model view controller repository service pattern component module")
+    invoke_data = {
+        "context": format_context(state),
+        "snippets": snippets,
+        "format_instructions": parser.get_format_instructions()
+    }
     
     try:
-        faiss_path = state.get("context", {}).get("faiss_index_path", "")
-        snippets = retrieve_code_snippets(faiss_path, "class interface architecture model view controller repository service pattern component module")
-        report = await chain.ainvoke({
-            "context": format_context(state),
-            "snippets": snippets,
-            "format_instructions": parser.get_format_instructions()
-        })
+        llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
+        chain = prompt | llm | parser
+        report = await chain.ainvoke(invoke_data)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "architecture_agent")
         return {"architecture_report": report}
     except Exception as e:
-        print(f"Architecture Agent Failed: {e}")
-        return {"architecture_report": {"error": "Offline Mode: Architecture Agent unreachable."}}
+        print(f"Architecture Agent Groq failed ({e}), falling back to Ollama...")
+        try:
+            llm_fallback = ChatOllama(model="deepseek-coder", temperature=0.1, format="json")
+            chain = prompt | llm_fallback | parser
+            report = await chain.ainvoke(invoke_data)
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "architecture_agent")
+            return {"architecture_report": report}
+        except Exception as e2:
+            print(f"Architecture Agent Fallback Failed: {e2}")
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "architecture_agent")
+            return {"architecture_report": {"error": "Offline Mode: Architecture Agent unreachable."}}
 
 async def performance_agent_node(state: AgentState) -> dict:
-    print("-> Running Performance Agent (qwen2.5-coder / fallback)...")
+    print("-> Running Performance Agent (Groq / Ollama fallback)...")
     task_id = state.get("task_id")
     repo_url = state.get("repo_url", "")
     broadcast_agent_status(task_id, repo_url, "AgentRunning", "performance_agent")
-    llm = ChatOllama(model="qwen2.5-coder", temperature=0.3, format="json") 
     parser = JsonOutputParser(pydantic_object=PerformanceReport)
     
     prompt = ChatPromptTemplate.from_messages([
@@ -166,28 +190,38 @@ async def performance_agent_node(state: AgentState) -> dict:
         ("user", "Repository Context:\n{context}\n\nRelevant Code Snippets:\n{snippets}")
     ])
     
-    chain = prompt | llm | parser
+    faiss_path = state.get("context", {}).get("faiss_index_path", "")
+    snippets = retrieve_code_snippets(faiss_path, "performance async await cache optimize complexity algorithm loop memory efficiency")
+    invoke_data = {
+        "context": format_context(state),
+        "snippets": snippets,
+        "format_instructions": parser.get_format_instructions()
+    }
     
     try:
-        faiss_path = state.get("context", {}).get("faiss_index_path", "")
-        snippets = retrieve_code_snippets(faiss_path, "performance async await cache optimize complexity algorithm loop memory efficiency")
-        report = await chain.ainvoke({
-            "context": format_context(state),
-            "snippets": snippets,
-            "format_instructions": parser.get_format_instructions()
-        })
+        llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2, api_key=os.getenv("GROQ_API_KEY"))
+        chain = prompt | llm | parser
+        report = await chain.ainvoke(invoke_data)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "performance_agent")
         return {"perf_report": report}
     except Exception as e:
-        print(f"Performance Agent Failed: {e}")
-        return {"perf_report": {"error": "Offline Mode: Performance Agent unreachable."}}
+        print(f"Performance Agent Groq failed ({e}), falling back to Ollama...")
+        try:
+            llm_fallback = ChatOllama(model="qwen2.5-coder", temperature=0.3, format="json") 
+            chain = prompt | llm_fallback | parser
+            report = await chain.ainvoke(invoke_data)
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "performance_agent")
+            return {"perf_report": report}
+        except Exception as e2:
+            print(f"Performance Agent Fallback Failed: {e2}")
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "performance_agent")
+            return {"perf_report": {"error": "Offline Mode: Performance Agent unreachable."}}
 
 async def testing_agent_node(state: AgentState) -> dict:
-    print("-> Running Testing Agent (llama-3.1-8b-instant via Groq)...")
+    print("-> Running Testing Agent (llama-3.1-8b-instant via Groq / fallback)...")
     task_id = state.get("task_id")
     repo_url = state.get("repo_url", "")
     broadcast_agent_status(task_id, repo_url, "AgentRunning", "testing_agent")
-    llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
     parser = JsonOutputParser(pydantic_object=TestingReport)
     
     prompt = ChatPromptTemplate.from_messages([
@@ -195,21 +229,32 @@ async def testing_agent_node(state: AgentState) -> dict:
         ("user", "Repository Context:\n{context}\n\nRelevant Code Snippets:\n{snippets}")
     ])
     
-    chain = prompt | llm | parser
+    faiss_path = state.get("context", {}).get("faiss_index_path", "")
+    snippets = retrieve_code_snippets(faiss_path, "test testing pytest jest mock assert spec coverage unit integration")
+    invoke_data = {
+        "context": format_context(state),
+        "snippets": snippets,
+        "format_instructions": parser.get_format_instructions()
+    }
     
     try:
-        faiss_path = state.get("context", {}).get("faiss_index_path", "")
-        snippets = retrieve_code_snippets(faiss_path, "test testing pytest jest mock assert spec coverage unit integration")
-        report = await chain.ainvoke({
-            "context": format_context(state),
-            "snippets": snippets,
-            "format_instructions": parser.get_format_instructions()
-        })
+        llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
+        chain = prompt | llm | parser
+        report = await chain.ainvoke(invoke_data)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "testing_agent")
         return {"testing_report": report}
     except Exception as e:
-        print(f"Testing Agent Failed: {e}")
-        return {"testing_report": {"error": "Testing Agent unreachable."}}
+        print(f"Testing Agent Groq failed ({e}), falling back to Ollama...")
+        try:
+            llm_fallback = ChatOllama(model="qwen2.5-coder", temperature=0.1, format="json")
+            chain = prompt | llm_fallback | parser
+            report = await chain.ainvoke(invoke_data)
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "testing_agent")
+            return {"testing_report": report}
+        except Exception as e2:
+            print(f"Testing Agent Fallback Failed: {e2}")
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "testing_agent")
+            return {"testing_report": {"test_coverage": "none", "frameworks_used": [], "testing_score": 0}}
 
 async def database_agent_node(state: AgentState) -> dict:
     print("-> Running Database Agent (gemini-flash-latest / Groq fallback)...")
