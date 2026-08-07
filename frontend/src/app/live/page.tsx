@@ -53,6 +53,36 @@ export default function LiveAnimationPage() {
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    // Initial fetch of latest job state if available
+    fetch("http://localhost:8000/api/v1/stats/history")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const latest = data[0];
+          setPipeline((prev) => {
+            // Only populate from history if we haven't received a live running task
+            if (prev.task_id && prev.globalStatus === "Running") return prev;
+            
+            const isCompleted = latest.status === "Completed";
+            return {
+              task_id: latest.repoId || latest.repo,
+              repo_url: latest.repoId?.startsWith("http") ? latest.repoId : `https://github.com/${latest.team}/${latest.repo}`,
+              ingestion: isCompleted ? "completed" : "idle",
+              agents: {
+                security_agent: isCompleted ? "completed" : "idle",
+                architecture_agent: isCompleted ? "completed" : "idle",
+                performance_agent: isCompleted ? "completed" : "idle",
+                testing_agent: isCompleted ? "completed" : "idle",
+                database_agent: isCompleted ? "completed" : "idle",
+              },
+              supervisor: isCompleted ? "completed" : "idle",
+              globalStatus: isCompleted ? "Completed" : "idle"
+            };
+          });
+        }
+      })
+      .catch((e) => console.log("Failed to load initial history:", e));
+
     // Connect to WebSocket
     const ws = new WebSocket(`ws://${window.location.hostname}:8000/api/v1/ws/updates`);
     wsRef.current = ws;
@@ -61,59 +91,89 @@ export default function LiveAnimationPage() {
       try {
         const data = JSON.parse(event.data);
         
-        // Update state based on incoming events
         setPipeline((prev) => {
-          const newState = { ...prev };
+          let current = { ...prev };
           
-          if (data.task_id) {
-            // If it's a new task, reset everything
-            if (prev.task_id !== data.task_id) {
-              return {
-                ...initialPipelineState,
-                task_id: data.task_id,
-                repo_url: data.repo_url,
-                globalStatus: "Running"
-              };
-            }
-            newState.repo_url = data.repo_url;
+          if (data.task_id && prev.task_id && prev.task_id !== data.task_id) {
+            // New task started - reset to fresh state for the new task
+            current = {
+              ...initialPipelineState,
+              task_id: data.task_id,
+              repo_url: data.repo_url || prev.repo_url,
+              globalStatus: "Running"
+            };
+          } else if (data.task_id && !prev.task_id) {
+            current.task_id = data.task_id;
+            current.repo_url = data.repo_url;
+          }
+          
+          if (data.repo_url) {
+            current.repo_url = data.repo_url;
           }
 
-          // State Catch-up: If any agent other than ingestion is running/completed, ingestion must be completed.
-          if (data.agent !== "ingestion" && data.agent !== "gemini_supervisor" && data.status) {
-            newState.ingestion = "completed";
+          // Handle global task status
+          if (data.status === "Completed") {
+            current.globalStatus = "Completed";
+            current.ingestion = "completed";
+            current.agents = {
+              security_agent: "completed",
+              architecture_agent: "completed",
+              performance_agent: "completed",
+              testing_agent: "completed",
+              database_agent: "completed"
+            };
+            current.supervisor = "completed";
+            return current;
           }
-          if (data.agent === "gemini_supervisor" && data.status) {
-            newState.ingestion = "completed";
-            Object.keys(newState.agents).forEach(k => {
-              newState.agents[k as keyof typeof newState.agents] = "completed";
+
+          if (data.status === "Failed") {
+            current.globalStatus = "Failed";
+            if (current.ingestion === "running") current.ingestion = "error";
+            if (current.supervisor === "running") current.supervisor = "error";
+            Object.keys(current.agents).forEach(k => {
+              if (current.agents[k as keyof typeof current.agents] === "running") {
+                current.agents[k as keyof typeof current.agents] = "error";
+              }
             });
+            return current;
           }
 
+          if (data.status === "Running") {
+            current.globalStatus = "Running";
+          }
+
+          // Handle granular agent status
           if (data.status === "AgentRunning") {
-            if (data.agent === "ingestion") newState.ingestion = "running";
-            else if (data.agent === "gemini_supervisor") newState.supervisor = "running";
-            else if (data.agent in newState.agents) {
-              newState.agents[data.agent as keyof typeof newState.agents] = "running";
+            current.globalStatus = "Running";
+            if (data.agent === "ingestion") {
+              current.ingestion = "running";
+            } else if (data.agent === "gemini_supervisor") {
+              current.ingestion = "completed";
+              Object.keys(current.agents).forEach(k => {
+                current.agents[k as keyof typeof current.agents] = "completed";
+              });
+              current.supervisor = "running";
+            } else if (data.agent in current.agents) {
+              current.ingestion = "completed";
+              current.agents[data.agent as keyof typeof current.agents] = "running";
             }
           } else if (data.status === "AgentCompleted") {
-            if (data.agent === "ingestion") newState.ingestion = "completed";
-            else if (data.agent === "gemini_supervisor") newState.supervisor = "completed";
-            else if (data.agent in newState.agents) {
-              newState.agents[data.agent as keyof typeof newState.agents] = "completed";
-            }
-          } else if (data.status === "Completed" || data.status === "Failed") {
-            newState.globalStatus = data.status;
-            if (data.status === "Completed") {
-              // Ensure all states show as completed if the global job finished
-              newState.ingestion = "completed";
-              Object.keys(newState.agents).forEach(k => {
-                newState.agents[k as keyof typeof newState.agents] = "completed";
+            if (data.agent === "ingestion") {
+              current.ingestion = "completed";
+            } else if (data.agent === "gemini_supervisor") {
+              current.ingestion = "completed";
+              Object.keys(current.agents).forEach(k => {
+                current.agents[k as keyof typeof current.agents] = "completed";
               });
-              newState.supervisor = "completed";
+              current.supervisor = "completed";
+              current.globalStatus = "Completed";
+            } else if (data.agent in current.agents) {
+              current.ingestion = "completed";
+              current.agents[data.agent as keyof typeof current.agents] = "completed";
             }
           }
 
-          return newState;
+          return current;
         });
       } catch (err) {
         console.error("Failed to parse websocket message", err);
@@ -213,8 +273,8 @@ export default function LiveAnimationPage() {
               {renderNode("Security Agent", pipeline.agents.security_agent, ShieldAlert, "Qwen 2.5 Coder")}
               {renderNode("Architecture Agent", pipeline.agents.architecture_agent, Layout, "DeepSeek Coder")}
               {renderNode("Performance Agent", pipeline.agents.performance_agent, Zap, "Qwen 2.5 Coder")}
-              {renderNode("Testing Agent", pipeline.agents.testing_agent, TestTube, "Llama 3.1 8B")}
-              {renderNode("Database Agent", pipeline.agents.database_agent, Database, "Gemini 2.5 Flash")}
+              {renderNode("Testing Agent", pipeline.agents.testing_agent, TestTube, "Llama 3.1 8B (Groq)")}
+              {renderNode("Database Agent", pipeline.agents.database_agent, Database, "Gemini Flash / Groq")}
             </div>
           </div>
 
@@ -225,7 +285,7 @@ export default function LiveAnimationPage() {
 
           {/* Stage 3: Supervisor */}
           <div className="flex flex-col items-center relative z-10">
-            {renderNode("Executive Supervisor", pipeline.supervisor, BrainCircuit, "Gemini 2.5 Flash", true)}
+            {renderNode("Executive Supervisor", pipeline.supervisor, BrainCircuit, "Gemini Flash / Groq", true)}
           </div>
 
           {/* Final state */}
