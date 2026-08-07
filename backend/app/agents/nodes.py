@@ -212,36 +212,45 @@ async def testing_agent_node(state: AgentState) -> dict:
         return {"testing_report": {"error": "Testing Agent unreachable."}}
 
 async def database_agent_node(state: AgentState) -> dict:
-    print("-> Running Database Agent (gemini-flash-latest)...")
+    print("-> Running Database Agent (gemini-flash-latest / Groq fallback)...")
     task_id = state.get("task_id")
     repo_url = state.get("repo_url", "")
     broadcast_agent_status(task_id, repo_url, "AgentRunning", "database_agent")
-    llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0.1, api_key=os.getenv("GEMINI_API_KEY"))
-    parser = JsonOutputParser(pydantic_object=DatabaseReport)
     
+    parser = JsonOutputParser(pydantic_object=DatabaseReport)
     prompt = ChatPromptTemplate.from_messages([
         ("system", "You are an expert Database Architect. Analyze the provided repository context and code snippets and output a JSON report matching the schema. Focus on schemas, ORM usage, queries, and data models.\n{format_instructions}"),
         ("user", "Repository Context:\n{context}\n\nRelevant Code Snippets:\n{snippets}")
     ])
     
-    chain = prompt | llm | parser
+    faiss_path = state.get("context", {}).get("faiss_index_path", "")
+    snippets = retrieve_code_snippets(faiss_path, "database schema ORM Prisma SQLAlchemy query table model SQL MongoDB PostgreSQL")
+    invoke_data = {
+        "context": format_context(state),
+        "snippets": snippets,
+        "format_instructions": parser.get_format_instructions()
+    }
     
     try:
-        faiss_path = state.get("context", {}).get("faiss_index_path", "")
-        snippets = retrieve_code_snippets(faiss_path, "database schema ORM Prisma SQLAlchemy query table model SQL MongoDB PostgreSQL")
-        report = await chain.ainvoke({
-            "context": format_context(state),
-            "snippets": snippets,
-            "format_instructions": parser.get_format_instructions()
-        })
+        llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0.1, api_key=os.getenv("GEMINI_API_KEY"))
+        chain = prompt | llm | parser
+        report = await chain.ainvoke(invoke_data)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "database_agent")
         return {"db_report": report}
     except Exception as e:
-        print(f"Database Agent Failed: {e}")
-        return {"db_report": {"error": "Database Agent unreachable."}}
+        print(f"Gemini Database Agent failed ({e}), falling back to Groq...")
+        try:
+            llm_fallback = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
+            chain = prompt | llm_fallback | parser
+            report = await chain.ainvoke(invoke_data)
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "database_agent")
+            return {"db_report": report}
+        except Exception as e2:
+            print(f"Database Agent Fallback Failed: {e2}")
+            return {"db_report": {"error": "Database Agent unreachable."}}
 
 async def gemini_supervisor_node(state: AgentState) -> dict:
-    print("-> Running Gemini Supervisor Node...")
+    print("-> Running Supervisor Node (Gemini / Groq fallback)...")
     task_id = state.get("task_id")
     repo_url = state.get("repo_url", "")
     broadcast_agent_status(task_id, repo_url, "AgentRunning", "gemini_supervisor")
@@ -253,40 +262,43 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
     db_rep = state.get("db_report", {})
     det_score = state.get("deterministic_score_result", {})
     
-    # We use gemini-flash-latest to stay within free tier quotas
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-flash-latest", 
-        temperature=0.2,
-        api_key=os.getenv("GEMINI_API_KEY")
-    )
     parser = JsonOutputParser(pydantic_object=FinalReport)
-    
     prompt = ChatPromptTemplate.from_messages([
         ("system", "You are an Executive AI Supervisor. You receive sub-reports from Security, Architecture, Performance, Testing, and Database agents, along with a deterministic score. Synthesize them into a single, cohesive final JSON report matching the schema. EXTREMELY IMPORTANT: You MUST include the exact `security_score`, `arch_score`, `perf_score`, `testing_score`, `db_score`, and `originality_score` from the input reports into your final JSON.\n{format_instructions}"),
         ("user", "Security:\n{sec}\n\nArchitecture:\n{arch}\n\nPerformance:\n{perf}\n\nTesting:\n{test_rep}\n\nDatabase:\n{db_rep}\n\nDeterministic Score:\n{det_score}")
     ])
     
-    chain = prompt | llm | parser
+    invoke_args = {
+        "sec": json.dumps(sec, indent=2),
+        "arch": json.dumps(arch, indent=2),
+        "perf": json.dumps(perf, indent=2),
+        "test_rep": json.dumps(test_rep, indent=2),
+        "db_rep": json.dumps(db_rep, indent=2),
+        "det_score": json.dumps(det_score, indent=2),
+        "format_instructions": parser.get_format_instructions()
+    }
     
     try:
-        report = await chain.ainvoke({
-            "sec": json.dumps(sec, indent=2),
-            "arch": json.dumps(arch, indent=2),
-            "perf": json.dumps(perf, indent=2),
-            "test_rep": json.dumps(test_rep, indent=2),
-            "db_rep": json.dumps(db_rep, indent=2),
-            "det_score": json.dumps(det_score, indent=2),
-            "format_instructions": parser.get_format_instructions()
-        })
+        llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0.2, api_key=os.getenv("GEMINI_API_KEY"))
+        chain = prompt | llm | parser
+        report = await chain.ainvoke(invoke_args)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "gemini_supervisor")
         return {"final_report": report}
     except Exception as e:
-        print(f"Gemini Supervisor Failed: {e}")
-        score = det_score.get("score", 0) if isinstance(det_score, dict) else 0
-        return {"final_report": {
-            "executive_summary": "Offline Mode: Full AI synthesis was unavailable due to network or quota errors. This report was generated using the deterministic scoring engine.",
-            "strengths": ["Evaluated using static heuristics and deterministic rules."],
-            "weaknesses": ["Advanced LLM synthesis was unavailable. Detailed insights are missing."],
-            "overall_score": score
-        }}
+        print(f"Gemini Supervisor failed ({e}), falling back to Groq llama-3.3-70b-versatile...")
+        try:
+            llm_fallback = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2, api_key=os.getenv("GROQ_API_KEY"))
+            chain = prompt | llm_fallback | parser
+            report = await chain.ainvoke(invoke_args)
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "gemini_supervisor")
+            return {"final_report": report}
+        except Exception as e2:
+            print(f"Supervisor Fallback Failed: {e2}")
+            score = det_score.get("score", 0) if isinstance(det_score, dict) else 0
+            return {"final_report": {
+                "executive_summary": "Offline Mode: Full AI synthesis was unavailable due to network or quota errors. This report was generated using the deterministic scoring engine.",
+                "strengths": ["Evaluated using static heuristics and deterministic rules."],
+                "weaknesses": ["Advanced LLM synthesis was unavailable. Detailed insights are missing."],
+                "overall_score": score
+            }}
 
