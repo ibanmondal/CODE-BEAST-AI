@@ -1,26 +1,29 @@
 @echo off
+title CodeBeast AI Launcher
 echo ===================================================
-echo Starting CodeBeast AI Platform
+echo 🚀 Starting CodeBeast AI Multi-Agent Platform
 echo ===================================================
 
-:: 1. Start Redis in Docker (if not already running)
-echo Starting Redis...
+:: 1. Start Redis in Docker (if docker is running)
+echo [1/4] Checking Redis container...
 docker run -p 6379:6379 -d redis 2>nul
 
 :: 2. Start Backend in a new window
-echo Starting FastAPI Backend...
-start "CodeBeast - FastAPI Backend" cmd /k "cd backend && (if exist venv\Scripts\activate call venv\Scripts\activate) && uvicorn main:app --reload --reload-dir app --reload-exclude worker_repos"
+echo [2/4] Starting FastAPI Backend on Port 8000...
+start "CodeBeast - FastAPI Backend" cmd /k "cd /d %~dp0backend && (if exist venv\Scripts\activate.bat call venv\Scripts\activate.bat) && uvicorn main:app --reload --port 8000"
 
 :: 3. Start Celery Worker in a new window
-echo Starting Celery Worker...
-start "CodeBeast - Celery Worker" cmd /k "cd backend && (if exist venv\Scripts\activate call venv\Scripts\activate) && celery -A app.worker.celery_app worker --loglevel=info -P threads"
+echo [3/4] Starting Celery Multi-Agent Worker...
+start "CodeBeast - Celery Worker" cmd /k "cd /d %~dp0backend && (if exist venv\Scripts\activate.bat call venv\Scripts\activate.bat) && celery -A app.worker.celery_app worker --loglevel=info -P threads"
 
 :: 4. Start Next.js Frontend in a new window
-echo Starting Next.js Frontend...
-start "CodeBeast - Frontend UI" cmd /k "cd frontend && npm run dev"
+echo [4/4] Starting Next.js Frontend Dashboard...
+start "CodeBeast - Frontend UI" cmd /k "cd /d %~dp0frontend && npm run dev"
 
 echo.
-echo All services launched!
-echo Frontend will be accessible at: http://localhost:3000
-echo Backend will be accessible at: http://localhost:8000
-echo.
+echo ===================================================
+echo ✅ All 3 services launched in separate windows!
+echo 🌐 Frontend UI:  http://localhost:3000
+echo 🔌 Backend API:  http://localhost:8000/docs
+echo ===================================================
+
