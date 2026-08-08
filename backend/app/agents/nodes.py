@@ -59,6 +59,12 @@ class DatabaseReport(BaseModel):
     orms_used: list[str] = Field(default_factory=list, description="ORMs or DB libraries used.")
     db_score: int = Field(default=0, description="Score from 0-100 indicating database modeling quality.")
 
+class SimilarityReport(BaseModel):
+    originality_score: int = Field(default=100, description="Score from 0-100 indicating code originality (100 - clone_percentage).")
+    clone_risk_level: str = Field(default="LOW", description="'LOW', 'MEDIUM', 'HIGH', or 'CRITICAL'")
+    detected_clones: list[str] = Field(default_factory=list, description="List of detected code clone patterns or template similarities.")
+    structural_evidence: list[str] = Field(default_factory=list, description="AST/CodeBERT structural similarity evidence.")
+
 class FinalReport(BaseModel):
     executive_summary: str = Field(description="A high level summary of the repository's quality.")
     strengths: list[str] = Field(description="List of key strengths.")
@@ -300,6 +306,56 @@ async def database_agent_node(state: AgentState) -> dict:
             broadcast_agent_status(task_id, repo_url, "AgentCompleted", "database_agent")
             return {"db_report": {"error": "Database Agent unreachable."}}
 
+async def similarity_agent_node(state: AgentState) -> dict:
+    print("-> Running Similarity & Originality Agent (AST/CodeBERT + Groq Llama-3.3)...")
+    task_id = state.get("task_id")
+    repo_url = state.get("repo_url", "")
+    broadcast_agent_status(task_id, repo_url, "AgentRunning", "similarity_agent")
+    
+    sim_result = state.get("similarity_result") or {}
+    sim_score = sim_result.get("similarity_score", 0)
+    sim_evidence = sim_result.get("evidence", [])
+    
+    parser = JsonOutputParser(pydantic_object=SimilarityReport)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "You are an expert Code Plagiarism and Structural Clone Analyst. Analyze the AST/CodeBERT similarity engine metrics and code patterns to assess repository originality and clone risk level.\n{format_instructions}"),
+        ("user", "Similarity Engine Results:\n- Template Similarity Percentage: {sim_score}%\n- Structural Evidence: {evidence}\n\nRepository Context:\n{context}\n\nKey Code Snippets:\n{snippets}")
+    ])
+    
+    faiss_path = state.get("context", {}).get("faiss_index_path", "")
+    snippets = retrieve_code_snippets(faiss_path, "main app route handler controller class function logic")
+    invoke_data = {
+        "sim_score": sim_score,
+        "evidence": "\n".join(sim_evidence) if sim_evidence else "Standard code structure detected.",
+        "context": format_context(state),
+        "snippets": snippets,
+        "format_instructions": parser.get_format_instructions()
+    }
+    
+    try:
+        if os.getenv("GROQ_API_KEY"):
+            llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
+        elif os.getenv("GEMINI_API_KEY"):
+            llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0.1, api_key=os.getenv("GEMINI_API_KEY"))
+        else:
+            llm = ChatOllama(model="qwen2.5-coder", temperature=0.1, format="json")
+            
+        chain = prompt | llm | parser
+        report = await chain.ainvoke(invoke_data)
+        broadcast_agent_status(task_id, repo_url, "AgentCompleted", "similarity_agent")
+        return {"similarity_report": report}
+    except Exception as e:
+        print(f"Similarity Agent Failed: {e}")
+        broadcast_agent_status(task_id, repo_url, "AgentCompleted", "similarity_agent")
+        orig_score = max(0, 100 - sim_score)
+        risk = "HIGH" if sim_score > 70 else ("MEDIUM" if sim_score > 30 else "LOW")
+        return {"similarity_report": {
+            "originality_score": orig_score,
+            "clone_risk_level": risk,
+            "detected_clones": [f"AST Similarity Engine flagged {sim_score}% template match."],
+            "structural_evidence": sim_evidence or ["Heuristic evaluation fallback."]
+        }}
+
 async def gemini_supervisor_node(state: AgentState) -> dict:
     print("-> Running Supervisor Node with ConsJudge Multi-Pass Consistency...")
     task_id = state.get("task_id")
@@ -312,12 +368,13 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
     perf = state.get("perf_report", {})
     test_rep = state.get("testing_report", {})
     db_rep = state.get("db_report", {})
+    sim_rep = state.get("similarity_report", {})
     det_score = state.get("deterministic_score_result", {})
     
     parser = JsonOutputParser(pydantic_object=FinalReport)
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an Executive AI Supervisor. You receive sub-reports from Security, Architecture, Performance, Testing, and Database agents, along with a deterministic score. Synthesize them into a single, cohesive final JSON report matching the schema. EXTREMELY IMPORTANT: You MUST include the exact `security_score`, `arch_score`, `perf_score`, `testing_score`, `db_score`, and `originality_score` from the input reports into your final JSON.\n{format_instructions}"),
-        ("user", "Security:\n{sec}\n\nArchitecture:\n{arch}\n\nPerformance:\n{perf}\n\nTesting:\n{test_rep}\n\nDatabase:\n{db_rep}\n\nDeterministic Score:\n{det_score}")
+        ("system", "You are an Executive AI Supervisor. You receive sub-reports from Security, Architecture, Performance, Testing, Database, and Similarity/Originality agents, along with a deterministic score. Synthesize them into a single, cohesive final JSON report matching the schema. EXTREMELY IMPORTANT: You MUST include the exact `security_score`, `arch_score`, `perf_score`, `testing_score`, `db_score`, and `originality_score` from the input reports into your final JSON.\n{format_instructions}"),
+        ("user", "Security:\n{sec}\n\nArchitecture:\n{arch}\n\nPerformance:\n{perf}\n\nTesting:\n{test_rep}\n\nDatabase:\n{db_rep}\n\nOriginality/Similarity:\n{sim_rep}\n\nDeterministic Score:\n{det_score}")
     ])
     
     invoke_args = {
@@ -326,6 +383,7 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
         "perf": json.dumps(perf, indent=2),
         "test_rep": json.dumps(test_rep, indent=2),
         "db_rep": json.dumps(db_rep, indent=2),
+        "sim_rep": json.dumps(sim_rep, indent=2),
         "det_score": json.dumps(det_score, indent=2),
         "format_instructions": parser.get_format_instructions()
     }

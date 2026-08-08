@@ -8,6 +8,7 @@ import {
   Zap, 
   TestTube, 
   Database, 
+  Fingerprint,
   BrainCircuit, 
   CheckCircle2, 
   Loader2,
@@ -27,6 +28,7 @@ interface PipelineState {
     performance_agent: NodeState;
     testing_agent: NodeState;
     database_agent: NodeState;
+    similarity_agent: NodeState;
   };
   supervisor: NodeState;
   globalStatus: "idle" | "Running" | "Completed" | "Failed";
@@ -42,6 +44,7 @@ const initialPipelineState: PipelineState = {
     performance_agent: "idle",
     testing_agent: "idle",
     database_agent: "idle",
+    similarity_agent: "idle",
   },
   supervisor: "idle",
   globalStatus: "idle"
@@ -74,6 +77,7 @@ export default function LiveAnimationPage() {
                 performance_agent: isCompleted ? "completed" : "idle",
                 testing_agent: isCompleted ? "completed" : "idle",
                 database_agent: isCompleted ? "completed" : "idle",
+                similarity_agent: isCompleted ? "completed" : "idle",
               },
               supervisor: isCompleted ? "completed" : "idle",
               globalStatus: isCompleted ? "Completed" : "idle"
@@ -120,7 +124,8 @@ export default function LiveAnimationPage() {
               architecture_agent: "completed",
               performance_agent: "completed",
               testing_agent: "completed",
-              database_agent: "completed"
+              database_agent: "completed",
+              similarity_agent: "completed"
             };
             current.supervisor = "completed";
             return current;
@@ -270,11 +275,12 @@ export default function LiveAnimationPage() {
             </div>
             
             <div className="flex flex-wrap justify-center gap-6">
-              {renderNode("Security Agent", pipeline.agents.security_agent, ShieldAlert, "Qwen 2.5 Coder")}
-              {renderNode("Architecture Agent", pipeline.agents.architecture_agent, Layout, "DeepSeek Coder")}
-              {renderNode("Performance Agent", pipeline.agents.performance_agent, Zap, "Qwen 2.5 Coder")}
+              {renderNode("Security Agent", pipeline.agents.security_agent, ShieldAlert, "Llama 3.3 (Groq)")}
+              {renderNode("Architecture Agent", pipeline.agents.architecture_agent, Layout, "Llama 3.3 (Groq)")}
+              {renderNode("Performance Agent", pipeline.agents.performance_agent, Zap, "Llama 3.3 (Groq)")}
               {renderNode("Testing Agent", pipeline.agents.testing_agent, TestTube, "Llama 3.1 8B (Groq)")}
               {renderNode("Database Agent", pipeline.agents.database_agent, Database, "Gemini Flash / Groq")}
+              {renderNode("Similarity Agent", pipeline.agents.similarity_agent, Fingerprint, "AST & CodeBERT")}
             </div>
           </div>
 
@@ -285,7 +291,7 @@ export default function LiveAnimationPage() {
 
           {/* Stage 3: Supervisor */}
           <div className="flex flex-col items-center relative z-10">
-            {renderNode("Executive Supervisor", pipeline.supervisor, BrainCircuit, "Gemini Flash / Groq", true)}
+            {renderNode("Executive Supervisor", pipeline.supervisor, BrainCircuit, "ConsJudge Multi-Pass", true)}
           </div>
 
           {/* Final state */}

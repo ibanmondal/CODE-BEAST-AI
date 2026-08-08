@@ -121,7 +121,7 @@ export function ScoreDashboard({ report }: ScoreDashboardProps) {
           <Cpu className="w-5 h-5 text-indigo-400" />
           AI Agents Architecture
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2">
           <div className="flex flex-col p-2 bg-black/40 rounded-xl border border-zinc-800/50 hover:border-zinc-700 transition-colors justify-center items-center text-center">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Shield className="w-3.5 h-3.5 text-blue-500" />
@@ -159,12 +159,35 @@ export function ScoreDashboard({ report }: ScoreDashboardProps) {
           </div>
           <div className="flex flex-col p-2 bg-black/40 rounded-xl border border-zinc-800/50 hover:border-zinc-700 transition-colors justify-center items-center text-center">
             <div className="flex items-center gap-1.5 mb-1.5">
+              <Shield className="w-3.5 h-3.5 text-purple-400" />
+              <span className="text-zinc-200 text-sm font-medium">Similarity</span>
+            </div>
+            <span className="text-[10px] font-mono text-zinc-500 bg-zinc-900 px-1.5 py-0.5 rounded inline-block w-fit border border-purple-500/20 text-purple-400/80">AST + CodeBERT</span>
+          </div>
+          <div className="flex flex-col p-2 bg-black/40 rounded-xl border border-zinc-800/50 hover:border-zinc-700 transition-colors justify-center items-center text-center">
+            <div className="flex items-center gap-1.5 mb-1.5">
               <Cpu className="w-3.5 h-3.5 text-purple-500" />
               <span className="text-zinc-200 text-sm font-medium">Supervisor</span>
             </div>
             <span className="text-[10px] font-mono text-zinc-500 bg-zinc-900 px-1.5 py-0.5 rounded inline-block w-fit border border-emerald-500/20 text-emerald-400/80">ConsJudge Multi-Pass</span>
           </div>
         </div>
+      </div>
+
+      {/* Originality & Clone Detection Card */}
+      <div className="p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800/50">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Shield className="w-5 h-5 text-purple-400" />
+            AST & CodeBERT Originality Verification
+          </h3>
+          <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300">
+            Originality Score: {report.orig || 100}/100
+          </span>
+        </div>
+        <p className="text-xs text-zinc-400 leading-relaxed">
+          Evaluated against known GitHub boilerplate templates and semantic clone clusters using normalized Tree-Sitter AST hash trees and CodeBERT neural embeddings.
+        </p>
       </div>
 
       {/* Strengths and Weaknesses */}
