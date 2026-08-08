@@ -1,13 +1,14 @@
 import os
+import logging
 from sqlalchemy import create_engine, Column, Integer, String, JSON, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
 import datetime
 
-# PostgreSQL connection string
+logger = logging.getLogger(__name__)
+
+# Primary PostgreSQL or SQLite connection string
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/codebeast")
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 class AnalysisJob(Base):
@@ -32,4 +33,25 @@ class AnalysisJob(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
 
+def init_engine():
+    global DATABASE_URL
+    try:
+        if DATABASE_URL.startswith("sqlite"):
+            eng = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+        else:
+            eng = create_engine(DATABASE_URL)
+        # Attempt a quick connection test
+        with eng.connect():
+            pass
+        return eng
+    except Exception as e:
+        print(f"[CodeBeast DB] Notice: PostgreSQL at '{DATABASE_URL}' is unreachable ({e}).")
+        print("[CodeBeast DB] -> Gracefully initializing local SQLite database (sqlite:///./codebeast.db)...")
+        sqlite_url = "sqlite:///./codebeast.db"
+        return create_engine(sqlite_url, connect_args={"check_same_thread": False})
+
+engine = init_engine()
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 Base.metadata.create_all(bind=engine)
+
