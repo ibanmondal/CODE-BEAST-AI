@@ -1,113 +1,155 @@
 <div align="center">
-  <img src="https://via.placeholder.com/1000x250/141C2F/3B82F6?text=CodeBeast+AI" alt="CodeBeast AI Banner" />
-
-  <h1>CodeBeast AI</h1>
-  <p><strong>Multi-Agent Repository Intelligence & Automated Scoring Platform</strong></p>
+  <h1>⚡ CodeBeast AI ⚡</h1>
+  <p><strong>Research-Backed Multi-Agent Repository Intelligence & Automated Scoring Platform</strong></p>
+  <p><em>Engineered for Technical Hiring, Hackathon Evaluations, and Automated Code Audits</em></p>
 
   <p>
-    <a href="#why-codebeast">WHY</a> •
-    <a href="#architecture">ARCHITECTURE</a> •
-    <a href="#quickstart">QUICKSTART</a> •
-    <a href="#scoring--evaluation">EVALUATION</a>
+    <a href="#why-codebeast-ai">Why CodeBeast?</a> •
+    <a href="#research-backed-advancements">Research Foundations</a> •
+    <a href="#system-architecture">Architecture</a> •
+    <a href="#multi-agent-pipeline">Agents</a> •
+    <a href="#quickstart">Quickstart</a> •
+    <a href="#features--ui">Features</a>
   </p>
 
   <p>
-    <img src="https://img.shields.io/badge/LangGraph-Agents-blue?style=for-the-badge" />
-    <img src="https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi" />
-    <img src="https://img.shields.io/badge/Next.js-Frontend-black?style=for-the-badge&logo=next.js" />
-    <img src="https://img.shields.io/badge/Celery-Workers-37814A?style=for-the-badge&logo=celery" />
+    <img src="https://img.shields.io/badge/LangGraph-6--Agent_Orchestrator-3B82F6?style=for-the-badge&logo=langchain" />
+    <img src="https://img.shields.io/badge/ConsJudge-Multi--Pass_Consensus-10B981?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/AutoReview-Detect_Locate_Repair-F43F5E?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/AST_%26_CodeBERT-Originality_Engine-8B5CF6?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/FastAPI-High_Performance_Backend-009688?style=for-the-badge&logo=fastapi" />
+    <img src="https://img.shields.io/badge/Next.js_14-App_Router-black?style=for-the-badge&logo=next.js" />
   </p>
 </div>
 
-## ♦ Why CodeBeast?
+---
 
-Most repository evaluation tools rely on simple static analysis or a single AI prompt that quickly hallucinates. **CodeBeast** spins up **5 specialized LLM experts** in parallel, analyzes the exact structure of your repository, and synthesizes a verifiable executive summary. 
+## 🔬 Research-Backed Advancements
 
-Designed specifically for **hackathons, technical hiring, and automated code reviews**, CodeBeast saves hours of manual code reading by combining strict deterministic heuristics with advanced AI code comprehension.
+CodeBeast AI incorporates three major peer-reviewed and preprint advancements in AI code evaluation:
+
+| # | Research Foundation | Problem Solved | Implementation in CodeBeast AI |
+|---|---|---|---|
+| **1** | **ConsJudge: Multi-Pass Consensus** (*LLM-as-a-Judge Consistency*) | Unverified, potentially hallucinated single-pass scores | Runs dual concurrent supervisor passes (Gemini + Groq Llama 3.3). Computes variance margin ($\pm \text{points}$) and issues a **ConsJudge Verified Confidence Badge** (High / Moderate / Low). |
+| **2** | **ASTNN & CodeBERT Neural Embeddings** (*Semantic Clone Detection*) | Fragile commit heuristics that fail on copy-paste code | Extracts Tree-Sitter normalized AST syntax trees and computes CodeBERT semantic embeddings with FAISS vector similarity to calculate a true **Originality Score (0-100)** and detect template clones. |
+| **3** | **AutoReview: 3-Stage Pipeline** (*ACM FSE 2025: Detect → Locate → Repair*) | Shallow, single-pass security reviews with no actionable fixes | **Detect**: Classifies CWE taxonomy (CWE-89, CWE-798, CWE-78).<br>**Locate**: Pinpoints exact file coordinates and exploit vectors.<br>**Repair**: Generates unified diffs and defensive test guidance. |
 
 ---
 
-## ♦ Architecture
-
-CodeBeast runs a robust server-side multi-agent pipeline using LangGraph, ensuring deep, context-aware analysis without overwhelming browser memory.
+## 🏗️ System Architecture
 
 ```mermaid
 graph TD
-    A[GitHub Repo URL] -->|Clone & Parse| B(Data Ingestion & Context)
-    B --> C{Parallel AI Agents}
+    A[GitHub Repository URL] -->|Async Ingest & Clone| B(Repository Preprocessing & Context)
+    B -->|Tree-Sitter & FAISS Vectorizer| V[(CodeBERT & MiniLM Embeddings)]
     
-    C -->|Security| D[Qwen 2.5 Coder]
-    C -->|Architecture| E[DeepSeek Coder]
-    C -->|Performance| F[Qwen 2.5 Coder]
-    C -->|Testing| G[Llama 3.1 8B]
-    C -->|Database| H[Gemini 2.5 Flash]
+    B --> C{LangGraph Parallel Dispatcher}
     
-    D --> I{Gemini Supervisor}
+    C -->|Security Review| D[AutoReview Security Agent<br/><i>Detect -> Locate -> Repair (Llama 3.3)</i>]
+    C -->|Structural Design| E[Architecture Agent<br/><i>Modularity & SOLID (Llama 3.3)</i>]
+    C -->|Resource Analysis| F[Performance Agent<br/><i>Complexity & Caching (Llama 3.3)</i>]
+    C -->|Quality & CI/CD| G[Testing Agent<br/><i>Coverage & Frameworks (Llama 3.1)</i>]
+    C -->|Data Layer| H[Database Agent<br/><i>Schema & ORM (Gemini Flash)</i>]
+    C -->|Clone Analysis| K[Similarity & Originality Agent<br/><i>AST + CodeBERT Neural Vector</i>]
+    
+    D --> I{ConsJudge Multi-Pass Supervisor}
     E --> I
     F --> I
     G --> I
     H --> I
+    K --> I
     
-    I -->|Synthesize| J[Final Executive Report]
+    I -->|Pass 1: Gemini Flash| P1[Score Pass 1]
+    I -->|Pass 2: Groq Llama 3.3| P2[Score Pass 2]
+    
+    P1 --> CM[Consensus & Variance Computation]
+    P2 --> CM
+    
+    CM -->|Synthesize| J[Final Executive Report<br/><i>Score + Confidence Badge + AutoReview Patches</i>]
     
     style A fill:#141C2F,stroke:#3B82F6,stroke-width:2px,color:#fff
-    style I fill:#3B82F6,stroke:#141C2F,stroke-width:2px,color:#fff
+    style C fill:#1E293B,stroke:#64748B,stroke-width:2px,color:#fff
+    style I fill:#3B82F6,stroke:#1D4ED8,stroke-width:2px,color:#fff
     style J fill:#10B981,stroke:#047857,stroke-width:2px,color:#fff
 ```
 
 ---
 
-## ♦ Scoring & Evaluation
+## ⚡ Quickstart
 
-The final score (0-100) is a hybrid calculation ensuring strict fairness and deep insight.
+### Option A: One-Click Runner (Windows PowerShell / Batch)
 
-### 1. Deterministic Engine (The Hard Cap)
-Before the AI even reviews your code, our deterministic engine checks for plagiarism or low-effort submissions. If a repository has **fewer than 3 commits**, the score is hard-capped at **50**, preventing copy-paste cheating.
+Launch all services (Redis, FastAPI backend, Celery multi-agent worker, and Next.js frontend) with a single command:
 
-### 2. Multi-Agent Evaluation Weights
-*   **Architecture & Code Quality:** ~30%
-*   **Security Practices:** ~20%
-*   **Testing & CI/CD:** ~20%
-*   **Database & State Management:** ~15%
-*   **Performance:** ~15%
+```powershell
+# PowerShell
+.\run_all.ps1
 
----
-
-## ♦ Major Engineering Highlights
-
-*   **Zero-Buffering Live WebSockets:** Built a custom state-inference UI layer. When a WebSocket connects, it instantly fetches the `last_eval_task` from Redis and infers previous states (e.g., if Security is running, Ingestion must be done) to guarantee frame-one accurate animations.
-*   **Graceful Offline Degradation:** If the cloud LLMs (Gemini) hit a `429 Rate Limit`, the LangGraph orchestrator gracefully degrades to an **Offline Mode**, falling back to local Ollama models and the Deterministic Scoring Engine so the user is never left without a report.
-
----
-
-## ♦ Quickstart
-
-### 1. Backend (FastAPI)
-```bash
-cd backend
-python -m venv .venv
-source .venv/Scripts/activate
-pip install -r requirements.txt
-
-# Start the server
-uvicorn main:app --reload
+# Or Windows Command Prompt / Batch
+run_all.bat
 ```
 
-### 2. Celery Worker (Task Queue)
+Services will be accessible at:
+* **Frontend Dashboard:** [http://localhost:3000](http://localhost:3000)
+* **Live Agent Monitor:** [http://localhost:3000/live](http://localhost:3000/live)
+* **Backend OpenAPI Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+### Option B: Manual Setup
+
+#### 1. Backend & Celery Worker
 ```bash
 cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
 
-# Start the background task worker
+# Start FastAPI server
+uvicorn main:app --reload --reload-dir app --reload-exclude worker_repos
+
+# Start Celery Worker in a separate terminal
 celery -A app.worker.celery_app worker --loglevel=info -P threads
 ```
 
-### 3. Frontend (Next.js)
+#### 2. Frontend
 ```bash
 cd frontend
 npm install
-
-# Start the dashboard UI
 npm run dev
 ```
 
-*Note: Ensure you have a running Redis instance on `localhost:6379` for the Celery workers and WebSockets.*
+---
+
+## 🧪 Automated Verification Suite
+
+Run our comprehensive test suite verifying the research-backed features:
+
+```powershell
+cd backend
+venv\Scripts\activate
+
+# 1. Test ConsJudge Multi-Pass Inter-Judge Consistency
+python test_judge_consistency.py
+
+# 2. Test 6-Agent LangGraph Pipeline with AST/CodeBERT Similarity
+python test_similarity_pipeline.py
+
+# 3. Test AutoReview 3-Stage Security Pipeline (Detect -> Locate -> Repair)
+python test_autoreview_security.py
+```
+
+---
+
+## 📊 Live Evaluation UI
+
+* **Real-time Agent Monitoring**: Watch the 6 specialized AI nodes execute in parallel over WebSockets.
+* **ConsJudge Confidence Badges**: Dynamic confidence indicators (`High Confidence ±2.5 pts`, `Moderate Confidence`, `Low Confidence`) with inter-judge variance metrics.
+* **AutoReview Security Patches**: Actionable unified git diffs and CWE matrices.
+* **AST & CodeBERT Originality Breakdown**: Neural clone detection graphs and template similarity ratios.
+
+---
+
+## 🛡️ License & Acknowledgments
+
+Built for technical evaluations, hackathon judging, and automated software reviews. Grounded in peer-reviewed AI software engineering research (FSE 2025 AutoReview, ConsJudge 2025, ASTNN).

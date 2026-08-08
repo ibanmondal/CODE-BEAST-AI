@@ -190,6 +190,33 @@ export function ScoreDashboard({ report }: ScoreDashboardProps) {
         </p>
       </div>
 
+      {/* 3-Stage Security AutoReview Pipeline Card */}
+      <div className="p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800/50">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Shield className="w-5 h-5 text-rose-400" />
+            AutoReview: 3-Stage Security Pipeline (FSE 2025)
+          </h3>
+          <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300">
+            Detect → Locate → Repair Active
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
+          <div className="p-3 bg-black/40 rounded-xl border border-zinc-800/60">
+            <span className="text-xs font-bold text-rose-400 block mb-1">1. DETECT (CWE Engine)</span>
+            <p className="text-[11px] text-zinc-400">Classifies vulnerability taxonomy (CWE-89, CWE-798, CWE-78) using AST & semantic pattern matching.</p>
+          </div>
+          <div className="p-3 bg-black/40 rounded-xl border border-zinc-800/60">
+            <span className="text-xs font-bold text-amber-400 block mb-1">2. LOCATE (Pinpoint Vector)</span>
+            <p className="text-[11px] text-zinc-400">Isolates exact file coordinates, vulnerable code lines, and attack vector exploit paths.</p>
+          </div>
+          <div className="p-3 bg-black/40 rounded-xl border border-zinc-800/60">
+            <span className="text-xs font-bold text-emerald-400 block mb-1">3. REPAIR (Unified Patch)</span>
+            <p className="text-[11px] text-zinc-400">Generates ready-to-merge unified git diffs and defensive regression unit tests.</p>
+          </div>
+        </div>
+      </div>
+
       {/* Strengths and Weaknesses */}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800/50">

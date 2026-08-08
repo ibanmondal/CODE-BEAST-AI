@@ -33,11 +33,22 @@ def broadcast_agent_status(task_id, repo_url, status, agent_name):
         except Exception as e:
             print(f"Redis publish error: {e}")
 
+class SecurityVulnerability(BaseModel):
+    cwe_id: str = Field(description="CWE category identifier, e.g., 'CWE-89: SQL Injection', 'CWE-798: Hardcoded Credentials', 'CWE-79: Cross-site Scripting'.")
+    severity: str = Field(description="'CRITICAL', 'HIGH', 'MEDIUM', or 'LOW'")
+    file_path: str = Field(default="N/A", description="Target file path or module where vulnerability was located")
+    line_range: str = Field(default="N/A", description="Estimated line range or code block reference, e.g., 'lines 24-30'")
+    trigger_vector: str = Field(description="Detailed explanation of how this vulnerability can be triggered or exploited")
+    remediation_patch: str = Field(description="Concrete unified diff or safe code replacement snippet to repair the vulnerability")
+    test_guidance: str = Field(description="Defensive test assertion or verification guidance to prevent regression")
+
 class SecurityReport(BaseModel):
     vulnerabilities_found: list[str] = Field(default_factory=list, description="List of security vulnerabilities found.")
     risk_level: str = Field(default="UNKNOWN", description="Overall risk level: LOW, MEDIUM, HIGH, CRITICAL")
     recommendations: list[str] = Field(default_factory=list, description="Actionable security recommendations.")
     security_score: int = Field(default=0, description="Score from 0-100 indicating how secure the codebase is.")
+    cwe_matrix: list[SecurityVulnerability] = Field(default_factory=list, description="3-Stage Detect-Locate-Repair vulnerability breakdown conforming to AutoReview (ACM FSE 2025).")
+    autoreview_pipeline: str = Field(default="Detect-Locate-Repair Complete", description="AutoReview pipeline state.")
 
 class ArchitectureReport(BaseModel):
     patterns_identified: list[str] = Field(default_factory=list, description="Architectural patterns identified (e.g., MVC, Microservices).")
@@ -118,7 +129,13 @@ async def security_agent_node(state: AgentState) -> dict:
     parser = JsonOutputParser(pydantic_object=SecurityReport)
     
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an expert Security Engineer. Analyze the provided repository context and code snippets and output a JSON report matching the schema. Focus on hardcoded secrets, dangerous dependencies, and permissions.\n{format_instructions}"),
+        ("system", "You are an elite Security Engineering Agent operating under the 3-Stage AutoReview Framework (ACM FSE 2025: Detect -> Locate -> Repair).\n"
+                   "Conduct a rigorous 3-stage security review:\n"
+                   "1. [DETECT]: Identify any vulnerability classes using standard CWE identifiers (e.g., CWE-89 SQL Injection, CWE-798 Hardcoded Secrets, CWE-79 XSS, CWE-78 Command Injection, CWE-502 Deserialization).\n"
+                   "2. [LOCATE]: For each flaw, pinpoint the specific file path, vulnerable code block / line reference, and explain the concrete trigger/exploit vector.\n"
+                   "3. [REPAIR]: Provide an actionable unified diff or safe replacement code snippet that remediates the vulnerability, plus a defensive test assertion to prevent regressions.\n"
+                   "If the codebase appears secure, provide at least one proactive defensive security hardening patch in the cwe_matrix.\n"
+                   "{format_instructions}"),
         ("user", "Repository Context:\n{context}\n\nRelevant Code Snippets:\n{snippets}")
     ])
     
