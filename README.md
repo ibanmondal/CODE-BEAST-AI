@@ -40,32 +40,32 @@ CodeBeast AI incorporates three major peer-reviewed and preprint advancements in
 
 ```mermaid
 graph TD
-    A[GitHub Repository URL] -->|Async Ingest & Clone| B(Repository Preprocessing & Context)
-    B -->|Tree-Sitter & FAISS Vectorizer| V[(CodeBERT & MiniLM Embeddings)]
+    A["GitHub Repository URL"] -->|Async Ingest & Clone| B["Repository Preprocessing & Context"]
+    B -->|Tree-Sitter & FAISS Vectorizer| V[("CodeBERT & MiniLM Embeddings")]
     
-    B --> C{LangGraph Parallel Dispatcher}
+    B --> C{"LangGraph Parallel Dispatcher"}
     
-    C -->|Security Review| D[AutoReview Security Agent<br/><i>Detect -> Locate -> Repair (Llama 3.3)</i>]
-    C -->|Structural Design| E[Architecture Agent<br/><i>Modularity & SOLID (Llama 3.3)</i>]
-    C -->|Resource Analysis| F[Performance Agent<br/><i>Complexity & Caching (Llama 3.3)</i>]
-    C -->|Quality & CI/CD| G[Testing Agent<br/><i>Coverage & Frameworks (Llama 3.1)</i>]
-    C -->|Data Layer| H[Database Agent<br/><i>Schema & ORM (Gemini Flash)</i>]
-    C -->|Clone Analysis| K[Similarity & Originality Agent<br/><i>AST + CodeBERT Neural Vector</i>]
+    C -->|Security Review| D["AutoReview Security Agent<br/>Detect → Locate → Repair (Llama 3.3)"]
+    C -->|Structural Design| E["Architecture Agent<br/>Modularity & SOLID (Llama 3.3)"]
+    C -->|Resource Analysis| F["Performance Agent<br/>Complexity & Caching (Llama 3.3)"]
+    C -->|Quality & CI/CD| G["Testing Agent<br/>Coverage & Frameworks (Llama 3.1)"]
+    C -->|Data Layer| H["Database Agent<br/>Schema & ORM (Gemini Flash)"]
+    C -->|Clone Analysis| K["Similarity & Originality Agent<br/>AST + CodeBERT Neural Vector"]
     
-    D --> I{ConsJudge Multi-Pass Supervisor}
+    D --> I{"ConsJudge Multi-Pass Supervisor"}
     E --> I
     F --> I
     G --> I
     H --> I
     K --> I
     
-    I -->|Pass 1: Gemini Flash| P1[Score Pass 1]
-    I -->|Pass 2: Groq Llama 3.3| P2[Score Pass 2]
+    I -->|Pass 1: Gemini Flash| P1["Score Pass 1"]
+    I -->|Pass 2: Groq Llama 3.3| P2["Score Pass 2"]
     
-    P1 --> CM[Consensus & Variance Computation]
+    P1 --> CM["Consensus & Variance Computation"]
     P2 --> CM
     
-    CM -->|Synthesize| J[Final Executive Report<br/><i>Score + Confidence Badge + AutoReview Patches</i>]
+    CM -->|Synthesize| J["Final Executive Report<br/>Score + Confidence Badge + AutoReview Patches"]
     
     style A fill:#141C2F,stroke:#3B82F6,stroke-width:2px,color:#fff
     style C fill:#1E293B,stroke:#64748B,stroke-width:2px,color:#fff
