@@ -91,6 +91,10 @@ class FinalReport(BaseModel):
     variance_margin: float = Field(default=0.0, description="Margin of score variance (± points) across consensus passes.")
     consistency_status: str = Field(default="HIGH_CONFIDENCE", description="'HIGH_CONFIDENCE', 'MODERATE_CONFIDENCE', or 'LOW_CONFIDENCE'")
     judge_passes: int = Field(default=2, description="Number of judge evaluation passes completed.")
+    cwe_matrix: list[SecurityVulnerability] = Field(default_factory=list, description="3-Stage Detect-Locate-Repair vulnerability breakdown from AutoReview.")
+    detected_clones: list[str] = Field(default_factory=list, description="Detected clones or templates from AST/CodeBERT.")
+    structural_evidence: list[str] = Field(default_factory=list, description="AST/CodeBERT structural similarity evidence.")
+    clone_risk_level: str = Field(default="LOW", description="Overall clone risk level.")
 
 # --- Helper to format context ---
 def format_context(state: AgentState) -> str:
@@ -451,6 +455,13 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
         final_rep["consistency_status"] = status
         final_rep["judge_passes"] = len(valid_passes)
         
+        if isinstance(sec, dict) and "cwe_matrix" in sec:
+            final_rep["cwe_matrix"] = sec.get("cwe_matrix", [])
+        if isinstance(sim_rep, dict):
+            final_rep["detected_clones"] = sim_rep.get("detected_clones", [])
+            final_rep["structural_evidence"] = sim_rep.get("structural_evidence", [])
+            final_rep["clone_risk_level"] = sim_rep.get("clone_risk_level", "LOW")
+            
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "gemini_supervisor")
         return {"final_report": final_rep}
     elif len(valid_passes) == 1:
@@ -459,6 +470,12 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
         p["confidence_score"] = 0.85
         p["consistency_status"] = "MODERATE_CONFIDENCE"
         p["judge_passes"] = 1
+        if isinstance(sec, dict) and "cwe_matrix" in sec:
+            p["cwe_matrix"] = sec.get("cwe_matrix", [])
+        if isinstance(sim_rep, dict):
+            p["detected_clones"] = sim_rep.get("detected_clones", [])
+            p["structural_evidence"] = sim_rep.get("structural_evidence", [])
+            p["clone_risk_level"] = sim_rep.get("clone_risk_level", "LOW")
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "gemini_supervisor")
         return {"final_report": p}
     else:
@@ -479,6 +496,10 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
             "confidence_score": 0.99,
             "variance_margin": 0.0,
             "consistency_status": "DETERMINISTIC_HEURISTIC",
-            "judge_passes": 0
+            "judge_passes": 0,
+            "cwe_matrix": [],
+            "detected_clones": [],
+            "structural_evidence": [],
+            "clone_risk_level": "LOW"
         }}
 
