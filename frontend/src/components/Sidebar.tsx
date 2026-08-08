@@ -17,6 +17,7 @@ import {
   ChevronsLeft,
   LogOut,
   PlayCircle,
+  Swords,
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -45,6 +46,7 @@ export function Sidebar() {
   const routes = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
     { name: "Repository Analysis", path: "/analysis", icon: Search },
+    { name: "Repo Duel (A/B)", path: "/duel", icon: Swords },
     { name: "Bulk CSV Upload", path: "/upload", icon: UploadCloud },
     { name: "Live Animation", path: "/live", icon: PlayCircle },
     { name: "Live Jobs", path: "/jobs", icon: Activity },

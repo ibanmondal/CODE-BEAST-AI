@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.api.endpoints import evaluate, stats, ws, chat
+from app.api.endpoints import evaluate, stats, ws, chat, duel
 from app.core.config import settings
 
 @asynccontextmanager
@@ -32,6 +32,7 @@ app.include_router(evaluate.router, prefix="/api/v1/evaluate", tags=["evaluate"]
 app.include_router(stats.router, prefix="/api/v1/stats", tags=["stats"])
 app.include_router(ws.router, prefix="/api/v1/ws", tags=["websocket"])
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
+app.include_router(duel.router, prefix="/api/v1/duel", tags=["duel"])
 
 @app.get("/")
 async def root():
