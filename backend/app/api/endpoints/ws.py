@@ -49,37 +49,44 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    r = redis.from_url(redis_url)
-    
-    # Immediately send the last known task state to avoid buffering UI
-    last_event = await r.get("last_eval_task")
-    if last_event:
-        await websocket.send_text(last_event.decode('utf-8'))
-        
-    pubsub = r.pubsub()
-    await pubsub.subscribe("job_updates")
-    
     try:
-        # Run both listeners concurrently
+        r = redis.from_url(redis_url)
+        last_event = None
+        try:
+            last_event = await r.get("last_eval_task")
+        except Exception:
+            pass
+            
+        if last_event:
+            await websocket.send_text(last_event.decode('utf-8'))
+            
+        pubsub = r.pubsub()
+        await pubsub.subscribe("job_updates")
+        
         redis_task = asyncio.create_task(redis_listener(pubsub, websocket))
         ws_task = asyncio.create_task(ws_listener(websocket))
         
-        # Wait until either the client disconnects or Redis fails
         done, pending = await asyncio.wait(
             [redis_task, ws_task],
             return_when=asyncio.FIRST_COMPLETED
         )
         
-        # Cancel any pending tasks
         for task in pending:
             task.cancel()
-            
     except Exception as e:
-        print(f"WebSocket endpoint error: {e}")
+        # Fallback to keep WebSocket alive even if Redis is offline
+        try:
+            while True:
+                await websocket.receive_text()
+        except WebSocketDisconnect:
+            pass
     finally:
         manager.disconnect(websocket)
         try:
-            await pubsub.unsubscribe("job_updates")
-            await r.aclose()
+            if 'pubsub' in locals():
+                await pubsub.unsubscribe("job_updates")
+            if 'r' in locals():
+                await r.aclose()
         except:
             pass
+
