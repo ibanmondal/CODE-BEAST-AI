@@ -1,12 +1,13 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { GitPullRequest, Search, Play, Filter, Eye, Download, Play as PlayIcon, Trash2 } from 'lucide-react';
+import { GitPullRequest, Search, Play, Filter, Eye, Download, Play as PlayIcon, Trash2, MessageSquare, Bot } from 'lucide-react';
 import { ScoreDashboard } from '@/components/ScoreDashboard';
 
 export default function AnalysisPage() {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<any>(null);
+  const [chatOpenInitial, setChatOpenInitial] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState([]);
 
@@ -82,7 +83,7 @@ export default function AnalysisPage() {
             >
               <Trash2 className="w-4 h-4" />
             </button>
-            <ScoreDashboard report={report} />
+            <ScoreDashboard report={report} startWithChatOpen={chatOpenInitial} />
           </div>
         </div>
       )}
@@ -169,10 +170,25 @@ export default function AnalysisPage() {
                 <td className="p-4 text-xs text-gray-500">{row.submitted}</td>
                 <td className="p-4 text-right">
                   <div className="flex items-center justify-end gap-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      title="Talk to Repository / Ask AI Judge"
+                      onClick={() => {
+                        if(row.final_report) {
+                           setChatOpenInitial(true);
+                           setReport({ ...row.final_report, sec: row.sec, arch: row.arch, perf: row.perf, testing_score: row.testing_score, db_score: row.db_score, orig: row.orig, repoName: row.repo });
+                        } else {
+                           alert("Report data not available for this run.");
+                        }
+                      }}
+                      className="p-1 text-blue-400 hover:text-blue-300 hover:bg-blue-950/40 rounded transition-colors"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </button>
                     <Eye 
                       className="w-4 h-4 hover:text-white cursor-pointer" 
                       onClick={() => {
                         if(row.final_report) {
+                           setChatOpenInitial(false);
                            setReport({ ...row.final_report, sec: row.sec, arch: row.arch, perf: row.perf, testing_score: row.testing_score, db_score: row.db_score, orig: row.orig, repoName: row.repo });
                         } else {
                            alert("Report data not available for this run.");

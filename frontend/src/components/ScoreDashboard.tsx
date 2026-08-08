@@ -55,12 +55,13 @@ export interface FinalReport {
 
 interface ScoreDashboardProps {
   report: FinalReport;
+  startWithChatOpen?: boolean;
 }
 
-export function ScoreDashboard({ report }: ScoreDashboardProps) {
+export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashboardProps) {
   const [expandedVuln, setExpandedVuln] = useState<number | null>(null);
   const [copiedPatchIdx, setCopiedPatchIdx] = useState<number | null>(null);
-  const [showChatBot, setShowChatBot] = useState<boolean>(false);
+  const [showChatBot, setShowChatBot] = useState<boolean>(startWithChatOpen);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-500';
