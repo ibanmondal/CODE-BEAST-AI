@@ -204,7 +204,22 @@ export default function UploadPage() {
           <div className="bg-blue-900/20 border border-blue-900/50 rounded-xl p-6">
             <h3 className="text-blue-400 font-medium mb-2">Need a template?</h3>
             <p className="text-gray-400 text-sm mb-4">Download our sample CSV template to ensure your formatting is correct before uploading.</p>
-            <button className="text-blue-400 text-sm font-medium hover:underline">Download Template (CSV)</button>
+            <button 
+              onClick={() => {
+                const csvContent = "github_url,team_name,project_type\nhttps://github.com/torvalds/subsurface-for-dir,Team Alpha,Desktop App\nhttps://github.com/pallets/flask,Team Beta,Web Backend\nhttps://github.com/expressjs/express,Team Gamma,Node API\n";
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'codebeast_bulk_template.csv');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+              className="text-blue-400 text-sm font-medium hover:underline flex items-center gap-1.5"
+            >
+              Download Template (CSV) ↓
+            </button>
           </div>
         </div>
       </div>

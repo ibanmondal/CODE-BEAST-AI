@@ -10,7 +10,7 @@ docker run -p 6379:6379 -d redis 2>nul
 
 :: 2. Start Backend in a new window
 echo [2/4] Starting FastAPI Backend on Port 8000...
-start "CodeBeast - FastAPI Backend" cmd /k "cd /d %~dp0backend && (if exist venv\Scripts\activate.bat call venv\Scripts\activate.bat) && uvicorn main:app --reload --port 8000"
+start "CodeBeast - FastAPI Backend" cmd /k "cd /d %~dp0backend && (if exist venv\Scripts\activate.bat call venv\Scripts\activate.bat) && uvicorn main:app --reload --port 8000 --reload-dir app --reload-exclude worker_repos"
 
 :: 3. Start Celery Worker in a new window
 echo [3/4] Starting Celery Multi-Agent Worker...
