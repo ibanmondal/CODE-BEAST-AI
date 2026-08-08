@@ -14,9 +14,12 @@ import {
   Check, 
   AlertTriangle, 
   FileCode,
-  Fingerprint
+  Fingerprint,
+  Bot,
+  MessageSquare
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { JudgeChatBot } from './JudgeChatBot';
 
 export interface SecurityVulnerability {
   cwe_id: string;
@@ -57,6 +60,7 @@ interface ScoreDashboardProps {
 export function ScoreDashboard({ report }: ScoreDashboardProps) {
   const [expandedVuln, setExpandedVuln] = useState<number | null>(null);
   const [copiedPatchIdx, setCopiedPatchIdx] = useState<number | null>(null);
+  const [showChatBot, setShowChatBot] = useState<boolean>(false);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-500';
@@ -124,6 +128,15 @@ export function ScoreDashboard({ report }: ScoreDashboardProps) {
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-2xl font-bold text-white tracking-tight">AI Evaluation Complete</h2>
             {getConfidenceBadge()}
+            
+            {/* Talk to Repository Trigger Button */}
+            <button
+              onClick={() => setShowChatBot(!showChatBot)}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 transition-all cursor-pointer"
+            >
+              <Bot className="w-3.5 h-3.5" />
+              <span>{showChatBot ? "Close Judge Copilot" : "💬 Talk to Repository"}</span>
+            </button>
           </div>
           <p className="text-zinc-400 leading-relaxed text-sm max-w-2xl">
             {report.executive_summary}
@@ -141,6 +154,13 @@ export function ScoreDashboard({ report }: ScoreDashboardProps) {
           <span className="text-zinc-500 text-[10px] font-medium mt-1 tracking-widest uppercase">Overall Score</span>
         </div>
       </div>
+
+      {/* Interactive Talk to Repository Judge Copilot Drawer */}
+      {showChatBot && (
+        <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+          <JudgeChatBot report={report} onClose={() => setShowChatBot(false)} />
+        </div>
+      )}
 
       {/* Charts Section */}
       <div className="p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800/50">
