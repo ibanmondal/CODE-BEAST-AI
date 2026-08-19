@@ -1,0 +1,45 @@
+# Environment & Secrets
+.env
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+frontend/.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+backend/venv/
+*.egg-info/
+.pytest_cache/
+
+# Next.js & Node
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+out/
+build/
+dist/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Docker
+postgres_data/
+redis_data/
+
+# Application Specific
+worker_repos/
+test_repos/
+*.db
+*.sqlite3
+codebeast.db

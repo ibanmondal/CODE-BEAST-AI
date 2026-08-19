@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: codebeast_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: codebeast
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: codebeast_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: codebeast_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # Enable NVIDIA GPU acceleration
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ollama-pull-models:
+    image: curlimages/curl:latest
+    container_name: codebeast_ollama_pull
+    depends_on:
+      - ollama
+    # This command pings ollama until it's ready, then pulls the specified models
+    command: >
+      sh -c "
+        echo 'Waiting for Ollama to start...';
+        while ! curl -s http://ollama:11434/api/tags > /dev/null; do sleep 2; done;
+        echo 'Ollama started. Pulling qwen2.5-coder...';
+        curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"qwen2.5-coder\"}';
+        echo 'Pulling deepseek-coder...';
+        curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"deepseek-coder\"}';
+        echo 'Models pulled successfully!';
+      "
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:
