@@ -183,7 +183,7 @@ Return a valid JSON object ONLY with the following exact keys:
 }}"""
 
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="openai/gpt-oss-120b",
                 messages=[
                     {"role": "system", "content": "You are a master engineering judge. Respond in pure JSON format without markdown wrapping."},
                     {"role": "user", "content": prompt}

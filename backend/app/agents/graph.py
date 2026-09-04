@@ -7,6 +7,7 @@ from app.agents.nodes import (
     testing_agent_node,
     database_agent_node,
     similarity_agent_node,
+    dx_agent_node,
     gemini_supervisor_node
 )
 
@@ -25,11 +26,12 @@ def create_orchestrator_graph():
     workflow.add_node("testing_agent", testing_agent_node)
     workflow.add_node("database_agent", database_agent_node)
     workflow.add_node("similarity_agent", similarity_agent_node)
+    workflow.add_node("dx_agent", dx_agent_node)
     
     # Define edges
     # Fan-out dispatcher node
     async def dispatcher_node(state: AgentState):
-        print("Dispatching tasks to 6 parallel specialized agents...")
+        print("Dispatching tasks to 7 parallel specialized agents...")
         return state
         
     workflow.add_node("dispatcher", dispatcher_node)
@@ -44,6 +46,7 @@ def create_orchestrator_graph():
     workflow.add_edge("dispatcher", "testing_agent")
     workflow.add_edge("dispatcher", "database_agent")
     workflow.add_edge("dispatcher", "similarity_agent")
+    workflow.add_edge("dispatcher", "dx_agent")
     
     # Fan in to Supervisor
     workflow.add_edge("security_agent", "gemini_supervisor")
@@ -52,6 +55,7 @@ def create_orchestrator_graph():
     workflow.add_edge("testing_agent", "gemini_supervisor")
     workflow.add_edge("database_agent", "gemini_supervisor")
     workflow.add_edge("similarity_agent", "gemini_supervisor")
+    workflow.add_edge("dx_agent", "gemini_supervisor")
     
     # Supervisor to END
     workflow.add_edge("gemini_supervisor", END)

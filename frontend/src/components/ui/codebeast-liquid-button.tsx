@@ -196,7 +196,6 @@ export function CodeBeastLiquidButton({
           disabled && "cursor-not-allowed"
         )}
         style={{
-          transformStyle: "preserve-3d",
           WebkitFontSmoothing: "antialiased",
         }}
         {...props}

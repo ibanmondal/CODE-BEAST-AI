@@ -19,7 +19,8 @@ import {
   Loader2,
   X,
   Activity,
-  Check
+  Check,
+  BookOpen
 } from 'lucide-react';
 import { ScoreDashboard } from '@/components/ScoreDashboard';
 import { TiltCard } from '@/components/TiltCard';
@@ -36,6 +37,13 @@ function AnalysisContent() {
   const [chatOpenInitial, setChatOpenInitial] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<any[]>([]);
+  
+  const currentTaskIdRef = useRef<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+
+  // Use a ref for loading to access inside timeouts
+  const loadingRef = useRef(loading);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
 
   const pipelineStages = [
     { id: "ingestion", num: "01", label: "Ingest", desc: "Git Tree & AST", icon: GitPullRequest, tech: "LibGit2 + AST" },
@@ -45,7 +53,8 @@ function AnalysisContent() {
     { id: "testing_agent", num: "05", label: "Testing", desc: "CI Flake Risk", icon: TestTube, tech: "Llama-3.1 8B" },
     { id: "database_agent", num: "06", label: "Database", desc: "Schema Indexing", icon: Database, tech: "Gemini Flash" },
     { id: "similarity_agent", num: "07", label: "Originality", desc: "CodeBERT FAISS", icon: Fingerprint, tech: "AST + Neural" },
-    { id: "gemini_supervisor", num: "08", label: "Synthesis", desc: "ConsJudge Multi-Pass", icon: Cpu, tech: "Dual-Pass Arbiter" }
+    { id: "dx_agent", num: "08", label: "Dev Exp", desc: "DX & Config", icon: BookOpen, tech: "Groq Llama-3.3" },
+    { id: "gemini_supervisor", num: "09", label: "Synthesis", desc: "ConsJudge Multi-Pass", icon: Cpu, tech: "Dual-Pass Arbiter" }
   ];
 
   const fetchHistory = () => {
@@ -78,6 +87,7 @@ function AnalysisContent() {
       perf: row?.perf || raw.perf_score || raw.perf || 82,
       testing_score: row?.testing_score || raw.testing_score || 80,
       db_score: row?.db_score || raw.db_score || 85,
+      dx_score: row?.dx_score || raw.dx_score || 85,
       orig: row?.orig || raw.originality_score || raw.orig || 90,
       repoName: repoName,
       executive_summary: raw.executive_summary || `Comprehensive 6-agent evaluation completed for ${repoName}. Clean architecture and production readiness verified.`,
@@ -135,60 +145,31 @@ function AnalysisContent() {
       const taskId = data.task_id;
       
       if (taskId) {
-        let attempts = 0;
-        const maxAttempts = 120; // 3 minutes maximum
+        currentTaskIdRef.current = taskId;
         
-        const pollInterval = setInterval(async () => {
-          attempts++;
-          try {
-            const stRes = await fetch(`http://${host}:8000/api/v1/evaluate/status/${taskId}`);
-            if (stRes.ok) {
-              const stData = await stRes.json();
-              
-              if (stData.active_agent) setActiveAgent(stData.active_agent);
-              if (stData.stage_label) setActiveStage(stData.stage_label);
-              if (Array.isArray(stData.completed_agents)) {
-                setCompletedAgents(stData.completed_agents);
+        // Timeout safeguard
+        setTimeout(async () => {
+          if (currentTaskIdRef.current === taskId && loadingRef.current) {
+            try {
+              const stRes = await fetch(`http://${host}:8000/api/v1/evaluate/status/${taskId}`);
+              if (stRes.ok) {
+                const stData = await stRes.json();
+                if (stData.status === "PENDING" || stData.status === "Running") {
+                  setLoading(false);
+                  setActiveStage(null);
+                  setActiveAgent(null);
+                  setError("Analysis timed out. Please try again or check backend connection.");
+                }
               }
-
-              if (stData.status === "SUCCESS") {
-                clearInterval(pollInterval);
-                setLoading(false);
-                setActiveStage(null);
-                setActiveAgent(null);
-                setCompletedAgents([
-                  "ingestion", "security_agent", "architecture_agent", 
-                  "performance_agent", "testing_agent", "database_agent", 
-                  "similarity_agent", "gemini_supervisor"
-                ]);
-                
-                const finalResult = stData.result || {};
-                const parsed = parseReportData(finalResult, { overall: stData.overall_score, repo: targetUrl.split("/").pop() });
-                setReport(parsed);
-                fetchHistory();
-              } else if (stData.status === "FAILURE") {
-                clearInterval(pollInterval);
-                setLoading(false);
-                setActiveStage(null);
-                setActiveAgent(null);
-                setError(stData.error || "Analysis pipeline encountered an issue.");
-              }
+            } catch (e) {
+               // Ignore timeout fetch error
             }
-          } catch (e) {
-            console.error("Polling error", e);
           }
-
-          if (attempts >= maxAttempts) {
-            clearInterval(pollInterval);
-            setLoading(false);
-            setActiveStage(null);
-            setActiveAgent(null);
-            setError("Analysis timed out. Please try again or check backend connection.");
-          }
-        }, 1200);
+        }, 600000); // 10 mins
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error("Evaluation fetch failed:", err);
+      setError(`Failed to connect to backend: ${err.message}. Is the backend running on port 8000?`);
       setLoading(false);
       setActiveStage(null);
       setActiveAgent(null);
@@ -202,11 +183,79 @@ function AnalysisContent() {
       setUrl(queryRepo);
       runAnalysisWithUrl(queryRepo);
     }
+    
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const ws = new WebSocket(`ws://${host}:8000/api/v1/ws/updates`);
+    
+    ws.onmessage = async (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (currentTaskIdRef.current && msg.task_id === currentTaskIdRef.current) {
+          if (msg.status === "AgentRunning") {
+            setActiveAgent(msg.agent);
+            const labelMap: Record<string, string> = {
+              "ingestion": "Ingesting Git Tree & AST Parsing...",
+              "security_agent": "AutoReview CWE Slicing & Security Audit...",
+              "architecture_agent": "SOLID Modularity & Architecture Review...",
+              "performance_agent": "Algorithmic Complexity & Bundle Optimization...",
+              "testing_agent": "CI Flake Risk & Test Assertion Verification...",
+              "database_agent": "Schema Quality & ORM Query Indexing...",
+              "similarity_agent": "AST & CodeBERT Plagiarism Verification...",
+              "dx_agent": "Developer Experience & Configuration Assessment...",
+              "gemini_supervisor": "ConsJudge Multi-Pass Consensus Verification..."
+            };
+            if (labelMap[msg.agent]) setActiveStage(labelMap[msg.agent]);
+          } else if (msg.status === "AgentCompleted") {
+            setCompletedAgents(prev => {
+              if (!prev.includes(msg.agent)) return [...prev, msg.agent];
+              return prev;
+            });
+          } else if (msg.status === "Completed") {
+            setLoading(false);
+            setActiveStage(null);
+            setActiveAgent(null);
+            setCompletedAgents([
+              "ingestion", "security_agent", "architecture_agent", 
+              "performance_agent", "testing_agent", "database_agent", 
+              "similarity_agent", "dx_agent", "gemini_supervisor"
+            ]);
+            
+            try {
+               const stRes = await fetch(`http://${host}:8000/api/v1/evaluate/status/${msg.task_id}`);
+               if (stRes.ok) {
+                 const stData = await stRes.json();
+                 const finalResult = stData.result || msg.final_report || {};
+                 const parsed = parseReportData(finalResult, { overall: stData.overall_score || msg.overall_score, repo: msg.repo_url?.split("/").pop() });
+                 setReport(parsed);
+                 fetchHistory();
+               }
+            } catch (e) {
+               console.error("Fetch after completion failed", e);
+            }
+          } else if (msg.status === "Failed") {
+            setLoading(false);
+            setActiveStage(null);
+            setActiveAgent(null);
+            setError("Analysis pipeline encountered an issue.");
+          }
+        }
+      } catch (err) {
+        console.error("WS Parse error", err);
+      }
+    };
+    
+    wsRef.current = ws;
+    return () => {
+      if (wsRef.current) wsRef.current.close();
+    };
   }, [searchParams]);
 
   const handleAnalyze = () => {
+    alert("Button click registered! Starting analysis...");
     if (url) {
       runAnalysisWithUrl(url);
+    } else {
+      alert("Please enter a URL first.");
     }
   };
 
@@ -428,13 +477,17 @@ function AnalysisContent() {
                   <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">Security</th>
                   <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">Arch</th>
                   <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">Perf</th>
+                  <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">Test</th>
+                  <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">DB</th>
+                  <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">DX</th>
+                  <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">Orig.</th>
                   <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E07A48]/10 text-sm">
                 {history.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-amber-200/40 font-mono text-xs">
+                    <td colSpan={12} className="p-8 text-center text-amber-200/40 font-mono text-xs">
                       No evaluation history yet. Enter a GitHub repository above to run your first 6-agent audit!
                     </td>
                   </tr>
@@ -468,6 +521,10 @@ function AnalysisContent() {
                       <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.sec || 80}</td>
                       <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.arch || 85}</td>
                       <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.perf || 82}</td>
+                      <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.testing_score !== undefined ? row.testing_score : 80}</td>
+                      <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.db_score !== undefined ? row.db_score : 85}</td>
+                      <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.dx_score !== undefined ? row.dx_score : 85}</td>
+                      <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.orig !== undefined ? row.orig : 90}</td>
                       <td className="p-4 sm:p-5 text-right">
                         <CodeBeastLiquidButton 
                           onClick={() => {

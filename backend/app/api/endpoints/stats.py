@@ -7,6 +7,16 @@ router = APIRouter()
 @router.get("/history")
 async def get_history():
     db = SessionLocal()
+    
+    # Cleanup stale jobs (older than 10 minutes and still running/queued)
+    import datetime
+    stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(minutes=10)
+    db.query(AnalysisJob).filter(
+        AnalysisJob.status.in_(["Running", "Queued"]),
+        AnalysisJob.created_at < stale_threshold
+    ).update({"status": "Failed"}, synchronize_session=False)
+    db.commit()
+
     jobs = db.query(AnalysisJob).order_by(desc(AnalysisJob.created_at)).all()
     db.close()
     
@@ -48,6 +58,16 @@ async def get_history():
 @router.get("/dashboard")
 async def get_dashboard_stats():
     db = SessionLocal()
+    
+    # Cleanup stale jobs
+    import datetime
+    stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(minutes=10)
+    db.query(AnalysisJob).filter(
+        AnalysisJob.status.in_(["Running", "Queued"]),
+        AnalysisJob.created_at < stale_threshold
+    ).update({"status": "Failed"}, synchronize_session=False)
+    db.commit()
+    
     jobs = db.query(AnalysisJob).all()
     db.close()
     

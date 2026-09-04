@@ -198,7 +198,6 @@ export function TiltCard({
       id={id}
       style={{
         transform: "perspective(1200px) rotateX(0deg) rotateY(0deg) translateY(0px) translateZ(0px) scale(1)",
-        transformStyle: "preserve-3d",
         willChange: "transform, box-shadow",
         ...style,
       }}
@@ -286,8 +285,7 @@ export function TiltCard({
 
       {/* 7. Inner Elevated Content (Parallax Depth translateZ) */}
       <div 
-        className="relative z-30 h-full w-full transform transition-transform duration-300 group-hover:translate-z-2"
-        style={{ transformStyle: "preserve-3d" }}
+        className="relative z-30 h-full w-full transform transition-transform duration-300"
       >
         {children}
       </div>

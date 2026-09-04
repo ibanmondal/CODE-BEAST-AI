@@ -12,9 +12,16 @@ def get_shared_embeddings():
     global _GLOBAL_EMBEDDINGS
     if _GLOBAL_EMBEDDINGS is None:
         try:
-            _GLOBAL_EMBEDDINGS = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            _GLOBAL_EMBEDDINGS = HuggingFaceEmbeddings(
+                model_name="all-MiniLM-L6-v2",
+                model_kwargs={'device': 'cuda'}
+            )
         except Exception:
-            _GLOBAL_EMBEDDINGS = None
+            # Fallback to default (CPU) if CUDA fails
+            try:
+                _GLOBAL_EMBEDDINGS = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            except Exception:
+                _GLOBAL_EMBEDDINGS = None
     return _GLOBAL_EMBEDDINGS
 
 class ContextBuilder:

@@ -136,7 +136,29 @@ def evaluate_repo(self, repo_url: str):
     
     broadcast_update("Running")
     
-    result = asyncio.run(_run_evaluation_async(repo_url, task_id=task_id))
+    import threading
+    
+    # Run in a completely isolated thread to prevent "Event loop is closed" 
+    # errors caused by AnyIO/HTTPX caching closed loops in the main thread
+    # when Celery processes subsequent tasks sequentially.
+    result_container = {}
+    
+    def _thread_target():
+        try:
+            res = asyncio.run(_run_evaluation_async(repo_url, task_id=task_id))
+            result_container["result"] = res
+        except Exception as e:
+            result_container["error"] = e
+            
+    t = threading.Thread(target=_thread_target)
+    t.start()
+    t.join()
+    
+    if "error" in result_container:
+        print(f"Thread execution failed: {result_container['error']}")
+        result = {"error": str(result_container["error"])}
+    else:
+        result = result_container.get("result", {"error": "No result returned from thread"})
     
     db = SessionLocal()
     job = db.query(AnalysisJob).filter(AnalysisJob.id == task_id).first()

@@ -115,6 +115,10 @@ class SimilarityReport(BaseModel):
     detected_clones: list[str] = Field(default_factory=list, description="List of detected code clone patterns or template similarities.")
     structural_evidence: list[str] = Field(default_factory=list, description="AST/CodeBERT structural similarity evidence.")
 
+class DXReport(BaseModel):
+    readability: str = Field(default="UNKNOWN", description="Assessment of code readability and comments.")
+    setup_ease: str = Field(default="UNKNOWN", description="Ease of local setup based on documentation and config scripts (e.g. docker-compose).")
+    dx_score: int = Field(default=0, description="Score from 0-100 indicating overall Developer Experience.")
 class FinalReport(BaseModel):
     executive_summary: str = Field(description="A high level summary of the repository's quality.")
     strengths: list[str] = Field(description="List of key strengths.")
@@ -126,6 +130,7 @@ class FinalReport(BaseModel):
     testing_score: int = Field(description="Testing score out of 100 passed from the Testing Report.")
     db_score: int = Field(description="Database score out of 100 passed from the Database Report.")
     originality_score: int = Field(description="Originality score out of 100 passed from the Deterministic Score.")
+    dx_score: int = Field(description="DX score out of 100 passed from the DX Report.")
     confidence_score: float = Field(default=0.95, description="Confidence score from 0.0 to 1.0 based on inter-judge consistency.")
     variance_margin: float = Field(default=0.0, description="Margin of score variance (± points) across consensus passes.")
     consistency_status: str = Field(default="HIGH_CONFIDENCE", description="'HIGH_CONFIDENCE', 'MODERATE_CONFIDENCE', or 'LOW_CONFIDENCE'")
@@ -170,6 +175,55 @@ def retrieve_code_snippets(faiss_path: str, query: str) -> str:
         return "Key codebase modules parsed and loaded."
 
 
+# --- Helper for Gemini Fallback ---
+async def run_with_gemini_fallback(prompt, parser, invoke_data, temp=0.1):
+    keys = []
+    if os.getenv("GEMINI_API_KEY"):
+        keys.append(os.getenv("GEMINI_API_KEY"))
+    if os.getenv("GEMINI_FALLBACK_KEYS"):
+        keys.extend([k.strip() for k in os.getenv("GEMINI_FALLBACK_KEYS").split(",") if k.strip()])
+        
+    last_err = None
+    for key in keys:
+        try:
+            llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=temp, api_key=key, max_retries=0, timeout=10.0)
+            chain = prompt | llm | parser
+            return await chain.ainvoke(invoke_data)
+        except Exception as e:
+            last_err = e
+            err_str = str(e).lower()
+            if "429" in err_str or "quota" in err_str or "exhausted" in err_str or "resource" in err_str:
+                print(f"Gemini key exhausted ({key[:10]}...), trying next key...")
+                continue
+            else:
+                raise e
+    raise last_err
+
+# --- Helper for Groq Fallback ---
+async def run_with_groq_fallback(prompt, parser, invoke_data, temp=0.1, model="openai/gpt-oss-120b"):
+    keys = []
+    if os.getenv("GROQ_API_KEY"):
+        keys.append(os.getenv("GROQ_API_KEY"))
+    if os.getenv("GROQ_FALLBACK_KEYS"):
+        keys.extend([k.strip() for k in os.getenv("GROQ_FALLBACK_KEYS").split(",") if k.strip()])
+        
+    last_err = None
+    for key in keys:
+        try:
+            llm = ChatGroq(model=model, temperature=temp, api_key=key, max_retries=0)
+            chain = prompt | llm | parser
+            return await chain.ainvoke(invoke_data)
+        except Exception as e:
+            last_err = e
+            err_str = str(e).lower()
+            if "429" in err_str or "rate_limit" in err_str or "too many requests" in err_str:
+                print(f"Groq key exhausted ({key[:10]}...), trying next key...")
+                continue
+            else:
+                raise e
+    raise last_err
+
+
 # --- Nodes ---
 
 async def security_agent_node(state: AgentState) -> dict:
@@ -198,11 +252,8 @@ async def security_agent_node(state: AgentState) -> dict:
         "format_instructions": parser.get_format_instructions()
     }
     
-    # Try Groq first for ultra-fast evaluation
     try:
-        llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
-        chain = prompt | llm | parser
-        report = await chain.ainvoke(invoke_data)
+        report = await run_with_groq_fallback(prompt, parser, invoke_data, temp=0.1)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "security_agent")
         return {"security_report": report}
     except Exception as e:
@@ -239,9 +290,7 @@ async def architecture_agent_node(state: AgentState) -> dict:
     }
     
     try:
-        llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
-        chain = prompt | llm | parser
-        report = await chain.ainvoke(invoke_data)
+        report = await run_with_groq_fallback(prompt, parser, invoke_data, temp=0.1)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "architecture_agent")
         return {"architecture_report": report}
     except Exception as e:
@@ -278,9 +327,7 @@ async def performance_agent_node(state: AgentState) -> dict:
     }
     
     try:
-        llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2, api_key=os.getenv("GROQ_API_KEY"))
-        chain = prompt | llm | parser
-        report = await chain.ainvoke(invoke_data)
+        report = await run_with_groq_fallback(prompt, parser, invoke_data, temp=0.2)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "performance_agent")
         return {"perf_report": report}
     except Exception as e:
@@ -297,7 +344,7 @@ async def performance_agent_node(state: AgentState) -> dict:
             return {"perf_report": {"error": "Offline Mode: Performance Agent unreachable."}}
 
 async def testing_agent_node(state: AgentState) -> dict:
-    print("-> Running Testing Agent (llama-3.1-8b-instant via Groq / fallback)...")
+    print("-> Running Testing Agent (groq/compound-mini via Groq / fallback)...")
     task_id = state.get("task_id")
     repo_url = state.get("repo_url", "")
     broadcast_agent_status(task_id, repo_url, "AgentRunning", "testing_agent")
@@ -317,16 +364,14 @@ async def testing_agent_node(state: AgentState) -> dict:
     }
     
     try:
-        llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
-        chain = prompt | llm | parser
-        report = await chain.ainvoke(invoke_data)
+        report = await run_with_groq_fallback(prompt, parser, invoke_data, temp=0.1, model="groq/compound-mini")
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "testing_agent")
         return {"testing_report": report}
     except Exception as e:
         print(f"Testing Agent Groq failed ({e}), falling back to Ollama...")
         try:
-            llm_fallback = ChatOllama(model="qwen2.5-coder", temperature=0.1, format="json")
-            chain = prompt | llm_fallback | parser
+            llm = ChatOllama(model="qwen2.5-coder", temperature=0.1, format="json")
+            chain = prompt | llm | parser
             report = await chain.ainvoke(invoke_data)
             broadcast_agent_status(task_id, repo_url, "AgentCompleted", "testing_agent")
             return {"testing_report": report}
@@ -356,17 +401,13 @@ async def database_agent_node(state: AgentState) -> dict:
     }
     
     try:
-        llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0.1, api_key=os.getenv("GEMINI_API_KEY"))
-        chain = prompt | llm | parser
-        report = await chain.ainvoke(invoke_data)
+        report = await run_with_groq_fallback(prompt, parser, invoke_data, temp=0.1)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "database_agent")
         return {"db_report": report}
     except Exception as e:
-        print(f"Gemini Database Agent failed ({e}), falling back to Groq...")
+        print(f"Database Agent Groq failed ({e}), falling back to Gemini...")
         try:
-            llm_fallback = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
-            chain = prompt | llm_fallback | parser
-            report = await chain.ainvoke(invoke_data)
+            report = await run_with_gemini_fallback(prompt, parser, invoke_data, temp=0.1)
             broadcast_agent_status(task_id, repo_url, "AgentCompleted", "database_agent")
             return {"db_report": report}
         except Exception as e2:
@@ -401,15 +442,19 @@ async def similarity_agent_node(state: AgentState) -> dict:
     }
     
     try:
-        if os.getenv("GROQ_API_KEY"):
-            llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1, api_key=os.getenv("GROQ_API_KEY"))
-        elif os.getenv("GEMINI_API_KEY"):
-            llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0.1, api_key=os.getenv("GEMINI_API_KEY"))
-        else:
+        # Try APIs first for speed
+        try:
+            if os.getenv("GROQ_API_KEY") or os.getenv("GROQ_FALLBACK_KEYS"):
+                report = await run_with_groq_fallback(prompt, parser, invoke_data, temp=0.1)
+            elif os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_FALLBACK_KEYS"):
+                report = await run_with_gemini_fallback(prompt, parser, invoke_data, temp=0.1)
+            else:
+                raise Exception("No APIs configured")
+        except Exception as api_err:
+            print(f"Similarity APIs failed ({api_err}), falling back to Ollama...")
             llm = ChatOllama(model="qwen2.5-coder", temperature=0.1, format="json")
-            
-        chain = prompt | llm | parser
-        report = await chain.ainvoke(invoke_data)
+            chain = prompt | llm | parser
+            report = await chain.ainvoke(invoke_data)
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "similarity_agent")
         return {"similarity_report": report}
     except Exception as e:
@@ -424,6 +469,44 @@ async def similarity_agent_node(state: AgentState) -> dict:
             "structural_evidence": sim_evidence or ["Heuristic evaluation fallback."]
         }}
 
+
+async def dx_agent_node(state: AgentState) -> dict:
+    print("-> Running Developer Experience (DX) Agent (Groq / Ollama fallback)...")
+    task_id = state.get("task_id")
+    repo_url = state.get("repo_url", "")
+    broadcast_agent_status(task_id, repo_url, "AgentRunning", "dx_agent")
+    parser = JsonOutputParser(pydantic_object=DXReport)
+    
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "You are an expert Developer Experience (DX) Assessor. Analyze the provided repository context (README, documentation, configuration, and scripts). Output a JSON report matching the schema. Focus on how easy it is for a new developer to set up the project, run tests, and understand the code.\n{format_instructions}"),
+        ("user", "Repository Context:\n{context}\n\nRelevant Snippets:\n{snippets}")
+    ])
+    
+    faiss_path = state.get("context", {}).get("faiss_index_path", "")
+    snippets = retrieve_code_snippets(faiss_path, "README docker-compose setup install package.json requirements.txt comments config")
+    invoke_data = {
+        "context": format_context(state),
+        "snippets": snippets,
+        "format_instructions": parser.get_format_instructions()
+    }
+    
+    try:
+        report = await run_with_groq_fallback(prompt, parser, invoke_data, temp=0.1)
+        broadcast_agent_status(task_id, repo_url, "AgentCompleted", "dx_agent")
+        return {"dx_report": report}
+    except Exception as e:
+        print(f"DX Agent Groq failed ({e}), falling back to Ollama...")
+        try:
+            llm_fallback = ChatOllama(model="qwen2.5-coder", temperature=0.1, format="json")
+            chain = prompt | llm_fallback | parser
+            report = await chain.ainvoke(invoke_data)
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "dx_agent")
+            return {"dx_report": report}
+        except Exception as e2:
+            print(f"DX Agent Fallback Failed: {e2}")
+            broadcast_agent_status(task_id, repo_url, "AgentCompleted", "dx_agent")
+            return {"dx_report": {"error": "Offline Mode: DX Agent unreachable."}}
+
 async def gemini_supervisor_node(state: AgentState) -> dict:
     print("-> Running Supervisor Node with ConsJudge Multi-Pass Consistency...")
     task_id = state.get("task_id")
@@ -437,12 +520,13 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
     test_rep = state.get("testing_report", {})
     db_rep = state.get("db_report", {})
     sim_rep = state.get("similarity_report", {})
+    dx_rep = state.get("dx_report", {})
     det_score = state.get("deterministic_score_result", {})
     
     parser = JsonOutputParser(pydantic_object=FinalReport)
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an Executive AI Supervisor. You receive sub-reports from Security, Architecture, Performance, Testing, Database, and Similarity/Originality agents, along with a deterministic score. Synthesize them into a single, cohesive final JSON report matching the schema. EXTREMELY IMPORTANT: You MUST include the exact `security_score`, `arch_score`, `perf_score`, `testing_score`, `db_score`, and `originality_score` from the input reports into your final JSON.\n{format_instructions}"),
-        ("user", "Security:\n{sec}\n\nArchitecture:\n{arch}\n\nPerformance:\n{perf}\n\nTesting:\n{test_rep}\n\nDatabase:\n{db_rep}\n\nOriginality/Similarity:\n{sim_rep}\n\nDeterministic Score:\n{det_score}")
+        ("system", "You are an Executive AI Supervisor. You receive sub-reports from Security, Architecture, Performance, Testing, Database, Developer Experience (DX), and Similarity/Originality agents, along with a deterministic score. Synthesize them into a single, cohesive final JSON report matching the schema. EXTREMELY IMPORTANT: You MUST include the exact `security_score`, `arch_score`, `perf_score`, `testing_score`, `db_score`, `dx_score`, and `originality_score` from the input reports into your final JSON.\n{format_instructions}"),
+        ("user", "Security:\n{sec}\n\nArchitecture:\n{arch}\n\nPerformance:\n{perf}\n\nTesting:\n{test_rep}\n\nDatabase:\n{db_rep}\n\nDeveloper Experience (DX):\n{dx_rep}\n\nOriginality/Similarity:\n{sim_rep}\n\nDeterministic Score:\n{det_score}")
     ])
     
     invoke_args = {
@@ -451,6 +535,7 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
         "perf": json.dumps(perf, indent=2),
         "test_rep": json.dumps(test_rep, indent=2),
         "db_rep": json.dumps(db_rep, indent=2),
+        "dx_rep": json.dumps(dx_rep, indent=2),
         "sim_rep": json.dumps(sim_rep, indent=2),
         "det_score": json.dumps(det_score, indent=2),
         "format_instructions": parser.get_format_instructions()
@@ -458,22 +543,28 @@ async def gemini_supervisor_node(state: AgentState) -> dict:
     
     async def run_single_pass(model_type: str, temp: float):
         try:
-            if model_type == "gemini" and os.getenv("GEMINI_API_KEY"):
-                llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=temp, api_key=os.getenv("GEMINI_API_KEY"))
-            elif os.getenv("GROQ_API_KEY"):
-                llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=temp, api_key=os.getenv("GROQ_API_KEY"))
-            else:
+            if model_type == "gemini" and (os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_FALLBACK_KEYS")):
+                try:
+                    return await run_with_gemini_fallback(prompt, parser, invoke_args, temp=temp)
+                except Exception:
+                    pass # Fallback
+            
+            try:
+                if os.getenv("GROQ_API_KEY") or os.getenv("GROQ_FALLBACK_KEYS"):
+                    return await run_with_groq_fallback(prompt, parser, invoke_args, temp=temp)
+                raise Exception("No Groq keys")
+            except Exception:
                 llm = ChatOllama(model="qwen2.5-coder", temperature=temp, format="json")
-            chain = prompt | llm | parser
-            return await chain.ainvoke(invoke_args)
+                chain = prompt | llm | parser
+                return await chain.ainvoke(invoke_args)
         except Exception as err:
             print(f"Supervisor pass ({model_type}, temp={temp}) failed: {err}")
             return None
 
-    # Run dual-pass consensus concurrently
+    # Run dual-pass consensus concurrently (Groq and Gemini to avoid slow Ollama)
     passes = await asyncio.gather(
-        run_single_pass("gemini", 0.1),
-        run_single_pass("groq", 0.3)
+        run_single_pass("groq", 0.1),
+        run_single_pass("gemini", 0.3)
     )
     valid_passes = [p for p in passes if p and isinstance(p, dict) and "overall_score" in p]
     
