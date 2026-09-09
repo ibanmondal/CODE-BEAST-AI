@@ -27,6 +27,7 @@ class AnalysisJob(Base):
     testing_score = Column(Integer, default=0)
     db_score = Column(Integer, default=0)
     originality_score = Column(Integer, default=0)
+    finops_score = Column(Integer, default=0)
     
     final_report = Column(JSON, nullable=True)
     

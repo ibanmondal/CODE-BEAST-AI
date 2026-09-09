@@ -17,7 +17,10 @@ import {
   Bot,
   Sparkles,
   ShieldCheck,
-  Code2
+  Code2,
+  BookOpen,
+  CloudCog,
+  Activity
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { JudgeChatBot } from './JudgeChatBot';
@@ -44,6 +47,8 @@ export interface FinalReport {
   perf?: number;
   testing_score?: number;
   db_score?: number;
+  dx_score?: number;
+  finops_score?: number;
   orig?: number;
   repoName?: string;
   confidence_score?: number;
@@ -121,6 +126,8 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
     { name: 'Performance', score: report.perf || 0, fill: '#FFB085' },
     { name: 'Testing', score: report.testing_score || 0, fill: '#D96B27' },
     { name: 'Database', score: report.db_score || 0, fill: '#FF9E64' },
+    { name: 'Dev Exp', score: report.dx_score || 0, fill: '#E65100' },
+    { name: 'FinOps', score: report.finops_score || 0, fill: '#FF8A50' },
     { name: 'Originality', score: report.orig || 0, fill: '#C85A17' },
   ];
 
@@ -144,6 +151,20 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
                 hasArrow={!showChatBot}
                 icon={<Bot className="w-4 h-4 text-[#FF8C42]" />}
               />
+              
+              <button 
+                onClick={() => {
+                  const repo = report.repoName || "unknown";
+                  const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+                  const badgeUrl = `http://${host}:8000/api/v1/stats/badge?repo=${encodeURIComponent(repo)}`;
+                  const md = `[![CodeBeast Score](${badgeUrl})](https://github.com/ibanmondal/CODE-BEAST-AI)`;
+                  navigator.clipboard.writeText(md);
+                  alert("Badge Markdown copied to clipboard!");
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#180A04] border border-[#E07A48]/30 text-[#FF8C42] hover:bg-[#E07A48]/10 transition-colors uppercase tracking-wider"
+              >
+                Copy Badge
+              </button>
             </div>
             <p className="text-amber-100/70 leading-relaxed text-sm max-w-2xl font-normal">
               {report.executive_summary}
@@ -193,9 +214,9 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
       <TiltCard variant="secondary" className="p-6 sm:p-7 shadow-xl">
         <h3 className="text-base sm:text-lg font-display text-[#D4BC9A] mb-4 flex items-center gap-2 uppercase tracking-wider font-normal">
           <Cpu className="w-5 h-5 text-[#FF8C42]" />
-          6 Parallel LangGraph AI Nodes + ConsJudge Supervisor
+          8 Parallel LangGraph AI Nodes + ConsJudge Supervisor
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2.5">
           <div className="flex flex-col p-3 bg-[#070402] rounded-xl border border-[#E07A48]/20 justify-center items-center text-center">
             <div className="flex items-center gap-1.5 mb-1">
               <Shield className="w-3.5 h-3.5 text-[#FF8C42]" />
@@ -242,6 +263,22 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
               <span className="text-[#D4BC9A] text-xs font-semibold">Similarity</span>
             </div>
             <span className="text-[9px] font-mono text-amber-200/60 bg-[#180A04] px-1.5 py-0.5 rounded border border-[#E07A48]/20">AST + CodeBERT</span>
+          </div>
+
+          <div className="flex flex-col p-3 bg-[#070402] rounded-xl border border-[#E07A48]/20 justify-center items-center text-center">
+            <div className="flex items-center gap-1.5 mb-1">
+              <BookOpen className="w-3.5 h-3.5 text-[#FF8C42]" />
+              <span className="text-[#D4BC9A] text-xs font-semibold">Dev Exp</span>
+            </div>
+            <span className="text-[9px] font-mono text-amber-200/60 bg-[#180A04] px-1.5 py-0.5 rounded border border-[#E07A48]/20">Groq (Llama-3.3)</span>
+          </div>
+
+          <div className="flex flex-col p-3 bg-[#070402] rounded-xl border border-[#E07A48]/20 justify-center items-center text-center">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Activity className="w-3.5 h-3.5 text-[#FF8C42]" />
+              <span className="text-[#D4BC9A] text-xs font-semibold">FinOps</span>
+            </div>
+            <span className="text-[9px] font-mono text-amber-200/60 bg-[#180A04] px-1.5 py-0.5 rounded border border-[#E07A48]/20">Groq (Llama-3.3)</span>
           </div>
 
           <div className="flex flex-col p-3 bg-[#070402] rounded-xl border border-[#E07A48]/20 justify-center items-center text-center">

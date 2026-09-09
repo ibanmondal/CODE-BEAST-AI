@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
+import urllib.parse
 from app.database import SessionLocal, AnalysisJob
 from sqlalchemy import desc
 
@@ -50,6 +51,7 @@ async def get_history():
             "testing_score": job.testing_score,
             "db_score": job.db_score,
             "orig": job.originality_score,
+            "finops": job.finops_score,
             "submitted": submitted,
             "final_report": job.final_report
         })
@@ -124,3 +126,61 @@ async def get_leaderboard():
             "orig": job.originality_score
         })
     return {"leaderboard": leaderboard}
+
+@router.get("/badge")
+async def get_badge(repo: str):
+    """
+    Returns an SVG badge for the given repository indicating its CodeBeast overall score.
+    Expects URL encoded repo url.
+    """
+    db = SessionLocal()
+    # Decode if needed
+    clean_repo = urllib.parse.unquote(repo).strip().lower()
+    
+    # Try exact match or substring
+    jobs = db.query(AnalysisJob).filter(AnalysisJob.status == "Completed").order_by(desc(AnalysisJob.created_at)).all()
+    db.close()
+    
+    job_found = None
+    for job in jobs:
+        if job.repo_url.lower() == clean_repo or clean_repo in job.repo_url.lower():
+            job_found = job
+            break
+            
+    if not job_found:
+        score_text = "N/A"
+        color = "#e05d44" # Red for not found
+    else:
+        score = job_found.overall_score
+        score_text = f"{score}/100"
+        
+        if score >= 80:
+            color = "#FF8C42" # CodeBeast Orange
+        elif score >= 60:
+            color = "#dfb317" # Yellow
+        else:
+            color = "#e05d44" # Red
+
+    # Simple Shields.io style SVG
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="130" height="20">
+  <linearGradient id="b" x2="0" y2="100%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <mask id="a">
+    <rect width="130" height="20" rx="3" fill="#fff"/>
+  </mask>
+  <g mask="url(#a)">
+    <path fill="#555" d="M0 0h75v20H0z"/>
+    <path fill="{color}" d="M75 0h55v20H75z"/>
+    <path fill="url(#b)" d="M0 0h130v20H0z"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+    <text x="37.5" y="15" fill="#010101" fill-opacity=".3">CodeBeast</text>
+    <text x="37.5" y="14">CodeBeast</text>
+    <text x="101.5" y="15" fill="#010101" fill-opacity=".3">{score_text}</text>
+    <text x="101.5" y="14">{score_text}</text>
+  </g>
+</svg>"""
+    
+    return Response(content=svg, media_type="image/svg+xml")

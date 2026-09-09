@@ -47,6 +47,7 @@ export function Sidebar() {
         { name: "Repository Analysis", path: "/analysis", icon: Search },
         { name: "Repo Duel (A/B)", path: "/duel", icon: Swords },
         { name: "Bulk CSV Upload", path: "/upload", icon: UploadCloud },
+        { name: "Plagiarism Matrix", path: "/matrix", icon: Radio },
       ]
     },
     {
@@ -99,7 +100,7 @@ export function Sidebar() {
                 <h1 className="text-[#D4BC9A] font-display text-2xl tracking-wider leading-none">CODEBEAST</h1>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#E07A48]/20 text-[#FF8C42] border border-[#E07A48]/30 font-mono font-bold">AI</span>
               </div>
-              <p className="text-[9px] text-amber-200/40 uppercase tracking-widest font-semibold mt-0.5">6-Agent Swarm Console</p>
+              <p className="text-[9px] text-amber-200/40 uppercase tracking-widest font-semibold mt-0.5">8-Agent Swarm Console</p>
             </div>
           )}
         </Link>
@@ -152,7 +153,7 @@ export function Sidebar() {
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 LangGraph Engine
               </span>
-              <span className="text-[#FF8C42] font-mono">6 Agents</span>
+              <span className="text-[#FF8C42] font-mono">8 Agents</span>
             </div>
           </div>
         )}

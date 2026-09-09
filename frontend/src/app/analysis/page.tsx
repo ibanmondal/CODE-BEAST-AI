@@ -54,7 +54,8 @@ function AnalysisContent() {
     { id: "database_agent", num: "06", label: "Database", desc: "Schema Indexing", icon: Database, tech: "Gemini Flash" },
     { id: "similarity_agent", num: "07", label: "Originality", desc: "CodeBERT FAISS", icon: Fingerprint, tech: "AST + Neural" },
     { id: "dx_agent", num: "08", label: "Dev Exp", desc: "DX & Config", icon: BookOpen, tech: "Groq Llama-3.3" },
-    { id: "gemini_supervisor", num: "09", label: "Synthesis", desc: "ConsJudge Multi-Pass", icon: Cpu, tech: "Dual-Pass Arbiter" }
+    { id: "finops_agent", num: "09", label: "FinOps", desc: "Cost & Cloud", icon: Activity, tech: "Groq Llama-3.3" },
+    { id: "gemini_supervisor", num: "10", label: "Synthesis", desc: "ConsJudge Multi-Pass", icon: Cpu, tech: "Dual-Pass Arbiter" }
   ];
 
   const fetchHistory = () => {
@@ -88,6 +89,7 @@ function AnalysisContent() {
       testing_score: row?.testing_score || raw.testing_score || 80,
       db_score: row?.db_score || raw.db_score || 85,
       dx_score: row?.dx_score || raw.dx_score || 85,
+      finops_score: row?.finops || raw.finops_score || raw.finops || 85,
       orig: row?.orig || raw.originality_score || raw.orig || 90,
       repoName: repoName,
       executive_summary: raw.executive_summary || `Comprehensive 6-agent evaluation completed for ${repoName}. Clean architecture and production readiness verified.`,
@@ -202,6 +204,7 @@ function AnalysisContent() {
               "database_agent": "Schema Quality & ORM Query Indexing...",
               "similarity_agent": "AST & CodeBERT Plagiarism Verification...",
               "dx_agent": "Developer Experience & Configuration Assessment...",
+              "finops_agent": "Cloud Readiness & FinOps Architecture Review...",
               "gemini_supervisor": "ConsJudge Multi-Pass Consensus Verification..."
             };
             if (labelMap[msg.agent]) setActiveStage(labelMap[msg.agent]);
@@ -217,7 +220,7 @@ function AnalysisContent() {
             setCompletedAgents([
               "ingestion", "security_agent", "architecture_agent", 
               "performance_agent", "testing_agent", "database_agent", 
-              "similarity_agent", "dx_agent", "gemini_supervisor"
+              "similarity_agent", "dx_agent", "finops_agent", "gemini_supervisor"
             ]);
             
             try {
@@ -480,6 +483,7 @@ function AnalysisContent() {
                   <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">Test</th>
                   <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">DB</th>
                   <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">DX</th>
+                  <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">FinOps</th>
                   <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-center">Orig.</th>
                   <th className="p-4 sm:p-5 text-xs font-mono font-bold text-amber-200/50 uppercase tracking-wider text-right">Actions</th>
                 </tr>
@@ -487,7 +491,7 @@ function AnalysisContent() {
               <tbody className="divide-y divide-[#E07A48]/10 text-sm">
                 {history.length === 0 ? (
                   <tr>
-                    <td colSpan={12} className="p-8 text-center text-amber-200/40 font-mono text-xs">
+                    <td colSpan={14} className="p-8 text-center text-amber-200/40 font-mono text-xs">
                       No evaluation history yet. Enter a GitHub repository above to run your first 6-agent audit!
                     </td>
                   </tr>
@@ -524,6 +528,7 @@ function AnalysisContent() {
                       <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.testing_score !== undefined ? row.testing_score : 80}</td>
                       <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.db_score !== undefined ? row.db_score : 85}</td>
                       <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.dx_score !== undefined ? row.dx_score : 85}</td>
+                      <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.finops !== undefined ? row.finops : 85}</td>
                       <td className="p-4 sm:p-5 text-center font-mono text-xs text-amber-200/70">{row.orig !== undefined ? row.orig : 90}</td>
                       <td className="p-4 sm:p-5 text-right">
                         <CodeBeastLiquidButton 

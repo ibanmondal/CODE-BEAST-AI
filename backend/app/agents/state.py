@@ -21,6 +21,7 @@ class AgentState(TypedDict):
     db_report: Optional[Dict[str, Any]]
     similarity_report: Optional[Dict[str, Any]]
     dx_report: Optional[Dict[str, Any]]
+    finops_report: Optional[Dict[str, Any]]
     
     # Final Output
     final_report: Optional[Dict[str, Any]]
