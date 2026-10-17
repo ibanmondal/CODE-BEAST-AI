@@ -1,28 +1,29 @@
+import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { CodeBeastLiquidButton } from "@/components/ui/codebeast-liquid-button";
 
 const buttonVariants = cva(
-  "group/button relative inline-flex shrink-0 items-center justify-center rounded-full text-sm font-extrabold tracking-wider uppercase transition-all duration-300 outline-none select-none",
+  "group/button relative inline-flex shrink-0 items-center justify-center rounded-none text-sm font-medium transition-all duration-150 outline-none select-none",
   {
     variants: {
       variant: {
-        default: "text-[#D4BC9A]",
-        outline: "text-[#D4BC9A]",
-        secondary: "text-[#D4BC9A]",
-        ghost: "text-[#D4BC9A]",
-        destructive: "text-[#FEE2E2]",
-        link: "text-[#FF8C42] underline-offset-4 hover:underline",
+        default: "text-[#040914] bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] font-bold hover:shadow-[0_0_20px_rgba(137,207,240,0.4)]",
+        outline: "text-white border border-[#89CFF0]/30 bg-[#08132B]/80 hover:bg-[#89CFF0]/15",
+        secondary: "text-[#89CFF0] bg-[#08132B] border border-[#89CFF0]/25 hover:bg-[#89CFF0]/10",
+        ghost: "text-[#BAE6FD] hover:bg-[#89CFF0]/10 hover:text-white",
+        destructive: "text-rose-300 bg-rose-950/60 border border-rose-500/30 hover:bg-rose-900/60",
+        link: "text-[#89CFF0] underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-6 text-xs font-bold",
-        xs: "h-7 px-3 text-[10px]",
-        sm: "h-8 px-4 text-xs",
-        lg: "h-12 px-8 text-xs font-extrabold",
-        icon: "size-10 rounded-full",
-        "icon-xs": "size-7 rounded-full",
-        "icon-sm": "size-8 rounded-full",
-        "icon-lg": "size-12 rounded-full",
+        default: "h-9 px-4 text-xs font-medium",
+        xs: "h-7 px-2.5 text-[11px]",
+        sm: "h-8 px-3 text-xs",
+        lg: "h-11 px-6 text-sm font-semibold",
+        icon: "size-9 rounded-none",
+        "icon-xs": "size-7 rounded-none",
+        "icon-sm": "size-8 rounded-none",
+        "icon-lg": "size-11 rounded-none",
       },
     },
     defaultVariants: {
@@ -58,22 +59,20 @@ function Button({
       : "primary";
 
   const mappedSize =
-    size === "xs" || size === "sm"
-      ? "sm"
-      : size === "lg"
+    size === "lg" || size === "icon-lg"
       ? "lg"
-      : size?.toString().startsWith("icon")
-      ? "icon"
+      : size === "xs" || size === "sm" || size === "icon-xs" || size === "icon-sm"
+      ? "sm"
       : "md";
 
   return (
     <CodeBeastLiquidButton
       variant={mappedVariant}
       size={mappedSize}
-      className={cn(buttonVariants({ variant, size, className }))}
       onClick={onClick}
       disabled={disabled}
       type={type}
+      className={cn(className)}
       {...props}
     >
       {children}

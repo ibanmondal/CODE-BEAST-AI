@@ -62,7 +62,8 @@ class RepositoryCloner:
                 clone_url, 
                 repo_dir, 
                 depth=1, 
-                single_branch=True
+                single_branch=True,
+                kill_after_timeout=5
             )
             logger.info(f"Successfully cloned {clean_url}")
         except Exception as e:

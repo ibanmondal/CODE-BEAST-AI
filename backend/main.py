@@ -1,3 +1,7 @@
+import os
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -40,8 +44,9 @@ async def root():
     return {"message": "Welcome to CodeBeast API", "status": "operational"}
 
 @app.get("/health")
+@app.get("/api/v1/health")
 async def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "CodeBeast Backend API", "port": 8000}
 
 if __name__ == "__main__":
     import uvicorn

@@ -38,10 +38,12 @@ async def get_history():
         else:
             submitted = "Just now"
 
+        owner = job.repo_url.rstrip("/").split("/")[-2] if "/" in job.repo_url else (job.team_name or "Developer")
         history.append({
             "repo": job.repo_url.split("/")[-1] if "/" in job.repo_url else job.repo_url,
             "repoId": job.repo_url,
-            "team": job.team_name,
+            "submitter_github_username": owner,
+            "team": job.team_name or f"{owner} Team",
             "lang": job.language,
             "status": job.status,
             "overall": job.overall_score,
@@ -53,6 +55,7 @@ async def get_history():
             "orig": job.originality_score,
             "finops": job.finops_score,
             "submitted": submitted,
+            "evaluated_at": job.completed_at.strftime("%B %d, %Y - %H:%M UTC") if job.completed_at else submitted,
             "final_report": job.final_report
         })
     return {"history": history}
@@ -87,7 +90,7 @@ async def get_dashboard_stats():
         lang_name = j.language or "Python"
         langs[lang_name] = langs.get(lang_name, 0) + 1
     
-    cb_palette = ["#FF8C42", "#E07A48", "#FFB085", "#D96B27", "#FFA04A", "#C44C0D"]
+    cb_palette = ["#3B2A20", "#7B5E4A", "#A67C52", "#D1B89A", "#8B5A2B", "#5C4033"]
     pieData = [
         {"name": k, "value": v, "color": cb_palette[i % len(cb_palette)]} 
         for i, (k, v) in enumerate(langs.items())

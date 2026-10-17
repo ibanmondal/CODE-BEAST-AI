@@ -65,14 +65,14 @@ export function InteractiveBeastSphere3D() {
     // -------------------------------------------------------------
     const sphereRadius = 90;
 
-    // Inner Dark Metallic Obsidian Core
+    // Inner Dark Metallic Obsidian Core with Electric Blue Emissive
     const innerGeo = new THREE.SphereGeometry(sphereRadius * 0.75, 48, 48);
     const innerMat = new THREE.MeshStandardMaterial({
-      color: 0x140703,
-      roughness: 0.2,
-      metalness: 0.9,
-      emissive: 0x551c05,
-      emissiveIntensity: 0.6
+      color: 0x05132d,
+      roughness: 0.15,
+      metalness: 0.95,
+      emissive: 0x0d2855,
+      emissiveIntensity: 0.75
     });
     const innerMesh = new THREE.Mesh(innerGeo, innerMat);
     mainGroup.add(innerMesh);
@@ -93,21 +93,21 @@ export function InteractiveBeastSphere3D() {
       nodes.push(new THREE.Vector3(x * sphereRadius, y * sphereRadius, z * sphereRadius));
     }
 
-    // Nodes Mesh Points
+    // Nodes Mesh Points in Baby Blue & Cyan
     const nodesGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(nodeCount * 3);
     const colors = new Float32Array(nodeCount * 3);
 
-    const orangeColor = new THREE.Color("#FF8C42");
-    const copperColor = new THREE.Color("#E07A48");
-    const brightColor = new THREE.Color("#D4BC9A");
+    const cyanColor = new THREE.Color("#89CFF0");
+    const babyBlueColor = new THREE.Color("#68B2F8");
+    const electricColor = new THREE.Color("#58A6FF");
 
     nodes.forEach((n, i) => {
       positions[i * 3] = n.x;
       positions[i * 3 + 1] = n.y;
       positions[i * 3 + 2] = n.z;
 
-      const c = i % 3 === 0 ? orangeColor : i % 3 === 1 ? copperColor : brightColor;
+      const c = i % 3 === 0 ? cyanColor : i % 3 === 1 ? babyBlueColor : electricColor;
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
       colors[i * 3 + 2] = c.b;
@@ -140,8 +140,8 @@ export function InteractiveBeastSphere3D() {
           linePositions.push(nodes[i].x, nodes[i].y, nodes[i].z);
           linePositions.push(nodes[j].x, nodes[j].y, nodes[j].z);
 
-          lineColors.push(orangeColor.r, orangeColor.g, orangeColor.b);
-          lineColors.push(copperColor.r, copperColor.g, copperColor.b);
+          lineColors.push(cyanColor.r, cyanColor.g, cyanColor.b);
+          lineColors.push(electricColor.r, electricColor.g, electricColor.b);
         }
       }
     }
@@ -153,7 +153,7 @@ export function InteractiveBeastSphere3D() {
     const linesMat = new THREE.LineBasicMaterial({
       vertexColors: true,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.5,
       blending: THREE.AdditiveBlending
     });
 
@@ -162,14 +162,14 @@ export function InteractiveBeastSphere3D() {
     linesMeshRef.current = linesMesh;
 
     // -------------------------------------------------------------
-    // B. 2 ELEGANT SHINY 3D METALLIC ORBITAL RINGS (Zero White Rings)
+    // B. 2 ELEGANT SHINY 3D METALLIC ORBITAL RINGS
     // -------------------------------------------------------------
     const ringMat = new THREE.MeshStandardMaterial({
-      color: 0xe07a48,
+      color: 0x388bfd,
       roughness: 0.12,
       metalness: 0.95,
-      emissive: 0xff8c42,
-      emissiveIntensity: 0.45
+      emissive: 0x58a6ff,
+      emissiveIntensity: 0.55
     });
 
     // Ring 1 (Inclined 35°, Radius 120)
@@ -194,13 +194,13 @@ export function InteractiveBeastSphere3D() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
     scene.add(ambientLight);
 
-    const orangeLight = new THREE.PointLight(0xff8c42, 4, 450);
-    orangeLight.position.set(120, 150, 200);
-    scene.add(orangeLight);
+    const blueLight = new THREE.PointLight(0x58a6ff, 5, 450);
+    blueLight.position.set(120, 150, 200);
+    scene.add(blueLight);
 
-    const rimLight = new THREE.PointLight(0xe07a48, 3, 400);
-    rimLight.position.set(-150, -100, -100);
-    scene.add(rimLight);
+    const cyanLight = new THREE.PointLight(0x89cff0, 4, 400);
+    cyanLight.position.set(-150, -100, -100);
+    scene.add(cyanLight);
 
     // Mouse Tracking Handler
     const handleMouseMove = (e: MouseEvent) => {
@@ -380,19 +380,19 @@ export function InteractiveBeastSphere3D() {
           className="w-full h-[480px] sm:h-[520px] cursor-pointer relative group flex items-center justify-center overflow-visible"
         >
           {/* Soft Organic Radial Light Halo */}
-          <div className="absolute w-[360px] h-[360px] rounded-full bg-radial from-[#E07A48]/25 via-[#1A0B05]/30 to-transparent blur-3xl group-hover:scale-105 transition-transform duration-500 pointer-events-none" />
+          <div className="absolute w-[360px] h-[360px] rounded-full bg-radial from-[#58A6FF]/25 via-[#08132B]/40 to-transparent blur-3xl group-hover:scale-105 transition-transform duration-500 pointer-events-none" />
         </div>
 
         {/* Action Button Badge */}
         <div 
           onClick={handleClick}
-          className="beast-3d-button mt-2 flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#1F0F08]/90 border border-[#E07A48]/50 hover:border-[#FF8C42] text-[#D4BC9A] text-xs font-mono font-bold tracking-wider uppercase cursor-pointer shadow-[0_10px_25px_rgba(0,0,0,0.8)] transition-all hover:scale-[1.03] group z-20 overflow-hidden before:absolute before:inset-0 before:-translate-x-full hover:before:animate-btn-light-sweep before:bg-gradient-to-r before:from-transparent before:via-[#FF8C42]/30 before:to-transparent"
+          className="beast-3d-button mt-2 flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#08132B]/90 border border-[#387DE6]/50 hover:border-[#58A6FF] text-[#89CFF0] text-xs font-mono font-bold tracking-wider uppercase cursor-pointer shadow-[0_10px_25px_rgba(2,6,18,0.8)] transition-all hover:scale-[1.03] group z-20 overflow-hidden before:absolute before:inset-0 before:-translate-x-full hover:before:animate-btn-light-sweep before:bg-gradient-to-r before:from-transparent before:via-[#58A6FF]/30 before:to-transparent"
         >
-          <Flame className="w-4 h-4 text-[#FF8C42] animate-pulse group-hover:scale-110 transition-transform" />
-          <span className="bg-gradient-to-r from-[#FF8C42] to-[#E07A48] bg-clip-text text-transparent">
+          <Sparkles className="w-4 h-4 text-[#58A6FF] animate-pulse group-hover:scale-110 transition-transform" />
+          <span className="bg-gradient-to-r from-[#89CFF0] to-[#58A6FF] bg-clip-text text-transparent font-sans font-black">
             {hintText}
           </span>
-          <Sparkles className="w-3.5 h-3.5 text-amber-200/50 group-hover:rotate-180 transition-transform duration-500" />
+          <Sparkles className="w-3.5 h-3.5 text-[#89CFF0]/60 group-hover:rotate-180 transition-transform duration-500" />
         </div>
 
       </div>

@@ -1,9 +1,16 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Save, Key, Sliders, ShieldCheck, GitBranch, Cpu, Fingerprint, Zap, Check, Sparkles } from 'lucide-react';
-import { TiltCard } from '@/components/TiltCard';
+import { 
+  Save, 
+  Key, 
+  Sliders, 
+  ShieldCheck, 
+  Check, 
+  Sparkles
+} from 'lucide-react';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
+import { ScrollReveal } from '@/components/ui/motion-primitives';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('api');
@@ -11,8 +18,10 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
 
   // Settings State
-  const [geminiKey, setGeminiKey] = useState('AIzaSyB*********************************');
-  const [groqKey, setGroqKey] = useState('gsk_*******************************************');
+  const [githubToken, setGithubToken] = useState('');
+  const [geminiKey, setGeminiKey] = useState('');
+  const [groqKey, setGroqKey] = useState('');
+  const [naraKey, setNaraKey] = useState('');
   const [ollamaEndpoint, setOllamaEndpoint] = useState('http://localhost:11434');
 
   const [weights, setWeights] = useState({
@@ -32,290 +41,281 @@ export default function SettingsPage() {
     offlineGracefulDegradation: true
   });
 
-  // Load Settings from localStorage
   React.useEffect(() => {
     try {
       const stored = localStorage.getItem('cb_settings');
       if (stored) {
         const parsed = JSON.parse(stored);
+        if (parsed.githubToken) setGithubToken(parsed.githubToken);
         if (parsed.geminiKey) setGeminiKey(parsed.geminiKey);
         if (parsed.groqKey) setGroqKey(parsed.groqKey);
+        if (parsed.naraKey) setNaraKey(parsed.naraKey);
         if (parsed.ollamaEndpoint) setOllamaEndpoint(parsed.ollamaEndpoint);
         if (parsed.weights) setWeights(parsed.weights);
         if (parsed.toggles) setToggles(parsed.toggles);
       }
-    } catch (e) {
-      console.error("Failed to load settings from localStorage", e);
-    }
+    } catch (e) {}
   }, []);
 
   const handleSave = () => {
     setIsSaving(true);
     try {
       const payload = {
+        githubToken,
         geminiKey,
         groqKey,
+        naraKey,
         ollamaEndpoint,
         weights,
         toggles
       };
       localStorage.setItem('cb_settings', JSON.stringify(payload));
+      setTimeout(() => {
+        setIsSaving(false);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      }, 400);
     } catch (e) {
-      console.error("Failed to save settings to localStorage", e);
-    }
-    setTimeout(() => {
       setIsSaving(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    }, 600);
+    }
   };
 
-  const navTabs = [
-    { id: 'api', label: 'API & LLM Endpoints', desc: 'Gemini, Groq, & Ollama', icon: Key },
-    { id: 'scoring', label: 'Scoring Weights', desc: 'Relative agent percentages', icon: Sliders },
-    { id: 'pipeline', label: 'Pipeline Toggles', desc: 'ConsJudge & AutoReview', icon: Cpu },
-  ];
-
   return (
-    <div className="space-y-12 sm:space-y-14 max-w-[1700px] mx-auto pb-20 px-3 sm:px-6 text-[#D4BC9A]">
+    <div className="space-y-8 pb-12 text-white">
       
-      {/* SECTION 1: Page Header */}
-      <section className="border-b border-[#E07A48]/20 pb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E07A48]/15 border border-[#E07A48]/30 text-[#FF8C42] text-xs font-semibold tracking-wide mb-3">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>System Configuration</span>
-        </div>
-        <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-[#D4BC9A] tracking-tight uppercase leading-none font-normal">
-          PLATFORM <span className="text-gradient-copper">SETTINGS</span>
-        </h1>
-        <p className="text-amber-100/70 text-sm mt-2 max-w-xl font-normal leading-relaxed">
-          Configure multi-model LLM credentials, scoring weight contributions, and automated research capabilities.
-        </p>
-      </section>
-
-      {/* SECTION 2: 2-Column Master-Detail Layout */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Left Rail: Navigation Tabs (4 cols) */}
-        <div className="lg:col-span-4 space-y-3">
-          <TiltCard variant="secondary" className="p-4 sm:p-5 shadow-xl space-y-2">
-            <span className="text-[10px] font-mono font-bold text-amber-200/50 uppercase tracking-widest px-3 py-1 block">
-              Configuration Sections
-            </span>
-            {navTabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full text-left p-3.5 rounded-2xl transition-all flex items-center gap-3.5 border ${
-                    isActive 
-                      ? 'bg-[#231109] border-[#FF8C42]/60 text-[#D4BC9A] shadow-[0_0_20px_rgba(224,122,72,0.25)]' 
-                      : 'bg-transparent border-transparent text-amber-100/60 hover:bg-[#140803] hover:text-[#D4BC9A]'
-                  }`}
-                >
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
-                    isActive ? 'bg-[#2E150B] border-[#FF8C42]/50 text-[#FF8C42]' : 'bg-[#180A04] border-[#E07A48]/20 text-amber-200/50'
-                  }`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold font-mono tracking-wide">{tab.label}</h4>
-                    <p className="text-[10px] text-amber-200/40 mt-0.5">{tab.desc}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </TiltCard>
-
-          {/* Quick Help Widget */}
-          <div className="p-5 rounded-3xl bg-[#0E0602] border border-[#E07A48]/15 text-xs text-amber-200/60 space-y-2">
-            <span className="font-bold text-[#FF8C42] block font-mono">⚡ Zero Downtime Fallback</span>
-            <p className="font-normal leading-relaxed">
-              If cloud rate limits trigger on Gemini or Groq, the engine automatically falls back to deterministic AST analyzers without dropping active evaluations.
+      {/* 1. Page Header */}
+      <ScrollReveal direction="down" distance={15}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#08132B] border border-[#89CFF0]/30 text-[#89CFF0] text-[11px] font-semibold tracking-wider uppercase rounded-full shadow-xs mb-2">
+              <Sliders className="w-3.5 h-3.5" />
+              Consensus Parameters
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Platform Configuration & Settings
+            </h1>
+            <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1">
+              Configure LLM inference API credentials, specialized agent scoring weights, and pipeline feature toggles.
             </p>
           </div>
+
+          <div className="flex items-center gap-3">
+            {saved && (
+              <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                Settings Saved
+              </span>
+            )}
+            <CodeBeastLiquidButton
+              onClick={handleSave}
+              disabled={isSaving}
+              isLoading={isSaving}
+              variant="primary"
+              size="sm"
+              label="Save Configuration"
+              icon={<Save className="w-4 h-4" />}
+            />
+          </div>
         </div>
+      </ScrollReveal>
 
-        {/* Right Main Panel: Active Tab Content (8 cols) */}
-        <TiltCard variant="hero" className="lg:col-span-8 p-7 sm:p-9 shadow-2xl">
-          
-          {/* TAB 1: API Endpoints */}
+      {/* 2. Navigation Tabs */}
+      <ScrollReveal direction="none">
+        <div className="flex items-center gap-2 pb-2 text-xs flex-wrap">
+          <button
+            onClick={() => setActiveTab('api')}
+            className={`flex items-center gap-2 px-4 py-2 font-bold rounded-full transition-all duration-200 ${
+              activeTab === 'api'
+                ? 'liquid-btn-primary text-[#040914] shadow-md'
+                : 'bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 shadow-xs'
+            }`}
+          >
+            <Key className="w-3.5 h-3.5" />
+            <span>Inference API Keys</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('weights')}
+            className={`flex items-center gap-2 px-4 py-2 font-bold rounded-full transition-all duration-200 ${
+              activeTab === 'weights'
+                ? 'liquid-btn-primary text-[#040914] shadow-md'
+                : 'bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 shadow-xs'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Scoring Dimension Weights</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('toggles')}
+            className={`flex items-center gap-2 px-4 py-2 font-bold rounded-full transition-all duration-200 ${
+              activeTab === 'toggles'
+                ? 'liquid-btn-primary text-[#040914] shadow-md'
+                : 'bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 shadow-xs'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Research Pipeline Toggles</span>
+          </button>
+        </div>
+      </ScrollReveal>
+
+      {/* 3. Tab Contents Liquid Glass Card */}
+      <ScrollReveal direction="up" distance={20} delay={0.1}>
+        <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)]">
+        
+          {/* Tab 1: API Keys */}
           {activeTab === 'api' && (
-            <div className="space-y-8">
+            <div className="max-w-2xl space-y-6">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="font-display text-3xl text-[#D4BC9A] uppercase tracking-wider font-normal">API & Model Endpoints</h2>
-                  <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 font-bold">
-                    Connected
-                  </span>
-                </div>
-                <p className="text-amber-100/60 text-xs mb-6 font-normal">Configure cloud LLM credentials and local Ollama inference server URLs.</p>
-                
-                <div className="space-y-6">
-                  <div className="space-y-2 bg-[#0E0602] p-5 rounded-2xl border border-[#E07A48]/20">
-                    <label className="text-xs font-mono font-bold text-[#FF8C42] uppercase tracking-wider flex items-center justify-between">
-                      <span>Google Gemini API Key</span>
-                      <span className="text-[10px] text-emerald-400 font-mono">Supervisor Active</span>
-                    </label>
-                    <input 
-                      type="password" 
-                      value={geminiKey}
-                      onChange={(e) => setGeminiKey(e.target.value)}
-                      className="w-full bg-[#140803] border border-[#E07A48]/30 text-[#D4BC9A] rounded-xl px-4 py-3 outline-none focus:border-[#FF8C42] font-mono text-xs shadow-inner"
-                    />
-                    <p className="text-[11px] text-amber-200/40 font-mono">Powers Gemini-Flash multi-pass synthesis and DB schema analysis.</p>
-                  </div>
-
-                  <div className="space-y-2 bg-[#0E0602] p-5 rounded-2xl border border-[#E07A48]/20">
-                    <label className="text-xs font-mono font-bold text-[#FF8C42] uppercase tracking-wider flex items-center justify-between">
-                      <span>Groq Cloud API Key</span>
-                      <span className="text-[10px] text-emerald-400 font-mono">Llama-3.3 70B</span>
-                    </label>
-                    <input 
-                      type="password" 
-                      value={groqKey}
-                      onChange={(e) => setGroqKey(e.target.value)}
-                      className="w-full bg-[#140803] border border-[#E07A48]/30 text-[#D4BC9A] rounded-xl px-4 py-3 outline-none focus:border-[#FF8C42] font-mono text-xs shadow-inner"
-                    />
-                    <p className="text-[11px] text-amber-200/40 font-mono">Ultra-fast inference for Architecture, Testing, Performance, and Security agents.</p>
-                  </div>
-
-                  <div className="space-y-2 bg-[#0E0602] p-5 rounded-2xl border border-[#E07A48]/20">
-                    <label className="text-xs font-mono font-bold text-[#FF8C42] uppercase tracking-wider flex items-center justify-between">
-                      <span>Ollama Local Inference Host</span>
-                      <span className="text-[10px] text-[#FF8C42] font-mono">Offline Local</span>
-                    </label>
-                    <input 
-                      type="text" 
-                      value={ollamaEndpoint}
-                      onChange={(e) => setOllamaEndpoint(e.target.value)}
-                      className="w-full bg-[#140803] border border-[#E07A48]/30 text-[#D4BC9A] rounded-xl px-4 py-3 outline-none focus:border-[#FF8C42] font-mono text-xs shadow-inner"
-                    />
-                    <p className="text-[11px] text-amber-200/40 font-mono">Local fallback endpoint for Qwen2.5-Coder and DeepSeek-Coder.</p>
-                  </div>
-                </div>
+                <h2 className="text-base font-bold text-white">
+                  LLM Inference Providers & Endpoints
+                </h2>
+                <span className="text-xs text-[#8EA6C8]">
+                  CodeBeast utilizes Google Gemini Flash and Groq Cloud for dual-pass consensus.
+                </span>
               </div>
 
-              <div className="pt-6 border-t border-[#E07A48]/20 flex justify-end">
-                <CodeBeastLiquidButton 
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  isLoading={isSaving}
-                  variant="primary"
-                  size="md"
-                  label={saved ? "SAVED CREDENTIALS!" : "SAVE CREDENTIALS"}
-                  hasArrow={!saved}
-                  icon={saved ? <Check className="w-4 h-4 text-emerald-400" /> : <Save className="w-4 h-4 text-[#FF8C42]" />}
-                />
+              <div className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-white font-semibold mb-1.5">GitHub Personal Access Token (PAT)</label>
+                  <input
+                    type="password"
+                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={githubToken}
+                    onChange={(e) => setGithubToken(e.target.value)}
+                    className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
+                  />
+                  <span className="text-[11px] text-[#8EA6C8] mt-1 block">Required for cloning public/private GitHub repositories and preventing 60 req/hr rate limits.</span>
+                </div>
+
+                <div>
+                  <label className="block text-white font-semibold mb-1.5">Google Gemini API Key</label>
+                  <input
+                    type="password"
+                    placeholder="AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={geminiKey}
+                    onChange={(e) => setGeminiKey(e.target.value)}
+                    className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
+                  />
+                  <span className="text-[11px] text-[#8EA6C8] mt-1 block">Used for the ConsJudge Primary Supervisor, Repository Chat Copilot, and Database analysis node.</span>
+                </div>
+
+                <div>
+                  <label className="block text-white font-semibold mb-1.5">Groq Cloud API Key (Llama 3.3 70B)</label>
+                  <input
+                    type="password"
+                    placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={groqKey}
+                    onChange={(e) => setGroqKey(e.target.value)}
+                    className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
+                  />
+                  <span className="text-[11px] text-[#8EA6C8] mt-1 block">Used for ConsJudge Second-Pass Arbiter and Architecture evaluation node.</span>
+                </div>
+
+                <div>
+                  <label className="block text-white font-semibold mb-1.5">Nara Router API Key</label>
+                  <input
+                    type="password"
+                    placeholder="sk-nry-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={naraKey}
+                    onChange={(e) => setNaraKey(e.target.value)}
+                    className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
+                  />
+                  <span className="text-[11px] text-[#8EA6C8] mt-1 block">Used for cloud agent orchestration and high-speed consensus routing.</span>
+                </div>
+
+                <div>
+                  <label className="block text-white font-semibold mb-1.5">Local Ollama Endpoint (Fallback)</label>
+                  <input
+                    type="text"
+                    value={ollamaEndpoint}
+                    onChange={(e) => setOllamaEndpoint(e.target.value)}
+                    className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
+                  />
+                  <span className="text-[11px] text-[#8EA6C8] mt-1 block">Default: http://localhost:11434 for zero-network on-premise execution.</span>
+                </div>
               </div>
             </div>
           )}
 
-          {/* TAB 2: Scoring Engine Weights */}
-          {activeTab === 'scoring' && (
-            <div className="space-y-8">
+          {/* Tab 2: Dimension Weights */}
+          {activeTab === 'weights' && (
+            <div className="max-w-2xl space-y-6">
               <div>
-                <h2 className="font-display text-3xl text-[#D4BC9A] mb-2 uppercase tracking-wider font-normal">Scoring Engine Weights</h2>
-                <p className="text-amber-100/60 text-xs mb-6 font-normal">Adjust the relative contribution percentage of each agent to the overall repository score (Sum: {Object.values(weights).reduce((a,b) => a+b, 0)}%).</p>
-                
-                <div className="space-y-5">
-                  {[
-                    { key: 'architecture', label: 'Architecture & Modularity', icon: Cpu },
-                    { key: 'security', label: 'Security & AutoReview', icon: ShieldCheck },
-                    { key: 'performance', label: 'Performance & Optimization', icon: Zap },
-                    { key: 'testing', label: 'Testing Coverage & Edge Cases', icon: Sliders },
-                    { key: 'database', label: 'Database & Data Modeling', icon: GitBranch },
-                    { key: 'originality', label: 'AST/CodeBERT Originality', icon: Fingerprint },
-                  ].map((item, i) => (
-                    <div key={i} className="space-y-2 bg-[#0E0602] p-4 rounded-2xl border border-[#E07A48]/15">
-                      <div className="flex justify-between items-center">
-                        <label className="text-xs font-mono font-bold text-[#D4BC9A] flex items-center gap-2">
-                          <item.icon className="w-4 h-4 text-[#FF8C42]" />
-                          {item.label}
-                        </label>
-                        <span className="text-xs text-[#FF8C42] font-mono font-bold">{weights[item.key as keyof typeof weights]}%</span>
-                      </div>
-                      <input 
-                        type="range" 
-                        min="0" max="50" 
-                        value={weights[item.key as keyof typeof weights]}
-                        onChange={(e) => setWeights({ ...weights, [item.key]: parseInt(e.target.value) || 0 })}
-                        className="w-full h-2 bg-[#26130A] rounded-lg appearance-none cursor-pointer accent-[#FF8C42]"
-                      />
+                <h2 className="text-base font-bold text-white">
+                  Agent Score Contribution Weights
+                </h2>
+                <span className="text-xs text-[#8EA6C8]">
+                  Configure the percentage contribution of each specialized evaluator node to the overall score.
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                {Object.entries(weights).map(([key, val]) => (
+                  <div key={key} className="space-y-2 bg-[#08132B]/80 border border-[#89CFF0]/20 rounded-2xl p-4 shadow-xs">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-white capitalize">
+                        {key} Dimension
+                      </span>
+                      <span className="font-mono font-bold text-[#89CFF0]">{val}%</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-[#E07A48]/20 flex justify-end">
-                <CodeBeastLiquidButton 
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  isLoading={isSaving}
-                  variant="primary"
-                  size="md"
-                  label={saved ? "SAVED WEIGHTS!" : "SAVE WEIGHTS"}
-                  hasArrow={!saved}
-                  icon={saved ? <Check className="w-4 h-4 text-emerald-400" /> : <Save className="w-4 h-4 text-[#FF8C42]" />}
-                />
+                    <input
+                      type="range"
+                      min="5"
+                      max="40"
+                      value={val}
+                      onChange={(e) => setWeights({ ...weights, [key]: Number(e.target.value) })}
+                      className="w-full accent-[#89CFF0] h-2 bg-[#040914] rounded-full cursor-pointer shadow-inner"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* TAB 3: Research Pipeline Toggles */}
-          {activeTab === 'pipeline' && (
-            <div className="space-y-8">
+          {/* Tab 3: Feature Toggles */}
+          {activeTab === 'toggles' && (
+            <div className="max-w-2xl space-y-6">
               <div>
-                <h2 className="font-display text-3xl text-[#D4BC9A] mb-2 uppercase tracking-wider font-normal">Research Pipeline Features</h2>
-                <p className="text-amber-100/60 text-xs mb-6 font-normal">Enable or disable specific research-grounded evaluation capabilities.</p>
-                
-                <div className="space-y-4">
-                  {[
-                    { key: 'consJudgeMultiPass', title: 'ConsJudge Dual-Pass Consistency (2025)', desc: 'Executes parallel consensus judging and bounds variance to guarantee ±5pt margin.' },
-                    { key: 'autoReviewCWESlicing', title: 'AutoReview 3-Stage Security Pipeline (FSE 2025)', desc: 'Runs OWASP Detect -> AST Locate -> Syntax Verified Patch generation.' },
-                    { key: 'astCodeBertClones', title: 'AST & CodeBERT Semantic Plagiarism Detection', desc: 'Computes normalized statement hash trees and neural CodeBERT cosine similarity.' },
-                    { key: 'gitDiffGeneration', title: 'Interactive Unified Git Diff Remediation', desc: 'Produces ready-to-merge git patch syntax blocks in the dashboard.' },
-                    { key: 'offlineGracefulDegradation', title: 'Zero-Downtime Offline Fallback Degradation', desc: 'Automatically routes to deterministic engine and Ollama when cloud rate limits occur.' },
-                  ].map((feat, i) => (
-                    <div key={i} className="p-4 sm:p-5 bg-[#0E0602] rounded-2xl border border-[#E07A48]/15 flex items-center justify-between gap-4">
-                      <div className="space-y-1 max-w-lg">
-                        <h4 className="text-xs font-bold text-[#D4BC9A] font-mono">{feat.title}</h4>
-                        <p className="text-[11px] text-amber-100/60 font-normal leading-relaxed">{feat.desc}</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                        <input 
-                          type="checkbox" 
-                          checked={toggles[feat.key as keyof typeof toggles]}
-                          onChange={(e) => setToggles({ ...toggles, [feat.key]: e.target.checked })}
-                          className="sr-only peer" 
-                        />
-                        <div className="w-11 h-6 bg-[#26130A] border border-[#E07A48]/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF8C42]"></div>
-                      </label>
-                    </div>
-                  ))}
-                </div>
+                <h2 className="text-base font-bold text-white">
+                  Pipeline Algorithms & Guardrails
+                </h2>
+                <span className="text-xs text-[#8EA6C8]">
+                  Enable or disable specific research algorithms across the multi-agent pipeline.
+                </span>
               </div>
 
-              <div className="pt-6 border-t border-[#E07A48]/20 flex justify-end">
-                <CodeBeastLiquidButton 
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  isLoading={isSaving}
-                  variant="primary"
-                  size="md"
-                  label={saved ? "SAVED PREFERENCES!" : "SAVE PREFERENCES"}
-                  hasArrow={!saved}
-                  icon={saved ? <Check className="w-4 h-4 text-emerald-400" /> : <Save className="w-4 h-4 text-[#FF8C42]" />}
-                />
+              <div className="space-y-3">
+                {[
+                  { key: 'consJudgeMultiPass', label: 'ConsJudge Dual-Pass Consensus (2025)', desc: 'Executes concurrent Gemini + Llama-3.3 passes to bound score hallucination within ±5 points.' },
+                  { key: 'autoReviewCWESlicing', label: 'AutoReview 3-Stage CWE Slicing (ACM FSE 2025)', desc: 'Detect → Locate → Repair pipeline extracting exploit triggers and generating unified patches.' },
+                  { key: 'astCodeBertClones', label: 'Tree-Sitter AST & CodeBERT Neural Vectors', desc: 'Computes deep semantic clone vectors stored in FAISS for cross-repository clone detection.' },
+                  { key: 'gitDiffGeneration', label: 'Automated Git Diff Remediation Synthesis', desc: 'Synthesizes clean unified diff blocks for identified CWE vulnerabilities.' },
+                  { key: 'offlineGracefulDegradation', label: 'Offline Graceful Deterministic Fallback', desc: 'Allows the platform to calculate deterministic AST metrics even if external LLM APIs fail.' },
+                ].map((toggle) => (
+                  <div 
+                    key={toggle.key}
+                    className="p-4 border border-[#89CFF0]/20 bg-[#08132B]/80 backdrop-blur-md rounded-2xl flex items-center justify-between gap-4 hover:border-[#89CFF0]/50 transition-colors shadow-xs"
+                  >
+                    <div>
+                      <h3 className="text-xs font-bold text-white">{toggle.label}</h3>
+                      <p className="text-[11px] text-[#8EA6C8] mt-0.5 leading-relaxed">{toggle.desc}</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={(toggles as any)[toggle.key]}
+                      onChange={(e) => setToggles({ ...toggles, [toggle.key]: e.target.checked })}
+                      className="w-5 h-5 text-[#89CFF0] accent-[#89CFF0] cursor-pointer shrink-0 rounded"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-        </TiltCard>
-
-      </section>
+        </div>
+      </ScrollReveal>
 
     </div>
   );

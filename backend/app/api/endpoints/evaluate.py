@@ -64,14 +64,35 @@ async def _execute_evaluation_job(task_id: str, repo_url: str):
                             final = {}
                     
                     score_result = result.get("deterministic_score", {})
+                    det_sub = score_result.get("subscores", {}) if isinstance(score_result, dict) else {}
                     overall = final.get("overall_score")
-                    job.overall_score = overall if isinstance(overall, int) else score_result.get("final_score", 85)
-                    job.security_score = final.get("security_score", 78)
-                    job.arch_score = final.get("arch_score", 84)
-                    job.perf_score = final.get("perf_score", 82)
-                    job.testing_score = final.get("testing_score", 80)
-                    job.db_score = final.get("db_score", 85)
-                    job.originality_score = final.get("originality_score", score_result.get("final_score", 90))
+                    job.overall_score = overall if isinstance(overall, int) and overall > 0 else score_result.get("final_score", 74)
+                    job.security_score = final.get("security_score") if final.get("security_score") is not None else det_sub.get("security_score", 76)
+                    job.arch_score = final.get("arch_score") if final.get("arch_score") is not None else det_sub.get("arch_score", 78)
+                    job.perf_score = final.get("perf_score") if final.get("perf_score") is not None else det_sub.get("perf_score", 78)
+                    job.testing_score = final.get("testing_score") if final.get("testing_score") is not None else det_sub.get("testing_score", 25)
+                    job.db_score = final.get("db_score") if final.get("db_score") is not None else det_sub.get("db_score", 74)
+                    job.originality_score = final.get("originality_score") if final.get("originality_score") is not None else det_sub.get("originality_score", 90)
+                    
+                    # Extract GitHub owner and repo name from URL
+                    owner = repo_url.rstrip("/").split("/")[-2] if "/" in repo_url else "Developer"
+                    repo_title = repo_url.rstrip("/").split("/")[-1] if "/" in repo_url else "Repository"
+                    eval_timestamp = datetime.datetime.utcnow().strftime("%B %d, %Y - %H:%M UTC")
+
+                    final["submitter_github_username"] = owner
+                    final["team_name"] = job.team_name or f"{owner} Team"
+                    final["repo_name"] = repo_title
+                    final["repo_url"] = repo_url
+                    final["task_id"] = task_id
+                    final["evaluated_at"] = eval_timestamp
+                    final["overall_score"] = job.overall_score
+                    final["security_score"] = job.security_score
+                    final["arch_score"] = job.arch_score
+                    final["perf_score"] = job.perf_score
+                    final["testing_score"] = job.testing_score
+                    final["db_score"] = job.db_score
+                    final["originality_score"] = job.originality_score
+
                     job.final_report = final
                     job.completed_at = datetime.datetime.utcnow()
                     

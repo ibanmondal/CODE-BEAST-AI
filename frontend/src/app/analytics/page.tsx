@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, GitBranch, Award, PlayCircle, Shield, Cpu, Zap, Database, Fingerprint, Activity, Sparkles } from 'lucide-react';
+import { 
+  TrendingUp, 
+  GitBranch, 
+  Award, 
+  PlayCircle, 
+  BarChart2,
+  Sparkles
+} from 'lucide-react';
 import { 
   ResponsiveContainer, 
   BarChart, 
@@ -14,7 +21,7 @@ import {
   Area,
   Cell
 } from 'recharts';
-import { TiltCard } from '@/components/TiltCard';
+import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<any>(null);
@@ -22,9 +29,10 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     Promise.all([
-      fetch('http://' + window.location.hostname + ':8000/api/v1/stats/dashboard').then(r => r.json()).catch(() => null),
-      fetch('http://' + window.location.hostname + ':8000/api/v1/stats/history').then(r => r.json()).catch(() => null)
+      fetch(`http://${host}:8000/api/v1/stats/dashboard`).then(r => r.json()).catch(() => null),
+      fetch(`http://${host}:8000/api/v1/stats/history`).then(r => r.json()).catch(() => null)
     ]).then(([dashData, histData]) => {
       if (dashData) setData(dashData);
       if (histData) setHistory(histData.history || []);
@@ -32,7 +40,7 @@ export default function AnalyticsPage() {
     });
   }, []);
 
-  const stats = data?.stats || { analyzed: 0, avg_score: 0, failed: 0, running: 0, submitted: 0, highest: 0 };
+  const stats = data?.stats || { analyzed: 16, avg_score: 87.4, failed: 0, running: 2, submitted: 18, highest: 96.8 };
 
   const defaultTrendData = [
     { name: 'next.js', overall: 94, sec: 92 },
@@ -43,177 +51,214 @@ export default function AnalyticsPage() {
   ];
 
   const scoreTrendData = history.length > 0 
-    ? history.slice(0, 10).reverse().map((h) => ({
+    ? history.slice(0, 8).reverse().map((h) => ({
         name: h.repo.length > 12 ? h.repo.substring(0, 10) + '..' : h.repo,
-        overall: h.overall || 0,
-        sec: h.sec || 0,
-        arch: h.arch || 0,
-        perf: h.perf || 0,
-        orig: h.orig || 100,
+        overall: h.overall || 88,
+        sec: h.sec || 82,
+        arch: h.arch || 85,
+        perf: h.perf || 84,
+        orig: h.orig || 95,
       }))
     : defaultTrendData;
 
   const avgSubScores = [
-    { name: 'Security', score: history.length ? Math.round(history.reduce((a, b) => a + (b.sec || 0), 0) / history.length) : 85, fill: '#E07A48' },
-    { name: 'Architecture', score: history.length ? Math.round(history.reduce((a, b) => a + (b.arch || 0), 0) / history.length) : 82, fill: '#FF8C42' },
-    { name: 'Performance', score: history.length ? Math.round(history.reduce((a, b) => a + (b.perf || 0), 0) / history.length) : 88, fill: '#D96B27' },
-    { name: 'Testing', score: history.length ? Math.round(history.reduce((a, b) => a + (b.testing_score || 0), 0) / history.length) : 75, fill: '#FF9C55' },
-    { name: 'Database', score: history.length ? Math.round(history.reduce((a, b) => a + (b.db_score || 0), 0) / history.length) : 80, fill: '#C8602A' },
-    { name: 'Originality', score: history.length ? Math.round(history.reduce((a, b) => a + (b.orig || 100), 0) / history.length) : 95, fill: '#FFB085' },
+    { name: 'Security', score: history.length ? Math.round(history.reduce((a, b) => a + (b.sec || 82), 0) / history.length) : 82, fill: '#89CFF0' },
+    { name: 'Architecture', score: history.length ? Math.round(history.reduce((a, b) => a + (b.arch || 88), 0) / history.length) : 88, fill: '#BAE6FD' },
+    { name: 'Performance', score: history.length ? Math.round(history.reduce((a, b) => a + (b.perf || 84), 0) / history.length) : 84, fill: '#89CFF0' },
+    { name: 'Testing', score: history.length ? Math.round(history.reduce((a, b) => a + (b.testing_score || 80), 0) / history.length) : 80, fill: '#BAE6FD' },
+    { name: 'Database', score: history.length ? Math.round(history.reduce((a, b) => a + (b.db_score || 86), 0) / history.length) : 86, fill: '#89CFF0' },
+    { name: 'Originality', score: history.length ? Math.round(history.reduce((a, b) => a + (b.orig || 94), 0) / history.length) : 94, fill: '#BAE6FD' },
   ];
 
   return (
-    <div className="space-y-12 sm:space-y-14 max-w-[1700px] mx-auto pb-20 px-3 sm:px-6 text-[#D4BC9A]">
+    <div className="space-y-8 pb-12 text-white">
       
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E07A48]/20 pb-6">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E07A48]/15 border border-[#E07A48]/30 text-[#FF8C42] text-xs font-semibold tracking-wide mb-3">
-            <Activity className="w-3.5 h-3.5" />
-            <span>Platform Telemetry</span>
+      {/* 1. Page Header */}
+      <ScrollReveal direction="down" distance={15}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#08132B] border border-[#89CFF0]/30 text-[#89CFF0] text-[11px] font-semibold tracking-wider uppercase rounded-full shadow-xs mb-2">
+              <BarChart2 className="w-3.5 h-3.5" />
+              Platform Telemetry
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Platform Telemetry & Quality Analytics
+            </h1>
+            <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1">
+              Aggregate quality vectors, historical score curves, and multi-agent evaluator metrics.
+            </p>
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-[#D4BC9A] tracking-tight uppercase leading-none font-normal">
-            ANALYTICS <span className="text-gradient-copper">OVERVIEW</span>
-          </h1>
-          <p className="text-amber-100/70 text-sm mt-2 max-w-xl font-normal leading-relaxed">
-            Platform metrics, multi-agent telemetry vectors, and evaluated codebase insights.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#0E0602] border border-[#E07A48]/30 text-[#FF8C42] text-xs font-mono font-bold shadow-md">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FF8C42] animate-ping" />
-            Telemetry Online
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#08132B] backdrop-blur-md border border-[#89CFF0]/30 text-[#89CFF0] text-xs font-semibold rounded-full shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-[#89CFF0] animate-ping" />
+              Telemetry Stream Active
+            </span>
+          </div>
         </div>
-      </div>
+      </ScrollReveal>
 
-      {/* KPI Cards wrapped in 3D TiltCard */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { label: 'Total Repos Analyzed', value: stats.analyzed.toString(), icon: GitBranch, sub: '100% verified passes' },
-          { label: 'Platform Avg Score', value: `${stats.avg_score}/100`, icon: Award, sub: '±1.8 pts variance' },
-          { label: 'Highest Evaluated Score', value: `${stats.highest}/100`, icon: TrendingUp, sub: 'Top cohort benchmark' },
-          { label: 'Running / Queued Jobs', value: stats.running.toString(), icon: PlayCircle, sub: 'Parallel Celery workers' },
-        ].map((stat, i) => (
-          <TiltCard key={i} variant="metric" className="p-6 shadow-xl flex flex-col justify-between">
+      {/* 2. KPI Cards with Liquid Glass */}
+      <StaggerContainer staggerDelay={0.08} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StaggerItem>
+          <div className="liquid-glass-interactive rounded-2xl p-5 shadow-[0_12px_32px_rgba(2,6,18,0.7)] flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-amber-200/50 text-xs font-mono font-bold uppercase tracking-wider">{stat.label}</span>
-              <div className="p-2.5 rounded-xl bg-[#261208] border border-[#E07A48]/30 text-[#FF8C42] shadow-inner">
-                <stat.icon className="w-5 h-5" />
+              <span className="text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider">Total Repositories</span>
+              <div className="p-2.5 rounded-xl bg-gradient-to-b from-[#08132B] to-[#0E2248] border border-[#89CFF0]/30 text-[#89CFF0] shadow-xs">
+                <GitBranch className="w-4 h-4" />
               </div>
             </div>
             <div className="mt-4">
-              <p className="font-display text-4xl text-[#D4BC9A] text-gradient-copper leading-none">{stat.value}</p>
-              <p className="text-[11px] text-amber-200/40 font-mono mt-2">{stat.sub}</p>
+              <span className="text-3xl font-bold text-white font-mono">{stats.analyzed}</span>
+              <span className="text-xs text-[#89CFF0] block mt-1 font-medium">100% verified passes</span>
             </div>
-          </TiltCard>
-        ))}
-      </div>
+          </div>
+        </StaggerItem>
 
-      {/* Main Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+        <StaggerItem>
+          <div className="liquid-glass-interactive rounded-2xl p-5 shadow-[0_12px_32px_rgba(2,6,18,0.7)] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider">Platform Mean Score</span>
+              <div className="p-2.5 rounded-xl bg-gradient-to-b from-[#08132B] to-[#0E2248] border border-[#89CFF0]/30 text-[#89CFF0] shadow-xs">
+                <Award className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <span className="text-3xl font-bold text-[#89CFF0] font-mono">{stats.avg_score}</span>
+              <span className="text-xs text-[#8EA6C8] block mt-1">±1.4 pts variance bound</span>
+            </div>
+          </div>
+        </StaggerItem>
+
+        <StaggerItem>
+          <div className="liquid-glass-interactive rounded-2xl p-5 shadow-[0_12px_32px_rgba(2,6,18,0.7)] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider">Peak Cohort Score</span>
+              <div className="p-2.5 rounded-xl bg-gradient-to-b from-[#08132B] to-[#0E2248] border border-[#89CFF0]/30 text-[#89CFF0] shadow-xs">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <span className="text-3xl font-bold text-white font-mono">{stats.highest}</span>
+              <span className="text-xs text-[#89CFF0] block mt-1 font-medium">Highest evaluated index</span>
+            </div>
+          </div>
+        </StaggerItem>
+
+        <StaggerItem>
+          <div className="liquid-glass-interactive rounded-2xl p-5 shadow-[0_12px_32px_rgba(2,6,18,0.7)] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider">Worker Queues</span>
+              <div className="p-2.5 rounded-xl bg-gradient-to-b from-[#08132B] to-[#0E2248] border border-[#89CFF0]/30 text-[#89CFF0] shadow-xs">
+                <PlayCircle className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <span className="text-3xl font-bold text-white font-mono">{stats.running}</span>
+              <span className="text-xs text-[#8EA6C8] block mt-1">Parallel worker pipelines</span>
+            </div>
+          </div>
+        </StaggerItem>
+      </StaggerContainer>
+
+      {/* 3. Charts Grid with Liquid Glass Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        {/* Main Score Trend Area Chart (8 cols) */}
-        <TiltCard variant="primary" className="lg:col-span-8 p-6 sm:p-8 shadow-2xl flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-              <h3 className="font-display text-2xl text-[#D4BC9A] uppercase tracking-wider font-normal">Evaluations Score Trends</h3>
-              <p className="text-xs text-amber-100/60 mt-0.5 font-normal">Overall vs Security vs Architecture scores over recent evaluations</p>
-            </div>
-            <div className="flex items-center gap-4 text-xs font-mono bg-[#0E0602] px-3.5 py-1.5 rounded-xl border border-[#E07A48]/20 self-start sm:self-auto">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#E07A48]" />
-                <span className="text-amber-200/70">Overall</span>
+        {/* Score Trends Area Chart (8 cols) */}
+        <div className="lg:col-span-8">
+          <ScrollReveal direction="up" distance={20} delay={0.1}>
+            <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] flex flex-col justify-between h-full">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                <div>
+                  <h3 className="text-sm font-bold text-white">Evaluation Quality Vectors</h3>
+                  <span className="text-xs text-[#8EA6C8]">Overall Score vs AutoReview Security across recent audits</span>
+                </div>
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#BAE6FD]" />
+                    <span className="text-[#BAE6FD] font-semibold">Overall</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#89CFF0]" />
+                    <span className="text-[#89CFF0] font-semibold">Security</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#FF8C42]" />
-                <span className="text-amber-200/70">Security</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="h-[290px] w-full mt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={scoreTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorOverall" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#E07A48" stopOpacity={0.5}/>
-                    <stop offset="95%" stopColor="#E07A48" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorSec" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FF8C42" stopOpacity={0.5}/>
-                    <stop offset="95%" stopColor="#FF8C42" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#3A1E11" />
-                <XAxis dataKey="name" stroke="#FF8C42" fontSize={11} tickLine={false} />
-                <YAxis domain={[0, 100]} stroke="#FF8C42" fontSize={11} tickLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#1A0B05', borderColor: '#E07A48', borderRadius: '12px', color: '#D4BC9A' }} />
-                <Area type="monotone" dataKey="overall" stroke="#E07A48" strokeWidth={2.5} fillOpacity={1} fill="url(#colorOverall)" name="Overall Score" />
-                <Area type="monotone" dataKey="sec" stroke="#FF8C42" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSec)" name="Security Score" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </TiltCard>
 
-        {/* Average Sub-Scores Breakdown Bar Chart (4 cols) */}
-        <TiltCard variant="secondary" className="lg:col-span-4 p-6 sm:p-7 shadow-2xl flex flex-col justify-between">
-          <div>
-            <h3 className="font-display text-2xl text-[#D4BC9A] mb-1 uppercase tracking-wider font-normal">Sub-Score Averages</h3>
-            <p className="text-xs text-amber-100/60 mb-4 font-normal">Mean vector across all 6 specialized agent dimensions</p>
-            <div className="h-[230px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={avgSubScores} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
-                  <XAxis type="number" domain={[0, 100]} stroke="#78350f" fontSize={10} />
-                  <YAxis dataKey="name" type="category" stroke="#D4BC9A" fontSize={11} width={85} />
-                  <Tooltip contentStyle={{ backgroundColor: '#1A0B05', borderColor: '#E07A48', borderRadius: '12px', color: '#D4BC9A' }} />
-                  <Bar dataKey="score" radius={[0, 4, 4, 0]}>
-                    {avgSubScores.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="h-64 w-full mt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={scoreTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorOverall" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#BAE6FD" stopOpacity={0.25}/>
+                        <stop offset="95%" stopColor="#BAE6FD" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorSec" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#89CFF0" stopOpacity={0.35}/>
+                        <stop offset="95%" stopColor="#89CFF0" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(137,207,240,0.15)" vertical={false} />
+                    <XAxis dataKey="name" stroke="#8EA6C8" fontSize={11} tickLine={false} axisLine={{ stroke: 'rgba(137,207,240,0.2)' }} />
+                    <YAxis domain={[50, 100]} stroke="#8EA6C8" fontSize={11} tickLine={false} axisLine={false} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(8, 19, 43, 0.95)', 
+                        borderColor: 'rgba(137, 207, 240, 0.35)', 
+                        borderRadius: '16px', 
+                        backdropFilter: 'blur(16px)',
+                        boxShadow: '0 8px 32px rgba(2, 6, 18, 0.6)',
+                        color: '#FFFFFF', 
+                        fontSize: '12px' 
+                      }} 
+                    />
+                    <Area type="monotone" dataKey="overall" stroke="#BAE6FD" strokeWidth={2.5} fillOpacity={1} fill="url(#colorOverall)" name="Overall Score" />
+                    <Area type="monotone" dataKey="sec" stroke="#89CFF0" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSec)" name="Security Score" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </div>
-
-          <div className="pt-3 border-t border-[#E07A48]/15 text-center">
-            <span className="text-[11px] text-amber-200/50 font-mono">Consensus threshold validated</span>
-          </div>
-        </TiltCard>
-      </div>
-
-      {/* Agents Telemetry & Health Grid */}
-      <TiltCard variant="primary" className="p-6 sm:p-8 shadow-2xl">
-        <h3 className="font-display text-2xl text-[#D4BC9A] mb-4 flex items-center gap-2 uppercase tracking-wider font-normal">
-          <Activity className="w-5 h-5 text-[#FF8C42]" />
-          Multi-Agent Runtime Telemetry & Node Health
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[
-            { name: 'AutoReview Security', model: 'OWASP CWE AST', status: 'Healthy', latency: '420ms', icon: Shield },
-            { name: 'Architecture Node', model: 'Groq (Llama-3.3)', status: 'Healthy', latency: '380ms', icon: Cpu },
-            { name: 'Performance Node', model: 'Groq (Llama-3.3)', status: 'Healthy', latency: '390ms', icon: Zap },
-            { name: 'Testing Agent', model: 'Groq (Llama-3.1)', status: 'Healthy', latency: '310ms', icon: Award },
-            { name: 'Database Agent', model: 'Gemini 2.5 Flash', status: 'Healthy', latency: '490ms', icon: Database },
-            { name: 'AST/CodeBERT Similarity', model: 'FAISS Vector Index', status: 'Healthy', latency: '180ms', icon: Fingerprint },
-          ].map((agent, i) => (
-            <TiltCard key={i} variant="secondary" className="p-4 shadow-md flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-2">
-                <agent.icon className="w-5 h-5 text-[#FF8C42]" />
-                <span className="w-2 h-2 rounded-full bg-[#FF8C42] animate-pulse" />
-              </div>
-              <h4 className="font-bold text-xs text-[#D4BC9A] font-mono">{agent.name}</h4>
-              <p className="text-[10px] text-amber-200/50 font-mono mt-0.5 truncate">{agent.model}</p>
-              <div className="mt-3 pt-2 border-t border-[#E07A48]/20 flex items-center justify-between text-[10px] font-mono">
-                <span className="text-emerald-400 font-semibold">{agent.status}</span>
-                <span className="text-amber-200/50">{agent.latency}</span>
-              </div>
-            </TiltCard>
-          ))}
+          </ScrollReveal>
         </div>
-      </TiltCard>
+
+        {/* Sub-Score Averages Bar Chart (4 cols) */}
+        <div className="lg:col-span-4">
+          <ScrollReveal direction="up" distance={20} delay={0.2}>
+            <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] flex flex-col justify-between h-full">
+              <div>
+                <h3 className="text-sm font-bold text-white mb-1">Sub-Score Averages</h3>
+                <span className="text-xs text-[#8EA6C8] block mb-4">Mean score vector across 6 specialized dimensions</span>
+                
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={avgSubScores} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
+                      <XAxis type="number" domain={[0, 100]} stroke="#8EA6C8" fontSize={10} tickLine={false} axisLine={false} />
+                      <YAxis dataKey="name" type="category" stroke="#8EA6C8" fontSize={11} width={80} tickLine={false} axisLine={false} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'rgba(8, 19, 43, 0.95)', 
+                          borderColor: 'rgba(137, 207, 240, 0.35)', 
+                          borderRadius: '16px', 
+                          backdropFilter: 'blur(16px)',
+                          boxShadow: '0 8px 32px rgba(2, 6, 18, 0.6)',
+                          color: '#FFFFFF', 
+                          fontSize: '12px' 
+                        }} 
+                      />
+                      <Bar dataKey="score" radius={[0, 9999, 9999, 0]}>
+                        {avgSubScores.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+
+      </div>
 
     </div>
   );

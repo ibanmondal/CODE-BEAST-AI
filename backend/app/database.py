@@ -6,8 +6,11 @@ import datetime
 
 logger = logging.getLogger(__name__)
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # Primary PostgreSQL or SQLite connection string
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/codebeast")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./codebeast.db")
 
 Base = declarative_base()
 

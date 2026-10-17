@@ -2,418 +2,565 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* ==============================================================================
+   CodeBeast AI - Enterprise Software Intelligence Platform
+   Strict Executive Palette:
+     - Midnight Blue: #06122C (Deep authoritative luxury navy, solid buttons, dark accents)
+     - Baby Blue:     #89CFF0 (Luminous sky-cyan pastel, active pills, specular glows, highlights)
+     - Crisp White:   #FFFFFF (Pristine frosted glass panels, translucent cards, canvas)
+   ============================================================================== */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --font-sans: var(--font-plex-sans), "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-heading: var(--font-plex-sans), "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-condensed: var(--font-plex-sans), "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  --color-midnight: #040914;
+  --color-midnight-surface: #08132B;
+  --color-baby: #89CFF0;
+  --color-baby-tint: #BAE6FD;
+  --color-baby-sheen: #E0F2FE;
+  
+  --color-navy: #040914;
+  --color-royal: #08132B;
+  --color-azure: #89CFF0;
+  --color-cobalt: #08132B;
+  --color-ice: #89CFF0;
+  --color-medium: #BAE6FD;
+  --color-pale: #8EA6C8;
+  --color-light: #BAE6FD;
+  --color-surface: rgba(8, 19, 43, 0.85);
+  
+  --color-sidebar: #040914;
+  --color-sidebar-foreground: #FFFFFF;
+  --color-sidebar-primary: #89CFF0;
+  --color-sidebar-primary-foreground: #040914;
+  --color-sidebar-accent: #08132B;
+  --color-sidebar-accent-foreground: #FFFFFF;
+  --color-sidebar-border: rgba(137, 207, 240, 0.22);
+  
+  --color-card: rgba(8, 19, 43, 0.85);
+  --color-card-foreground: #FFFFFF;
+  --color-popover: rgba(8, 19, 43, 0.95);
+  --color-popover-foreground: #FFFFFF;
+  --color-primary: #89CFF0;
+  --color-primary-foreground: #040914;
+  --color-secondary: #08132B;
+  --color-secondary-foreground: #89CFF0;
+  --color-muted: #08132B;
+  --color-muted-foreground: #8EA6C8;
+  --color-accent: #89CFF0;
+  --color-accent-foreground: #040914;
+  --color-border: rgba(137, 207, 240, 0.25);
+  --color-input: #08132B;
+  --color-ring: #89CFF0;
+  
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: #D4BC9A;
-  --card: oklch(1 0 0);
-  --card-foreground: #D4BC9A;
-  --popover: oklch(1 0 0);
-  --popover-foreground: #D4BC9A;
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: #D4BC9A;
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: #D4BC9A;
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: #D4BC9A;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: #D4BC9A;
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: #D4BC9A;
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: #D4BC9A;
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: #D4BC9A;
-  --card: oklch(0.205 0 0);
-  --card-foreground: #D4BC9A;
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: #D4BC9A;
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: #D4BC9A;
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: #D4BC9A;
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: #D4BC9A;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: #D4BC9A;
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: #D4BC9A;
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: #D4BC9A;
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #040914;
+  --foreground: #FFFFFF;
+  --card: rgba(8, 19, 43, 0.85);
+  --card-foreground: #FFFFFF;
+  --popover: rgba(8, 19, 43, 0.95);
+  --popover-foreground: #FFFFFF;
+  --primary: #89CFF0;
+  --primary-foreground: #040914;
+  --secondary: #08132B;
+  --secondary-foreground: #89CFF0;
+  --muted: #08132B;
+  --muted-foreground: #8EA6C8;
+  --accent: #89CFF0;
+  --accent-foreground: #040914;
+  --destructive: #F87171;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(137, 207, 240, 0.25);
+  --input: #08132B;
+  --ring: #89CFF0;
+  --radius: 0.875rem;
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+  *, ::before, ::after {
+    border-color: rgba(56, 125, 230, 0.22);
   }
+
+  /* Circular chart indicators */
+  .circular-score-indicator,
+  .score-radial,
+  .circular-chart,
+  svg circle,
+  svg ellipse {
+    border-radius: 9999px !important;
+  }
+
   html {
-    @apply font-sans;
+    font-family: var(--font-plex-sans), "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     color-scheme: dark;
-    color: #D4BC9A !important;
+    color: #FFFFFF;
+    background-color: #040914;
     scroll-behavior: smooth;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
   body {
-    @apply bg-[#0D0704] antialiased selection:bg-amber-500/30 selection:text-amber-100;
-    color: #D4BC9A !important;
-    overflow-x: hidden;
+    background-color: #040914;
+    color: #FFFFFF;
+    font-family: var(--font-plex-sans), "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-image: 
+      radial-gradient(circle at 75% 20%, rgba(137, 207, 240, 0.14) 0%, transparent 45%),
+      radial-gradient(circle at 15% 70%, rgba(186, 230, 253, 0.08) 0%, transparent 50%),
+      linear-gradient(rgba(137, 207, 240, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(137, 207, 240, 0.035) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+    background-attachment: fixed;
   }
 
-  /* Deep warm beige / sand / cream text override — intercept ALL near-white utility classes */
-  .text-white {
-    color: #D4BC9A !important;
-  }
-  .text-\[\#F5E6D3\] {
-    color: #D4BC9A !important;
+  /* ==============================================================================
+     UNIFIED CLEAN TYPOGRAPHY SYSTEM ACROSS ALL PAGES
+     All headings, bold words, and buttons strictly share the same IBM Plex Sans font
+     ============================================================================== */
+  h1,
+  .font-heading,
+  .heading-condensed {
+    font-family: var(--font-plex-sans), "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+    color: #FFFFFF;
+    -webkit-text-stroke: 0px transparent !important;
   }
 
-  /* Custom scrollbar & GPU Accelerated Scroll Containers */
-  .custom-scrollbar {
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    will-change: scroll-position;
+  h2, h3, h4, h5, h6 {
+    font-family: var(--font-plex-sans), "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    -webkit-text-stroke: 0px transparent !important;
   }
+
+  /* Clear any text stroke across all headings */
+  h1, h2, h3, h4, h5, h6,
+  .text-3xl, .text-4xl, .text-5xl, .text-6xl {
+    -webkit-text-stroke: 0px transparent !important;
+  }
+
+  h1:not([class*="text-"]) {
+    font-size: clamp(2.5rem, 5.5vw, 4.25rem);
+    letter-spacing: -0.01em !important;
+    line-height: 1.05 !important;
+  }
+
+  /* Bold words and sentences: unified clean font without heavy stroke */
+  b,
+  strong,
+  .font-bold,
+  .font-black,
+  .font-extrabold,
+  .font-semibold {
+    font-family: var(--font-plex-sans), "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-weight: 700 !important;
+    -webkit-text-stroke: 0px transparent !important;
+  }
+
+  /* Inline bold text clean sizing */
+  p b, p strong, p .font-bold {
+    font-family: var(--font-plex-sans), "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-weight: 700 !important;
+    -webkit-text-stroke: 0px transparent !important;
+  }
+  
+  /* Precision Scrollbar */
   ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: #040914;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(224, 122, 72, 0.25);
+    background: rgba(137, 207, 240, 0.35);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #E07A48;
+    background: #89CFF0;
   }
-}
-
-/* Display Typography */
-.font-display {
-  font-family: var(--font-bebas), sans-serif;
-  letter-spacing: 0.04em;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-/* Warm Copper Design System */
-.bg-copper-dark {
-  background-color: #0D0704;
-}
-
-.text-gradient-copper, .text-gradient-orange {
-  background: linear-gradient(135deg, #FF8C42 0%, #E07A48 50%, #C8602A 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 12px rgba(224, 122, 72, 0.45));
-}
-
-.text-gradient-amber {
-  background: linear-gradient(135deg, #D4BC9A 0%, #FF8C42 50%, #E07A48 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.glow-copper {
-  box-shadow: 0 0 35px -5px rgba(224, 122, 72, 0.4);
-}
-
-.glow-copper-lg {
-  box-shadow: 0 0 70px 10px rgba(224, 122, 72, 0.25);
-}
-
-.glass-copper {
-  background: rgba(26, 14, 8, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(224, 122, 72, 0.2);
-}
-
-.glass-pill-copper {
-  background: rgba(35, 18, 10, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(224, 122, 72, 0.3);
-}
-
-/* Scrolling Ticker Animation */
-@keyframes infiniteScroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.animate-infinite-scroll {
-  animation: infiniteScroll 25s linear infinite;
-}
-
-/* Pulse Glow Copper */
-@keyframes pulseGlowCopper {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.08); }
-}
-
-.animate-pulse-copper {
-  animation: pulseGlowCopper 5s infinite ease-in-out;
-}
-
-/* 3D Beast Obsidian-Copper Button Keyframes & Styling */
-@keyframes cb-border-beam {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes cb-specular-shimmer {
-  0% { transform: translateX(-130%) skewX(-22deg); opacity: 0; }
-  25% { opacity: 0.75; }
-  75% { opacity: 0.75; }
-  100% { transform: translateX(230%) skewX(-22deg); opacity: 0; }
-}
-
-@keyframes cb-char-appear {
-  0% {
-    transform: translateY(50%);
-    opacity: 0;
-    filter: blur(4px);
-  }
-  50% {
-    transform: translateY(-10%);
-    opacity: 1;
-    filter: blur(0);
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes cb-char-disappear {
-  0% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-50%);
-    opacity: 0;
-    filter: blur(3px);
-  }
-}
-
-@keyframes cb-icon-slide {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(4px); }
-}
-
-.animate-cb-beam {
-  animation: cb-border-beam 3.5s linear infinite;
-}
-
-.animate-cb-shimmer {
-  animation: cb-specular-shimmer 2.2s ease-in-out infinite;
-}
-
-.beast-3d-button {
-  position: relative;
-  transform-style: preserve-3d;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ==============================================================================
-   CodeBeast Rich Orange 3D Futuristic Cube System
-   Multi-face lighting gradients with realistic depth and razor edge highlights
+   MIDNIGHT BLUE & LIGHT BABY BLUE LIQUID GLASS DESIGN SYSTEM
    ============================================================================== */
-:root {
-  --cb-rich-size: 230px;
-  --cb-rich-half: 115px;
+
+/* 1. Liquid Glass Card / Box - Deep Obsidian Midnight Glass with Baby Blue Rim */
+.liquid-glass-card {
+  background: rgba(8, 19, 43, 0.85) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(137, 207, 240, 0.25) !important;
+  box-shadow: 
+    0 12px 32px rgba(2, 6, 18, 0.6),
+    0 4px 16px rgba(137, 207, 240, 0.08),
+    inset 0 1px 1px rgba(137, 207, 240, 0.18) !important;
+  border-radius: 0.875rem !important;
+  color: #FFFFFF !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-@media (min-width: 640px) {
-  :root {
-    --cb-rich-size: 240px;
-    --cb-rich-half: 120px;
-  }
-}
-
-@media (min-width: 1024px) {
-  :root {
-    --cb-rich-size: 245px;
-    --cb-rich-half: 122.5px;
-  }
-}
-
-.cb-rich-cube-wrapper {
-  perspective: 1000px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cb-rich-cube-container {
-  width: var(--cb-rich-size);
-  height: var(--cb-rich-size);
-  perspective: 1000px;
-  margin: 0 auto;
-  transform-style: preserve-3d;
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.cb-rich-cube {
+/* 2. Interactive Liquid Glass Card with Hover Lift & Baby Blue Glow */
+.liquid-glass-interactive {
+  background: rgba(8, 19, 43, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(137, 207, 240, 0.25);
+  box-shadow: 
+    0 12px 32px rgba(2, 6, 18, 0.6),
+    0 4px 16px rgba(137, 207, 240, 0.08),
+    inset 0 1px 1px rgba(137, 207, 240, 0.18);
+  border-radius: 0.875rem;
+  color: #FFFFFF;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  animation: cb-rich-rotate 20s infinite linear;
-  will-change: transform;
-}
-
-.cb-rich-cube-paused {
-  animation-play-state: paused !important;
-}
-
-.cb-rich-cube-container:hover .cb-rich-cube {
-  animation-play-state: paused;
-}
-
-.cb-r-face {
-  position: absolute;
-  width: var(--cb-rich-size);
-  height: var(--cb-rich-size);
-  color: rgb(255, 140, 0);
-  background-color: #ff6a00;
-  background-image: linear-gradient(160deg, #ff5500 0%, #ffa834 100%);
-  opacity: 0.9;
-  border: 2px solid;
-  border-image: linear-gradient(
-    90deg,
-    rgba(180, 50, 0, 1) 0%,
-    rgba(255, 120, 0, 1) 26%,
-    rgba(255, 180, 50, 1) 85%
-  ) 1;
-  box-shadow: 0 0 100px rgba(255, 110, 0, 0.65), 0 0 40px rgba(255, 165, 0, 0.4);
-  border-radius: 4px;
   overflow: hidden;
-  user-select: none;
 }
 
-.cb-r-front {
-  transform: translateZ(var(--cb-rich-half));
-  background-color: #ff6a00;
-  background-image: linear-gradient(160deg, #ff5500 0%, #ffa834 100%);
+.liquid-glass-interactive:hover {
+  background: rgba(12, 28, 62, 0.95);
+  border-color: rgba(137, 207, 240, 0.55);
+  box-shadow: 
+    0 16px 40px rgba(2, 6, 18, 0.75),
+    0 0 20px rgba(137, 207, 240, 0.25),
+    inset 0 1px 2px rgba(186, 230, 253, 0.3);
+  transform: translateY(-2px);
 }
 
-.cb-r-back {
-  transform: rotateY(180deg) translateZ(var(--cb-rich-half));
-  background-color: #ff6a00;
-  background-image: linear-gradient(160deg, #ff5500 0%, #ffa834 100%);
+/* 3. Liquid Glass Input */
+.liquid-glass-input {
+  background: rgba(11, 26, 58, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(137, 207, 240, 0.35) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 
+    inset 0 2px 4px rgba(2, 6, 18, 0.4),
+    0 4px 14px rgba(137, 207, 240, 0.06) !important;
+  color: #FFFFFF !important;
+  transition: all 0.2s ease !important;
 }
 
-.cb-r-right {
-  transform: rotateY(90deg) translateZ(var(--cb-rich-half));
-  background-color: #ff6a00;
-  background-image: linear-gradient(160deg, #ff5500 0%, #ffa834 100%);
+.liquid-glass-input:focus-within {
+  background: rgba(14, 34, 76, 0.95) !important;
+  border-color: #89CFF0 !important;
+  box-shadow: 
+    0 0 0 3px rgba(137, 207, 240, 0.25),
+    inset 0 2px 4px rgba(2, 6, 18, 0.5) !important;
 }
 
-.cb-r-left {
-  transform: rotateY(-90deg) translateZ(var(--cb-rich-half));
-  background-color: #ff6a00;
-  background-image: linear-gradient(160deg, #ff5500 0%, #ffa834 100%);
+/* 4. Baby Blue Primary Button (Unified Clean IBM Plex Sans Font) */
+.liquid-btn-primary {
+  background: linear-gradient(135deg, #BAE6FD 0%, #89CFF0 50%, #70C0E8 100%) !important;
+  color: #040914 !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 
+    0 8px 24px rgba(137, 207, 240, 0.35),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.85) !important;
+  border-radius: 0.625rem !important;
+  font-weight: 700 !important;
+  font-family: var(--font-plex-sans), "IBM Plex Sans", sans-serif !important;
+  letter-spacing: 0.01em !important;
+  text-transform: uppercase !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.cb-r-top {
-  transform: rotateX(90deg) translateZ(var(--cb-rich-half));
-  background-color: #ff6a00;
-  background-image: linear-gradient(160deg, #ff5500 0%, #ffa834 100%);
+.liquid-btn-primary:hover {
+  background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 50%, #89CFF0 100%) !important;
+  color: #040914 !important;
+  border-color: #FFFFFF !important;
+  box-shadow: 
+    0 12px 30px rgba(137, 207, 240, 0.55),
+    0 0 20px rgba(186, 230, 253, 0.6),
+    inset 0 2px 3px rgba(255, 255, 255, 0.95) !important;
+  transform: translateY(-1.5px) scale(1.01) !important;
 }
 
-.cb-r-bottom {
-  transform: rotateX(-90deg) translateZ(var(--cb-rich-half));
-  background-color: #ff6a00;
-  background-image: linear-gradient(160deg, #ff5500 0%, #ffa834 100%);
+/* 5. Baby Blue Pill Button (Unified Clean IBM Plex Sans Font) */
+.liquid-btn-baby {
+  background: linear-gradient(135deg, #BAE6FD 0%, #89CFF0 50%, #70C0E8 100%) !important;
+  color: #040914 !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 
+    0 8px 20px rgba(137, 207, 240, 0.35),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.85) !important;
+  border-radius: 0.625rem !important;
+  font-weight: 700 !important;
+  font-family: var(--font-plex-sans), "IBM Plex Sans", sans-serif !important;
+  letter-spacing: 0.01em !important;
+  text-transform: uppercase !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-@keyframes cb-rich-rotate {
-  0% {
-    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+.liquid-btn-baby:hover {
+  background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%) !important;
+  color: #040914 !important;
+  box-shadow: 
+    0 12px 28px rgba(137, 207, 240, 0.55),
+    inset 0 2px 3px #FFFFFF !important;
+  transform: translateY(-1.5px) scale(1.01) !important;
+}
+
+/* 6. Secondary Liquid Glass Button */
+.liquid-btn-secondary {
+  background: rgba(8, 19, 43, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  color: #89CFF0 !important;
+  border: 1px solid rgba(137, 207, 240, 0.35) !important;
+  box-shadow: 
+    0 4px 16px rgba(2, 6, 18, 0.4),
+    inset 0 1px 1.5px rgba(137, 207, 240, 0.15) !important;
+  border-radius: 0.625rem !important;
+  font-weight: 700 !important;
+  font-family: var(--font-plex-sans), "IBM Plex Sans", sans-serif !important;
+  transition: all 0.2s ease !important;
+}
+
+.liquid-btn-secondary:hover {
+  background: rgba(12, 28, 62, 0.95) !important;
+  color: #FFFFFF !important;
+  border-color: #89CFF0 !important;
+  box-shadow: 
+    0 6px 20px rgba(2, 6, 18, 0.6),
+    inset 0 1px 2px rgba(137, 207, 240, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 7. Liquid Glass Badge / Pill */
+.liquid-badge {
+  background: rgba(8, 19, 43, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(137, 207, 240, 0.35) !important;
+  box-shadow: 
+    0 2px 8px rgba(2, 6, 18, 0.4),
+    inset 0 1px 1px rgba(137, 207, 240, 0.2) !important;
+  border-radius: 9999px !important;
+  color: #89CFF0 !important;
+  font-weight: 700 !important;
+  font-family: var(--font-plex-sans), "IBM Plex Sans", sans-serif !important;
+}
+
+/* Enterprise Card mapping to Liquid Glass */
+.enterprise-card,
+.enterprise-card-interactive {
+  background: rgba(8, 19, 43, 0.85) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(137, 207, 240, 0.25) !important;
+  border-radius: 0.875rem !important;
+  box-shadow: 
+    0 12px 32px rgba(2, 6, 18, 0.6),
+    0 4px 16px rgba(137, 207, 240, 0.08),
+    inset 0 1px 1px rgba(137, 207, 240, 0.18) !important;
+  color: #FFFFFF !important;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.enterprise-card-interactive:hover {
+  background: rgba(12, 28, 62, 0.95) !important;
+  border-color: rgba(137, 207, 240, 0.55) !important;
+  box-shadow: 
+    0 16px 40px rgba(2, 6, 18, 0.75),
+    0 0 20px rgba(137, 207, 240, 0.25),
+    inset 0 1px 2px rgba(186, 230, 253, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+.enterprise-panel {
+  background: rgba(8, 19, 43, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(137, 207, 240, 0.25) !important;
+  border-radius: 0.875rem !important;
+  color: #FFFFFF !important;
+}
+
+/* ==============================================================================
+   GLOBAL EXECUTIVE MIDNIGHT THEME ENFORCEMENT ACROSS ALL PAGES
+   Maps legacy light classes into high-performance translucent dark glass
+   ============================================================================== */
+.dark .bg-white\/50,
+.dark .bg-white\/60,
+.dark .bg-white\/70,
+.dark .bg-white\/75,
+.dark .bg-white\/80,
+.dark .bg-white\/85,
+.dark .bg-white\/90,
+.dark .bg-white\/95,
+.dark .bg-white,
+.dark .bg-slate-50,
+.dark .bg-gray-50,
+.dark .bg-zinc-50 {
+  background-color: rgba(8, 19, 43, 0.85) !important;
+  color: #FFFFFF !important;
+  border-color: rgba(137, 207, 240, 0.25) !important;
+}
+
+.dark .text-\[\#06122C\],
+.dark .text-\[\#03195B\],
+.dark .text-\[\#04122C\],
+.dark .text-\[\#0B192C\],
+.dark .text-slate-900,
+.dark .text-gray-900,
+.dark .text-zinc-900,
+.dark .text-neutral-900 {
+  color: #FFFFFF !important;
+}
+
+.dark .text-\[\#4A6B94\],
+.dark .text-\[\#1E3A8A\],
+.dark .text-slate-600,
+.dark .text-gray-600,
+.dark .text-zinc-500 {
+  color: #8EA6C8 !important;
+}
+
+.dark .text-\[\#1951FC\],
+.dark .text-\[\#3781FC\],
+.dark .text-\[\#0062FF\],
+.dark .text-\[\#58A6FF\],
+.dark .text-blue-600,
+.dark .text-blue-500 {
+  color: #89CFF0 !important;
+}
+
+.dark .bg-\[\#1951FC\],
+.dark .bg-\[\#3781FC\],
+.dark .bg-\[\#0062FF\],
+.dark .bg-\[\#58A6FF\],
+.dark .bg-blue-600,
+.dark .bg-blue-500 {
+  background-color: #89CFF0 !important;
+  color: #040914 !important;
+}
+
+.dark .border-\[\#1951FC\],
+.dark .border-\[\#3781FC\],
+.dark .border-\[\#58A6FF\],
+.dark .border-\[\#387DE6\],
+.dark .border-blue-600,
+.dark .border-blue-500 {
+  border-color: rgba(137, 207, 240, 0.35) !important;
+}
+
+.dark .border-white\/60,
+.dark .border-white\/70,
+.dark .border-white\/80,
+.dark .border-white\/90,
+.dark .border-white,
+.dark .border-slate-200,
+.dark .border-gray-200 {
+  border-color: rgba(137, 207, 240, 0.25) !important;
+}
+
+.dark .divide-white\/60 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-white\/80 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-white > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(137, 207, 240, 0.2) !important;
+}
+
+/* Enforce strict IBM Plex Sans on any residual font classes */
+.font-anton,
+.font-barlow-condensed,
+.font-bebas-neue,
+.font-heading,
+.heading-condensed {
+  font-family: var(--font-plex-sans), "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* Modal Scrim */
+.modal-scrim {
+  background: rgba(4, 9, 20, 0.75);
+  backdrop-filter: blur(10px);
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-  100% {
-    transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+}
+
+/* ==============================================================================
+   CodeBeast AI - Official Print & PDF Generation Styling
+   ============================================================================== */
+@media print {
+  @page {
+    margin: 12mm 10mm;
+    size: A4 portrait;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #06122C !important;
+    font-size: 11pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  aside, 
+  nav, 
+  header, 
+  button, 
+  .no-print, 
+  [role="navigation"], 
+  .fixed:not(#printable-audit-report) {
+    display: none !important;
+  }
+
+  #printable-audit-report {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .liquid-glass-card, 
+  .enterprise-card, 
+  .enterprise-panel {
+    background: #ffffff !important;
+    border: 1px solid #89CFF0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    page-break-inside: avoid !important;
+  }
+
+  table {
+    page-break-inside: auto !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  pre, code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    font-size: 8.5pt !important;
   }
 }

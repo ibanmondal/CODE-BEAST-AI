@@ -2,26 +2,19 @@
 
 import { useEffect, useState, useRef } from "react";
 import { 
-  GitBranch, 
-  ShieldAlert, 
-  Layout, 
+  ShieldCheck, 
+  Layers, 
   Zap, 
   TestTube, 
   Database, 
   Fingerprint, 
-  BrainCircuit, 
   CheckCircle2, 
   Loader2,
-  ArrowRight,
   Radio,
   Terminal,
-  Clock,
-  Sparkles,
-  Flame,
-  Activity
+  Sparkles
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { TiltCard } from "@/components/TiltCard";
+import { ScrollReveal } from "@/components/ui/motion-primitives";
 
 type NodeState = "idle" | "running" | "completed" | "error";
 
@@ -63,12 +56,10 @@ const initialPipelineState: PipelineState = {
   globalStatus: "idle"
 };
 
-export default function LiveAnimationPage() {
+export default function LiveMonitorPage() {
   const [pipeline, setPipeline] = useState<PipelineState>(initialPipelineState);
   const [wsConnected, setWsConnected] = useState<boolean>(false);
   const [logs, setLogs] = useState<EventLog[]>([]);
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const router = useRouter();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -76,18 +67,6 @@ export default function LiveAnimationPage() {
     const time = new Date().toLocaleTimeString();
     setLogs((prev) => [{ time, message, type }, ...prev.slice(0, 19)]);
   };
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (pipeline.globalStatus === "Running") {
-      interval = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [pipeline.globalStatus]);
 
   useEffect(() => {
     const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
@@ -120,9 +99,7 @@ export default function LiveAnimationPage() {
           addLog(`Synchronized initial state for ${latest.repo || 'repository'}`, "info");
         }
       })
-      .catch(() => {
-        // Silently handle offline state
-      });
+      .catch(() => {});
 
     function connectWS() {
       if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
@@ -135,12 +112,12 @@ export default function LiveAnimationPage() {
 
       ws.onopen = () => {
         setWsConnected(true);
-        addLog("Real-time WebSocket connected to 6-agent runner", "success");
+        addLog("WebSocket connected to live agent runner", "success");
       };
 
       ws.onclose = () => {
         setWsConnected(false);
-        addLog("WebSocket disconnected. Reconnecting in 2.5s...", "warning");
+        addLog("WebSocket disconnected. Retrying in 2.5s...", "warning");
         if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(connectWS, 2500);
       };
@@ -157,7 +134,6 @@ export default function LiveAnimationPage() {
             let current = { ...prev };
             
             if (data.task_id && prev.task_id && prev.task_id !== data.task_id) {
-              setElapsedSeconds(0);
               addLog(`New evaluation job queued: ${data.task_id.substring(0, 8)}`, "info");
               current = {
                 ...initialPipelineState,
@@ -179,15 +155,27 @@ export default function LiveAnimationPage() {
                 similarity_agent: "completed"
               };
               current.supervisor = "completed";
-              addLog(`Job ${data.task_id?.substring(0, 8) || ''} fully verified and completed!`, "success");
+              addLog("All LangGraph evaluator nodes & ConsJudge synthesized successfully", "success");
               return current;
             }
 
+            if (data.agent) {
+              const nodeKey = data.agent as keyof typeof current.agents;
+              if (nodeKey in current.agents) {
+                current.agents[nodeKey] = data.status === "AgentRunning" ? "running" : "completed";
+              }
+              if (data.agent === "ingestion") {
+                current.ingestion = data.status === "AgentRunning" ? "running" : "completed";
+              }
+              if (data.agent === "supervisor" || data.agent === "gemini_supervisor") {
+                current.supervisor = data.status === "AgentRunning" ? "running" : "completed";
+              }
+              addLog(`Node '${data.agent}' transitioned to state: ${data.status}`, "agent");
+            }
+            
             return current;
           });
-        } catch (err) {
-          console.error("Failed to parse websocket message", err);
-        }
+        } catch (e) {}
       };
     }
 
@@ -199,177 +187,177 @@ export default function LiveAnimationPage() {
     };
   }, []);
 
-  const renderNode = (
-    title: string, 
-    state: NodeState, 
-    Icon: any, 
-    subtitle?: string,
-    isLarge: boolean = false
-  ) => {
-    let borderClass = "border-[#E07A48]/20 bg-[#0E0602]";
-    let textClass = "text-amber-200/50";
-    let iconAnim = "";
-
-    if (state === "running") {
-      borderClass = "border-[#FF8C42] bg-[#29130A] shadow-[0_0_25px_rgba(255,140,66,0.4)] ring-1 ring-[#FF8C42]";
-      textClass = "text-[#FF8C42]";
-      iconAnim = "animate-pulse";
-    } else if (state === "completed") {
-      borderClass = "border-emerald-500/80 bg-emerald-950/20 shadow-[0_0_15px_rgba(34,197,94,0.25)]";
-      textClass = "text-emerald-400";
+  const getNodeBadge = (state: NodeState) => {
+    switch (state) {
+      case "running":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold bg-[#89CFF0]/15 text-[#89CFF0] border border-[#89CFF0]/30 rounded-full shadow-xs">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#89CFF0]" />
+            Running
+          </span>
+        );
+      case "completed":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-400/30 rounded-full shadow-xs">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            Verified
+          </span>
+        );
+      case "error":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-400/30 rounded-full shadow-xs">
+            Error
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium bg-[#08132B] text-[#8EA6C8] border border-[#89CFF0]/20 rounded-full shadow-xs">
+            Standby
+          </span>
+        );
     }
-
-    return (
-      <TiltCard variant="secondary" className={`relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-500 ${borderClass} ${isLarge ? 'w-64 h-32' : 'w-48 h-32'}`}>
-        <Icon className={`w-8 h-8 mb-2 ${textClass} ${iconAnim}`} />
-        <span className={`text-xs font-bold text-center uppercase tracking-wider font-mono ${state === 'idle' ? 'text-amber-200/50' : 'text-[#D4BC9A]'}`}>{title}</span>
-        {subtitle && <span className="text-[10px] text-amber-200/40 mt-1 font-mono">{subtitle}</span>}
-        {state === "running" && (
-          <div className="absolute top-2.5 right-2.5">
-            <Loader2 className="w-4 h-4 text-[#FF8C42] animate-spin" />
-          </div>
-        )}
-        {state === "completed" && (
-          <div className="absolute top-2.5 right-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          </div>
-        )}
-      </TiltCard>
-    );
   };
 
+  const agentNodesList = [
+    { id: "security_agent", name: "AutoReview Security", tech: "ACM FSE '25", icon: ShieldCheck, state: pipeline.agents.security_agent },
+    { id: "architecture_agent", name: "Architecture & SOLID", tech: "Llama 3.3 70B", icon: Layers, state: pipeline.agents.architecture_agent },
+    { id: "performance_agent", name: "Resource Performance", tech: "Llama 3.3 70B", icon: Zap, state: pipeline.agents.performance_agent },
+    { id: "testing_agent", name: "Testing & CI Flakes", tech: "Llama 3.1 8B", icon: TestTube, state: pipeline.agents.testing_agent },
+    { id: "database_agent", name: "Database & Schema", tech: "Gemini Flash", icon: Database, state: pipeline.agents.database_agent },
+    { id: "similarity_agent", name: "AST Neural Clones", tech: "CodeBERT FAISS", icon: Fingerprint, state: pipeline.agents.similarity_agent },
+  ];
+
   return (
-    <div className="space-y-12 sm:space-y-14 max-w-[1700px] mx-auto pb-20 px-3 sm:px-6 text-[#D4BC9A]">
+    <div className="space-y-8 pb-12 text-white">
       
-      {/* SECTION 1: Page Header */}
-      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-[#E07A48]/20 pb-6">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E07A48]/15 border border-[#E07A48]/30 text-[#FF8C42] text-xs font-semibold tracking-wide mb-3">
-            <Activity className="w-3.5 h-3.5 text-[#FF8C42]" />
-            <span>Real-Time WebSocket Stream</span>
+      {/* 1. Page Header */}
+      <ScrollReveal direction="down" distance={15}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#08132B] border border-[#89CFF0]/30 text-[#89CFF0] text-[11px] font-semibold tracking-wider uppercase rounded-full shadow-xs mb-2">
+              <Radio className="w-3.5 h-3.5" />
+              Live Execution Telemetry
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Agent Swarm Real-Time Monitor
+            </h1>
+            <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1">
+              Live telemetry stream tracking parallel LangGraph evaluator nodes and supervisor consensus.
+            </p>
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-[#D4BC9A] tracking-tight uppercase leading-none font-normal">
-            LIVE <span className="text-gradient-copper">NEURAL TOPOLOGY MESH</span>
-          </h1>
-          <p className="text-amber-100/70 text-sm mt-2 max-w-xl font-normal leading-relaxed">
-            Real-time 3D telemetry streaming multi-agent execution states and ConsJudge synthesis over WebSockets.
+
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-full border shadow-xs ${
+              wsConnected 
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-400/30' 
+                : 'bg-amber-500/10 text-amber-300 border-amber-400/30'
+            }`}>
+              <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400' : 'bg-amber-400'} animate-ping`} />
+              <span>{wsConnected ? "Connected (Port 8000)" : "Reconnecting..."}</span>
+            </span>
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* 2. Pipeline Stage Overview Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Stage 1: Ingestion */}
+        <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8EA6C8]">Phase 01</span>
+            {getNodeBadge(pipeline.ingestion)}
+          </div>
+          <h3 className="text-base font-bold text-white">Git Tree & Context Ingestion</h3>
+          <p className="text-xs text-[#8EA6C8] leading-relaxed">
+            LibGit2 shallow clone, AST normalized extraction, and repository metadata collection.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 self-start sm:self-auto">
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-semibold font-mono border transition-all ${
-            wsConnected 
-              ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
-              : 'bg-amber-950/40 text-amber-300 border-amber-500/40'
-          }`}>
-            <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400 animate-ping' : 'bg-amber-400 animate-pulse'}`} />
-            <Radio className="w-3.5 h-3.5" />
-            <span>{wsConnected ? 'LIVE: WS 8000' : 'RECONNECTING...'}</span>
+        {/* Stage 2: Parallel Evaluator Swarm */}
+        <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8EA6C8]">Phase 02</span>
+            <span className="text-xs font-semibold px-3 py-1 bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 rounded-full shadow-xs">
+              6 Parallel Nodes
+            </span>
           </div>
+          <h3 className="text-base font-bold text-white">LangGraph Parallel Fan-Out</h3>
+          <p className="text-xs text-[#8EA6C8] leading-relaxed">
+            Concurrent execution of Security, Architecture, Performance, Testing, Database, and Clone analysis.
+          </p>
+        </div>
 
-          {pipeline.globalStatus === "Running" && (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-mono bg-[#28130B] text-[#FF8C42] border border-[#E07A48]/30">
-              <Clock className="w-3.5 h-3.5 animate-spin" />
-              <span>{elapsedSeconds}s elapsed</span>
+        {/* Stage 3: ConsJudge Consensus */}
+        <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8EA6C8]">Phase 03</span>
+            {getNodeBadge(pipeline.supervisor)}
+          </div>
+          <h3 className="text-base font-bold text-white">ConsJudge Consensus Arbiter</h3>
+          <p className="text-xs text-[#8EA6C8] leading-relaxed">
+            Dual concurrent supervisor passes bounding variance and issuing verified executive audit reports.
+          </p>
+        </div>
+
+      </div>
+
+      {/* 3. Six Parallel Evaluator Nodes Cards */}
+      <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
+        <h2 className="text-base font-bold text-white">
+          Parallel Evaluator Node Status
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {agentNodesList.map((node) => (
+            <div 
+              key={node.id}
+              className="p-4 border border-[#89CFF0]/20 bg-[#08132B]/80 backdrop-blur-md rounded-2xl flex items-center justify-between gap-3 hover:border-[#89CFF0]/50 transition-colors shadow-xs"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-[#08132B] to-[#0E2248] border border-[#89CFF0]/30 text-[#89CFF0] flex items-center justify-center shrink-0 shadow-xs">
+                  <node.icon className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold text-white truncate">{node.name}</h4>
+                  <span className="text-[11px] text-[#8EA6C8] block truncate font-mono">{node.tech}</span>
+                </div>
+              </div>
+              <div className="shrink-0">
+                {getNodeBadge(node.state)}
+              </div>
             </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 4. Live Event Log Terminal */}
+      <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Terminal className="w-4 h-4 text-[#89CFF0]" />
+            Live Execution Telemetry Stream
+          </h3>
+          <span className="text-xs text-[#8EA6C8] font-mono">
+            {logs.length} events logged
+          </span>
+        </div>
+
+        <div className="p-4 bg-[#040914] text-white rounded-2xl font-mono text-xs max-h-56 overflow-y-auto space-y-2 leading-relaxed border border-[#89CFF0]/25 shadow-inner">
+          {logs.length === 0 ? (
+            <span className="text-[#8EA6C8]">Awaiting evaluation events...</span>
+          ) : (
+            logs.map((log, idx) => (
+              <div key={idx} className="flex items-start gap-2">
+                <span className="text-[#89CFF0] shrink-0">[{log.time}]</span>
+                <span className={log.type === "success" ? "text-emerald-400 font-semibold" : log.type === "warning" ? "text-amber-300 font-semibold" : "text-white"}>
+                  {log.message}
+                </span>
+              </div>
+            ))
           )}
         </div>
-      </section>
-      
-      {/* SECTION 2: Pipeline Visualizer */}
-      <section>
-        {!pipeline.task_id ? (
-          <TiltCard variant="secondary" className="flex flex-col items-center justify-center h-88 border border-dashed border-[#E07A48]/30 rounded-3xl p-8 text-center">
-            <Loader2 className="w-10 h-10 text-[#FF8C42] animate-spin mb-4" />
-            <h2 className="font-display text-2xl text-[#D4BC9A] tracking-wider uppercase font-normal">WAITING FOR EVALUATION RUN...</h2>
-            <p className="text-xs text-amber-200/50 mt-2 max-w-md">
-              Trigger a repository evaluation from the <strong className="text-[#FF8C42]">Analysis</strong> page to stream live 3D neural mesh telemetry.
-            </p>
-          </TiltCard>
-        ) : (
-          <div className="flex flex-col items-center w-full max-w-6xl mx-auto py-6 space-y-10 relative">
-            
-            <div className="text-center space-y-2">
-              <h2 className="font-mono text-xl font-bold text-[#D4BC9A] tracking-tight">{pipeline.repo_url}</h2>
-              <div className="flex items-center justify-center gap-2">
-                <span className="px-3 py-1 bg-[#28130B] text-[#FF8C42] rounded-full text-xs font-mono border border-[#E07A48]/30">
-                  JOB ID: {pipeline.task_id?.split('-')[0]}...
-                </span>
-                <span className="px-3 py-1 rounded-full text-xs font-bold font-mono uppercase bg-emerald-950/40 text-emerald-400 border border-emerald-500/40">
-                  {pipeline.globalStatus}
-                </span>
-              </div>
-            </div>
-
-            {/* Stage 1: Ingestion */}
-            <div className="flex flex-col items-center relative z-10">
-              {renderNode("GitHub Ingestion", pipeline.ingestion, GitBranch, "Clone & FAISS Vectorize", true)}
-            </div>
-
-            {/* Vertical line connecting Stage 1 to Stage 2 */}
-            <div className="w-1 h-12 bg-[#E07A48]/20 relative rounded-full overflow-hidden">
-              <div className="absolute inset-0 bg-[#FF8C42] shadow-[0_0_15px_#FF8C42]" />
-            </div>
-
-            {/* Stage 2: Parallel 6-Agent Execution Layer */}
-            <TiltCard variant="hero" className="w-full p-8 relative shadow-2xl">
-              <div className="absolute -top-3.5 left-1/2 transform -translate-x-1/2 bg-[#0D0805] border border-[#E07A48]/40 px-5 py-1 rounded-full text-xs font-mono font-bold text-[#FF8C42] uppercase tracking-wider">
-                6-Agent Parallel Execution Layer
-              </div>
-              
-              <div className="flex flex-wrap justify-center gap-6 mt-4">
-                {renderNode("Security Agent", pipeline.agents.security_agent, ShieldAlert, "AutoReview CWE")}
-                {renderNode("Architecture Agent", pipeline.agents.architecture_agent, Layout, "SOLID & Layering")}
-                {renderNode("Performance Agent", pipeline.agents.performance_agent, Zap, "Bundle & Cache")}
-                {renderNode("Testing Agent", pipeline.agents.testing_agent, TestTube, "CI & Flake Risk")}
-                {renderNode("Database Agent", pipeline.agents.database_agent, Database, "Schema Normalization")}
-                {renderNode("Similarity Agent", pipeline.agents.similarity_agent, Fingerprint, "AST & CodeBERT")}
-              </div>
-            </TiltCard>
-
-            {/* Vertical line connecting Stage 2 to Stage 3 */}
-            <div className="w-1 h-12 bg-[#E07A48]/20 relative rounded-full overflow-hidden">
-              <div className="absolute inset-0 bg-[#FF8C42] shadow-[0_0_15px_#FF8C42]" />
-            </div>
-
-            {/* Stage 3: Supervisor */}
-            <div className="flex flex-col items-center relative z-10">
-              {renderNode("Executive Supervisor", pipeline.supervisor, BrainCircuit, "ConsJudge Multi-Pass", true)}
-            </div>
-
-            {/* Real-time WebSocket Event Log Stream */}
-            <TiltCard variant="primary" className="w-full mt-8 p-6 sm:p-7 shadow-2xl">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#E07A48]/20">
-                <div className="flex items-center gap-2 text-xs font-bold text-amber-100 uppercase tracking-wider font-mono">
-                  <Terminal className="w-4 h-4 text-[#FF8C42]" />
-                  <span>Live Event Stream (WebSockets / Redis)</span>
-                </div>
-                <span className="text-[11px] text-amber-200/50 font-mono">channel: job_updates</span>
-              </div>
-              
-              <div className="space-y-2 font-mono text-xs max-h-48 overflow-y-auto pr-2">
-                {logs.length === 0 ? (
-                  <div className="text-amber-200/40 italic">Listening for live pipeline execution events...</div>
-                ) : (
-                  logs.map((log, idx) => (
-                    <div key={idx} className="flex items-start gap-3 text-amber-100/80">
-                      <span className="text-amber-200/40 shrink-0">[{log.time}]</span>
-                      <span className={
-                        log.type === "success" ? "text-emerald-400" :
-                        log.type === "warning" ? "text-amber-300" :
-                        log.type === "agent" ? "text-[#FF8C42]" : "text-amber-100/80"
-                      }>
-                        {log.message}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </TiltCard>
-
-          </div>
-        )}
-      </section>
+      </div>
 
     </div>
   );

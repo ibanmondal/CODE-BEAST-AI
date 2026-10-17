@@ -1,60 +1,77 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import React from "react";
+import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
-import { AtmosphericBackground3D } from "@/components/AtmosphericBackground3D";
-import { BeastIntroOverlay } from "@/components/BeastIntroOverlay";
+import { ToastProvider } from "@/components/NotificationToast";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
-  const [showIntro, setShowIntro] = useState(false);
-  const [isIntroActive, setIsIntroActive] = useState(true);
-
-  useEffect(() => {
-    // Enforce dark mode: reset any document CSS filter inversion
-    document.documentElement.style.filter = "none";
-  }, []);
-
-  const handleStartDissolve = () => {
-    setIsIntroActive(false);
-  };
-
-  const handleReplayIntro = () => {
-    setIsIntroActive(true);
-    setShowIntro(true);
-  };
-
   return (
-    <div className="min-h-screen w-full flex flex-col bg-[#0D0704] text-[#D4BC9A] relative font-sans selection:bg-amber-500/30 overflow-x-hidden">
-      {/* 1. Volumetric Atmospheric 3D Canvas Background (Preserved 100% Untouched) */}
-      <AtmosphericBackground3D />
+    <ToastProvider>
+      <div className="min-h-screen flex bg-[#040914] text-white relative overflow-x-hidden selection:bg-[#58A6FF]/30 selection:text-[#89CFF0]">
+        
+        {/* Subtle Cyberpunk Electric Ambient Background Lights */}
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+          {/* Top-Right Glowing Electric Blue Halo */}
+          <div className="absolute -top-40 right-1/4 w-[42rem] h-[42rem] rounded-full bg-gradient-to-br from-[#1E50AA]/20 via-[#0A1A3A]/25 to-transparent blur-3xl opacity-70" />
+          
+          {/* Center-Right Ambient Cyan Glow */}
+          <div className="absolute top-1/3 -right-32 w-[36rem] h-[36rem] rounded-full bg-gradient-to-bl from-[#388BFD]/15 via-[#08142C]/20 to-transparent blur-3xl opacity-60" />
+          
+          {/* Bottom-Left Ambient Deep Navy Glow */}
+          <div className="absolute -bottom-40 left-1/4 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-[#1E50AA]/15 via-transparent to-transparent blur-3xl opacity-50" />
+        </div>
 
-      {/* 2. Cinematic 5-Phase Beast Scratch Intro Overlay */}
-      <BeastIntroOverlay
-        forceRun={showIntro}
-        onStartDissolve={handleStartDissolve}
-        onComplete={() => setIsIntroActive(false)}
-      />
+        {/* Global SVG Glass Filter from Reference Component */}
+        <svg className="hidden" aria-hidden="true">
+          <defs>
+            <filter
+              id="container-glass"
+              x="0%"
+              y="0%"
+              width="100%"
+              height="100%"
+              colorInterpolationFilters="sRGB"
+            >
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="0.05 0.05"
+                numOctaves="1"
+                seed="1"
+                result="turbulence"
+              />
+              <feGaussianBlur in="turbulence" stdDeviation="2" result="blurredNoise" />
+              <feDisplacementMap
+                in="SourceGraphic"
+                in2="blurredNoise"
+                scale="70"
+                xChannelSelector="R"
+                yChannelSelector="B"
+                result="displaced"
+              />
+              <feGaussianBlur in="displaced" stdDeviation="4" result="finalBlur" />
+              <feComposite in="finalBlur" in2="finalBlur" operator="over" />
+            </filter>
+          </defs>
+        </svg>
 
-      {/* 3. Main Full-Width Website Wrapper with Seamless Cinematic Crossfade Entrance */}
-      <motion.div
-        className="min-h-screen w-full flex flex-col relative z-10"
-        initial={{ opacity: 0, y: 12, scale: 0.99 }}
-        animate={{
-          opacity: isIntroActive ? 0 : 1,
-          y: isIntroActive ? 12 : 0,
-          scale: isIntroActive ? 0.99 : 1.0,
-        }}
-        transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
-      >
-        {/* Top Header Navigation */}
-        <Header onReplayIntro={handleReplayIntro} />
+        {/* Permanent Left-Hand Navigation Sidebar with Frosted Liquid Glass */}
+        <div className="relative z-40">
+          <Sidebar />
+        </div>
 
-        {/* Main Body Container: Fully Expanded, Responsive & Centered */}
-        <main className="flex-1 w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
-          {children}
-        </main>
-      </motion.div>
-    </div>
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 relative z-10">
+          <Header />
+          
+          {/* Main Content Container */}
+          <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="w-full">
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
+    </ToastProvider>
   );
 }

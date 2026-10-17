@@ -1,9 +1,18 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Mail, Shield, UserPlus, Trash2, Search, X, Sparkles, Users } from 'lucide-react';
-import { TiltCard } from '@/components/TiltCard';
+import { 
+  Mail, 
+  UserPlus, 
+  Trash2, 
+  Search, 
+  X, 
+  Users,
+  Sparkles
+} from 'lucide-react';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ScrollReveal } from '@/components/ui/motion-primitives';
 
 export default function JudgesPage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -53,58 +62,62 @@ export default function JudgesPage() {
   });
 
   return (
-    <div className="space-y-12 sm:space-y-14 max-w-[1700px] mx-auto pb-20 px-3 sm:px-6 text-[#D4BC9A]">
+    <div className="space-y-8 pb-12 text-white">
       
-      {/* SECTION 1: Page Header */}
-      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-[#E07A48]/20 pb-6">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E07A48]/15 border border-[#E07A48]/30 text-[#FF8C42] text-xs font-semibold tracking-wide mb-3">
-            <Users className="w-3.5 h-3.5" />
-            <span>Committee Governance</span>
-          </div>
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-[#D4BC9A] tracking-tight uppercase leading-none font-normal">
-            JUDGE <span className="text-gradient-copper">DIRECTORY</span>
-          </h1>
-          <p className="text-amber-100/70 text-sm mt-2 max-w-xl font-normal leading-relaxed">
-            Manage evaluation committee members, domain roles, consensus overrides, and platform permissions.
-          </p>
-        </div>
-
-        <CodeBeastLiquidButton 
-          onClick={() => setIsInviteModalOpen(true)}
-          variant="primary"
-          size="md"
-          label="INVITE JUDGE"
-          hasArrow
-          icon={<UserPlus className="w-4 h-4" />}
-          className="self-start sm:self-auto shrink-0"
-        />
-      </section>
-
-      {/* SECTION 2: Filter Toolbar & Directory Table */}
-      <section>
-        <TiltCard variant="primary" className="p-0 overflow-hidden shadow-2xl">
-          <div className="p-5 sm:p-6 border-b border-[#E07A48]/15 flex flex-col sm:flex-row gap-4 items-center justify-between bg-[#120703]">
-            <div className="relative w-full sm:w-88">
-              <Search className="w-4 h-4 text-amber-200/50 absolute left-4 top-1/2 -translate-y-1/2" />
-              <input 
-                type="text" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search judges by name, email, or role..." 
-                className="bg-[#0E0602] border border-[#E07A48]/25 text-xs text-[#D4BC9A] rounded-2xl pl-11 pr-4 py-2.5 w-full outline-none focus:border-[#FF8C42] placeholder-amber-200/30 font-mono shadow-inner"
-              />
+      {/* 1. Page Header */}
+      <ScrollReveal direction="down" distance={15}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#08132B] border border-[#89CFF0]/30 text-[#89CFF0] text-[11px] font-semibold tracking-wider uppercase rounded-full shadow-xs mb-2">
+              <Users className="w-3.5 h-3.5" />
+              Consensus Committee Administration
             </div>
-            
-            <div className="flex flex-wrap gap-2 text-xs">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Evaluation Judges Directory
+            </h1>
+            <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1">
+              Manage evaluation committee members, technical judges, and domain scoring permissions.
+            </p>
+          </div>
+
+          <CodeBeastLiquidButton 
+            onClick={() => setIsInviteModalOpen(true)}
+            variant="primary"
+            size="sm"
+            label="Invite Evaluator"
+            icon={<UserPlus className="w-4 h-4" />}
+          />
+        </div>
+      </ScrollReveal>
+
+      {/* 2. Directory Toolbar & Table Card */}
+      <ScrollReveal direction="up" distance={20} delay={0.1}>
+        <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
+          
+          {/* Filter and Search Bar */}
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between pb-4 border-b border-[#89CFF0]/20">
+            <div className="relative w-full sm:w-80">
+              <div className="flex items-center gap-2.5 px-4 py-2 bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 rounded-full focus-within:border-[#89CFF0] focus-within:ring-2 focus-within:ring-[#89CFF0]/20 transition-all shadow-inner">
+                <Search className="w-4 h-4 text-[#8EA6C8] shrink-0" />
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search judges by name or email..." 
+                  className="w-full bg-transparent border-none text-xs text-white placeholder-[#8EA6C8] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs flex-wrap">
               {['All', 'Active', 'Invited', 'Offline'].map((st) => (
                 <button 
                   key={st}
                   onClick={() => setFilter(st)}
-                  className={`px-3.5 py-1.5 rounded-xl transition-all font-bold text-xs uppercase tracking-wider font-mono ${
+                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 ${
                     filter === st 
-                      ? 'bg-[#E07A48] text-[#0D0805] font-extrabold shadow-[0_0_12px_rgba(224,122,72,0.4)]' 
-                      : 'text-amber-100/60 bg-[#0E0602] border border-[#E07A48]/15 hover:bg-[#1A0B05]'
+                      ? 'liquid-btn-primary text-[#040914] shadow-xs' 
+                      : 'bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 shadow-xs'
                   }`}
                 >
                   {st} ({st === 'All' ? judges.length : judges.filter(j => j.status === st).length})
@@ -113,142 +126,155 @@ export default function JudgesPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[#140803] border-b border-[#E07A48]/20 text-xs font-mono font-bold text-[#FF8C42] uppercase tracking-wider">
-                  <th className="p-5">Judge Profile</th>
-                  <th className="p-5">Role Access</th>
-                  <th className="p-5">Status</th>
-                  <th className="p-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E07A48]/10 text-xs">
-                {filteredJudges.map((judge) => (
-                  <tr key={judge.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="p-5">
-                      <div className="flex items-center gap-3.5">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#E07A48] to-[#FF8C42] text-[#0D0805] flex items-center justify-center font-bold text-sm font-mono shadow-[0_0_15px_rgba(224,122,72,0.4)] shrink-0">
-                          {judge.avatar}
-                        </div>
-                        <div>
-                          <h4 className="text-[#D4BC9A] font-bold text-sm font-mono">{judge.name}</h4>
-                          <p className="text-amber-200/50 text-xs flex items-center gap-1.5 font-mono mt-0.5">
-                            <Mail className="w-3 h-3 text-[#FF8C42]" /> {judge.email}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-5">
-                      <div className="flex items-center gap-2 text-xs text-amber-100/80 font-mono font-semibold">
-                        <Shield className="w-4 h-4 text-[#FF8C42]" />
-                        <span>{judge.role}</span>
-                      </div>
-                    </td>
-                    <td className="p-5">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 font-mono ${
-                        judge.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                        judge.status === 'Invited' ? 'bg-[#E07A48]/20 text-[#FF8C42] border border-[#E07A48]/30' :
-                        'bg-[#261208] text-amber-200/40 border border-[#E07A48]/20'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          judge.status === 'Active' ? 'bg-emerald-400' :
-                          judge.status === 'Invited' ? 'bg-[#FF8C42]' : 'bg-amber-200/30'
-                        }`} />
-                        {judge.status}
-                      </span>
-                    </td>
-                    <td className="p-5 text-right">
-                      <button 
-                        onClick={() => handleDeleteJudge(judge.id)}
-                        className="text-amber-200/40 hover:text-red-400 p-2 transition-colors rounded-xl hover:bg-red-500/10"
-                        title="Remove Judge"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
+          {/* Directory Table */}
+          <div className="border border-[#89CFF0]/20 rounded-2xl overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#08132B]/80 border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold">
+                  <tr>
+                    <th className="py-3 px-4">Evaluator Profile</th>
+                    <th className="py-3 px-4">Role Authority</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </TiltCard>
-      </section>
-
-      {/* Invite Modal */}
-      {isInviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#070402]/90 backdrop-blur-md">
-          <TiltCard variant="hero" className="w-full max-w-md p-7 shadow-2xl relative">
-            <button 
-              onClick={() => setIsInviteModalOpen(false)}
-              className="absolute top-5 right-5 text-amber-200/40 hover:text-[#D4BC9A]"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="mb-6">
-              <h3 className="font-display text-2xl text-[#D4BC9A] uppercase tracking-wider font-normal">Invite Evaluator</h3>
-              <p className="text-xs text-amber-100/60 mt-1 font-normal">Send an invitation to join the hackathon evaluation committee.</p>
+                </thead>
+                <tbody className="divide-y divide-[#89CFF0]/15">
+                  {filteredJudges.map((judge) => (
+                    <tr key={judge.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-b from-[#08132B] to-[#0E2248] border border-[#89CFF0]/30 text-[#89CFF0] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                            {judge.avatar}
+                          </div>
+                          <div>
+                            <span className="font-bold text-white block">{judge.name}</span>
+                            <span className="text-[11px] text-[#8EA6C8] flex items-center gap-1 mt-0.5">
+                              <Mail className="w-3 h-3 text-[#8EA6C8]" /> {judge.email}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="font-semibold text-white">{judge.role}</span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold rounded-full border shadow-xs ${
+                          judge.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-400/30' :
+                          judge.status === 'Invited' ? 'bg-[#89CFF0]/15 text-[#89CFF0] border-[#89CFF0]/30' :
+                          'bg-slate-500/10 text-slate-400 border-slate-400/30'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            judge.status === 'Active' ? 'bg-emerald-400' :
+                            judge.status === 'Invited' ? 'bg-[#89CFF0]' : 'bg-slate-400'
+                          }`} />
+                          {judge.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button 
+                          onClick={() => handleDeleteJudge(judge.id)}
+                          className="text-[#8EA6C8] hover:text-rose-400 p-2 rounded-full hover:bg-white/10 transition-colors"
+                          title="Remove Evaluator"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          </div>
 
-            <form onSubmit={handleAddJudge} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-mono font-bold text-amber-200/60 block">Full Name</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="e.g. Dr. Jane Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-[#0E0602] border border-[#E07A48]/30 rounded-xl px-4 py-2.5 text-xs text-[#D4BC9A] focus:outline-none focus:border-[#FF8C42] font-mono"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-mono font-bold text-amber-200/60 block">Email Address</label>
-                <input 
-                  type="email" 
-                  required
-                  placeholder="e.g. jane@institution.edu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[#0E0602] border border-[#E07A48]/30 rounded-xl px-4 py-2.5 text-xs text-[#D4BC9A] focus:outline-none focus:border-[#FF8C42] font-mono"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-mono font-bold text-amber-200/60 block">Committee Role</label>
-                <select 
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full bg-[#0E0602] border border-[#E07A48]/30 rounded-xl px-3 py-2.5 text-xs text-[#D4BC9A] focus:outline-none focus:border-[#FF8C42] font-mono"
-                >
-                  <option value="Head Judge">Head Judge (Supervisor Override)</option>
-                  <option value="Technical Judge">Technical Judge (Domain Reviewer)</option>
-                  <option value="Observer">Observer (Read-Only Telemetry)</option>
-                </select>
-              </div>
-
-              <div className="pt-4 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsInviteModalOpen(false)}
-                  className="px-4 py-2 text-xs font-mono text-amber-200/60 hover:text-[#D4BC9A]"
-                >
-                  Cancel
-                </button>
-                <CodeBeastLiquidButton
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  label="SEND INVITATION"
-                  hasArrow
-                />
-              </div>
-            </form>
-          </TiltCard>
         </div>
-      )}
+      </ScrollReveal>
+
+      {/* Modal Dialog for Inviting Judge */}
+      <AnimatePresence>
+        {isInviteModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#040914]/80 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="liquid-glass-card rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-[0_24px_60px_rgba(2,6,18,0.9)] space-y-5 border border-[#89CFF0]/30"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-[#89CFF0]/20">
+                <h3 className="text-base font-bold text-white">Invite Technical Evaluator</h3>
+                <button 
+                  onClick={() => setIsInviteModalOpen(false)}
+                  className="text-[#8EA6C8] hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddJudge} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-white font-semibold mb-1.5">Full Name</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="e.g. Dr. Priya Sharma"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white font-semibold mb-1.5">Email Address</label>
+                  <input 
+                    type="email" 
+                    required
+                    placeholder="priya@domain.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white font-semibold mb-1.5">Evaluation Role</label>
+                  <select 
+                    value={role} 
+                    onChange={(e) => setRole(e.target.value)}
+                    className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
+                  >
+                    <option value="Head Judge">Head Judge (Consensus Override)</option>
+                    <option value="Technical Judge">Technical Judge</option>
+                    <option value="Security Specialist">Security Specialist</option>
+                    <option value="Observer">Observer</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#89CFF0]/20">
+                  <button
+                    type="button"
+                    onClick={() => setIsInviteModalOpen(false)}
+                    className="px-4 py-2 text-xs font-semibold bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 rounded-full shadow-xs transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <CodeBeastLiquidButton
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    label="Send Invitation"
+                  />
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

@@ -108,7 +108,7 @@ class SimilarityEngine:
                     # Filter out trivial functions (< 3 lines or < 40 chars)
                     meaningful = [f for f in funcs if len(f.strip().splitlines()) >= 3 and len(f.strip()) >= 40]
                     all_functions.extend(meaningful)
-                    if len(all_functions) > 60:
+                    if len(all_functions) >= 20:
                         break
                     
         if not all_functions:

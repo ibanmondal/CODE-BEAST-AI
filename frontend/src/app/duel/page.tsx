@@ -4,23 +4,20 @@ import React, { useState, useEffect } from "react";
 import { 
   Swords, 
   Trophy, 
-  ShieldAlert, 
-  Layout, 
+  ShieldCheck, 
   Zap, 
   TestTube, 
   Database, 
   Fingerprint, 
-  Sparkles, 
   AlertTriangle, 
   CheckCircle2, 
   Crown, 
   Scale, 
-  Flame,
-  Printer,
-  RefreshCw,
-  Layers,
+  Printer, 
+  Layers, 
   ChevronRight,
-  ShieldCheck
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 import { 
   Radar, 
@@ -32,8 +29,8 @@ import {
   Legend,
   Tooltip
 } from "recharts";
-import { TiltCard } from "@/components/TiltCard";
 import { CodeBeastLiquidButton } from "@/components/ui/codebeast-liquid-button";
+import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/motion-primitives";
 
 interface MetricDelta {
   category: string;
@@ -111,7 +108,7 @@ export default function RepoDuelPage() {
           }
         }
       })
-      .catch(e => console.log("Failed to fetch repository history:", e));
+      .catch(() => {});
   }, []);
 
   const handleStartDuel = async () => {
@@ -153,306 +150,298 @@ export default function RepoDuelPage() {
   };
 
   return (
-    <div className="space-y-12 sm:space-y-14 max-w-[1700px] mx-auto pb-20 px-3 sm:px-6 text-[#D4BC9A]">
+    <div className="space-y-8 pb-12 text-white">
       
-      {/* SECTION 1: Header */}
-      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E07A48]/20 pb-6">
+      {/* 1. Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E07A48]/15 border border-[#E07A48]/30 text-[#FF8C42] text-xs font-semibold tracking-wide mb-3">
-            <Flame className="w-3.5 h-3.5" />
-            <span>Head-to-Head Evaluation Stage</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#08132B] border border-[#89CFF0]/30 text-[#89CFF0] text-[11px] font-semibold tracking-wider uppercase rounded-full shadow-xs mb-2">
+            <Swords className="w-3.5 h-3.5" />
+            Competitive Evaluation Arena
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-[#D4BC9A] tracking-tight uppercase leading-none font-normal">
-            REPO DUEL <span className="text-gradient-copper">(A/B ARENA)</span>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Repository Duel Arena (A/B Benchmark)
           </h1>
-          <p className="text-amber-100/70 text-sm mt-2 max-w-2xl font-normal leading-relaxed">
-            Direct side-by-side codebase confrontation with comparative multi-agent telemetry, AST neural clone detection, and an AI Executive Jury Verdict.
+          <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1">
+            Head-to-head multi-agent evaluation comparing code quality, architectural modularity, and clone overlap.
           </p>
         </div>
 
         {duelResult && (
           <CodeBeastLiquidButton
             onClick={() => window.print()}
-            variant="secondary"
+            variant="outline"
             size="sm"
-            label="EXPORT PDF"
-            icon={<Printer className="w-4 h-4 text-[#FF8C42]" />}
-            className="self-start sm:self-auto shrink-0"
+            label="Print / Export Report"
+            icon={<Printer className="w-4 h-4 text-[#89CFF0]" />}
           />
         )}
-      </section>
+      </div>
 
-      {/* SECTION 2: Matchmaker Selection Stage */}
-      <section>
-        <TiltCard variant="hero" className="p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#E07A48]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FF8C42]/10 rounded-full blur-3xl pointer-events-none" />
-
+      {/* 2. Matchmaker Selection Card with Liquid Glass */}
+      <ScrollReveal distance={16} duration={0.45}>
+        <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(137,207,240,0.1)] relative border border-[#89CFF0]/25">
           <div className="grid grid-cols-1 lg:grid-cols-11 gap-6 items-center">
             
-            {/* Contender A */}
-            <TiltCard variant="secondary" className="lg:col-span-5 p-5 shadow-lg">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#FF8C42] flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#FF8C42] animate-ping" /> Contender A (Alpha)
+            {/* Contender Alpha */}
+            <div className="lg:col-span-5 p-5 bg-[#08132B]/80 backdrop-blur-md border border-[#89CFF0]/25 rounded-2xl space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#89CFF0] flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#89CFF0]" /> Contender Alpha
                 </span>
-                <span className="text-[11px] text-amber-200/50 font-mono">Team Alpha</span>
+                <span className="text-[11px] text-[#8EA6C8]">Primary Repository</span>
               </div>
 
               {historyList.length > 0 && (
-                <div className="mb-3">
-                  <label className="text-[11px] text-amber-200/60 font-mono block mb-1">Quick Select from Analyzed Repos:</label>
+                <div>
+                  <label className="text-[11px] font-semibold text-white block mb-1">Select from analyzed repositories:</label>
                   <select 
-                    className="w-full bg-[#140803] border border-[#E07A48]/25 rounded-xl px-3 py-2 text-xs text-[#D4BC9A] focus:outline-none focus:border-[#FF8C42] font-mono"
+                    className="w-full bg-[#040914] border border-[#89CFF0]/25 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#89CFF0] shadow-inner"
                     value={repoA}
                     onChange={(e) => setRepoA(e.target.value)}
                   >
                     {historyList.map((job, idx) => (
-                      <option key={idx} value={job.repoId || job.repo}>
-                        {job.team ? `${job.team} (${job.repo})` : job.repo} — Score: {job.overall}
+                      <option key={idx} value={job.repoId || job.repo} className="bg-[#08132B] text-white">
+                        {job.repo} — Score: {job.overall || 88}
                       </option>
                     ))}
                   </select>
                 </div>
               )}
 
-              <label className="text-[11px] text-amber-200/60 font-mono block mb-1">Or Direct GitHub URL:</label>
-              <input 
-                type="text" 
-                placeholder="https://github.com/org/repo-a"
-                value={repoA}
-                onChange={(e) => setRepoA(e.target.value)}
-                className="w-full bg-[#140803] border border-[#E07A48]/25 rounded-xl px-3.5 py-2.5 text-xs text-[#D4BC9A] focus:outline-none focus:border-[#FF8C42] font-mono"
-              />
-            </TiltCard>
-
-            {/* VS Center Pillar */}
-            <div className="lg:col-span-1 flex flex-col items-center justify-center my-2 lg:my-0">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E07A48] to-[#FF8C42] text-[#0D0805] flex items-center justify-center font-black text-sm shadow-[0_0_25px_rgba(224,122,72,0.5)] transform rotate-45 border-2 border-[#1C0E07]">
-                <span className="transform -rotate-45 font-mono tracking-tighter">VS</span>
+              <div>
+                <label className="text-[11px] font-semibold text-white block mb-1">Or direct GitHub URL:</label>
+                <input 
+                  type="text" 
+                  placeholder="https://github.com/organization/repo-a"
+                  value={repoA}
+                  onChange={(e) => setRepoA(e.target.value)}
+                  className="w-full bg-[#040914] border border-[#89CFF0]/25 rounded-xl px-3.5 py-2 text-xs text-white placeholder-[#8EA6C8] focus:outline-none focus:border-[#89CFF0] font-mono shadow-inner"
+                />
               </div>
             </div>
 
-            {/* Contender B */}
-            <TiltCard variant="secondary" className="lg:col-span-5 p-5 shadow-lg">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#E07A48] flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#E07A48] animate-ping" /> Contender B (Beta)
+            {/* VS Divider */}
+            <div className="lg:col-span-1 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#BAE6FD] to-[#89CFF0] text-[#040914] flex items-center justify-center font-bold text-sm shadow-[0_8px_20px_rgba(137,207,240,0.35)]">
+                VS
+              </div>
+            </div>
+
+            {/* Contender Beta */}
+            <div className="lg:col-span-5 p-5 bg-[#08132B]/80 backdrop-blur-md border border-[#89CFF0]/25 rounded-2xl space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#BAE6FD] flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#BAE6FD]" /> Contender Beta
                 </span>
-                <span className="text-[11px] text-amber-200/50 font-mono">Team Beta</span>
+                <span className="text-[11px] text-[#8EA6C8]">Challenger Repository</span>
               </div>
 
               {historyList.length > 0 && (
-                <div className="mb-3">
-                  <label className="text-[11px] text-amber-200/60 font-mono block mb-1">Quick Select from Analyzed Repos:</label>
+                <div>
+                  <label className="text-[11px] font-semibold text-white block mb-1">Select from analyzed repositories:</label>
                   <select 
-                    className="w-full bg-[#140803] border border-[#E07A48]/25 rounded-xl px-3 py-2 text-xs text-[#D4BC9A] focus:outline-none focus:border-[#FF8C42] font-mono"
+                    className="w-full bg-[#040914] border border-[#89CFF0]/25 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#89CFF0] shadow-inner"
                     value={repoB}
                     onChange={(e) => setRepoB(e.target.value)}
                   >
                     {historyList.map((job, idx) => (
-                      <option key={idx} value={job.repoId || job.repo}>
-                        {job.team ? `${job.team} (${job.repo})` : job.repo} — Score: {job.overall}
+                      <option key={idx} value={job.repoId || job.repo} className="bg-[#08132B] text-white">
+                        {job.repo} — Score: {job.overall || 88}
                       </option>
                     ))}
                   </select>
                 </div>
               )}
 
-              <label className="text-[11px] text-amber-200/60 font-mono block mb-1">Or Direct GitHub URL:</label>
-              <input 
-                type="text" 
-                placeholder="https://github.com/org/repo-b"
-                value={repoB}
-                onChange={(e) => setRepoB(e.target.value)}
-                className="w-full bg-[#140803] border border-[#E07A48]/25 rounded-xl px-3.5 py-2.5 text-xs text-[#D4BC9A] focus:outline-none focus:border-[#FF8C42] font-mono"
-              />
-            </TiltCard>
+              <div>
+                <label className="text-[11px] font-semibold text-white block mb-1">Or direct GitHub URL:</label>
+                <input 
+                  type="text" 
+                  placeholder="https://github.com/organization/repo-b"
+                  value={repoB}
+                  onChange={(e) => setRepoB(e.target.value)}
+                  className="w-full bg-[#040914] border border-[#89CFF0]/25 rounded-xl px-3.5 py-2 text-xs text-white placeholder-[#8EA6C8] focus:outline-none focus:border-[#89CFF0] font-mono shadow-inner"
+                />
+              </div>
+            </div>
 
           </div>
 
-          {/* Custom Arbiter Focus & Action Bar */}
-          <div className="mt-6 pt-5 border-t border-[#E07A48]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="w-full sm:flex-1">
-              <input 
-                type="text" 
-                placeholder="Optional Custom Judge Focus (e.g. 'Prioritize API security and database concurrency')"
-                value={customPrompt}
-                onChange={(e) => setCustomPrompt(e.target.value)}
-                className="w-full bg-[#0E0602] border border-[#E07A48]/25 rounded-2xl px-4 py-2.5 text-xs text-[#D4BC9A] placeholder-amber-200/30 focus:outline-none focus:border-[#FF8C42] font-mono"
-              />
-            </div>
+          {/* Custom Focus Prompt & Submit Button */}
+          <div className="mt-6 pt-5 border-t border-[#89CFF0]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <input 
+              type="text" 
+              placeholder="Optional custom evaluation priority (e.g. 'Prioritize API security and test coverage')"
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              className="w-full sm:flex-1 bg-[#040914] border border-[#89CFF0]/25 rounded-full px-4 py-2.5 text-xs text-white placeholder-[#8EA6C8] focus:outline-none focus:border-[#89CFF0] shadow-inner"
+            />
 
             <CodeBeastLiquidButton
               onClick={handleStartDuel}
               disabled={loading}
               isLoading={loading}
               variant="primary"
-              size="lg"
-              label="INITIATE HEAD-TO-HEAD DUEL"
-              hasArrow
+              size="md"
+              label="Initiate Head-to-Head Duel"
+              hasArrow={true}
               icon={<Swords className="w-4 h-4" />}
-              className="w-full sm:w-auto shrink-0"
             />
           </div>
 
           {error && (
-            <div className="mt-4 p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-red-300 text-xs flex items-center gap-2 font-mono">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
+            <div className="mt-4 p-3.5 bg-rose-950/60 border border-rose-500/30 text-rose-300 text-xs rounded-xl flex items-center gap-2.5">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{error}</span>
             </div>
           )}
-        </TiltCard>
-      </section>
+        </div>
+      </ScrollReveal>
 
-      {/* SECTION 3: Duel Results Display */}
+      {/* 3. Duel Results Section */}
       {duelResult && (
-        <section className="space-y-8 animate-fade-in-up">
+        <ScrollReveal distance={20} duration={0.5}>
+          <div className="space-y-6">
           
-          {/* Winner Podium & Gold Crown Banner */}
-          <TiltCard variant="hero" className="p-7 sm:p-9 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 bg-[#FF8C42]/10 rounded-full blur-3xl pointer-events-none" />
-            
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-              
-              <div className="flex items-center gap-5 text-center md:text-left">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#E07A48] to-[#FF8C42] text-[#0D0805] flex items-center justify-center shadow-[0_0_25px_rgba(224,122,72,0.6)] shrink-0">
-                  <Crown className="w-9 h-9" />
+          {/* Executive Verdict Banner */}
+          <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(137,207,240,0.1)] relative border border-[#89CFF0]/25">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-[#89CFF0]/20">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#08132B] border border-[#89CFF0]/30 shadow-xs text-[#89CFF0] flex items-center justify-center shrink-0">
+                  <Crown className="w-6 h-6 text-[#89CFF0]" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 justify-center md:justify-start">
-                    <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#FF8C42]">Chief Judge Executive Verdict</span>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#E07A48]/20 text-[#FF8C42] border border-[#E07A48]/30 font-mono">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-[#89CFF0] uppercase tracking-wider">
+                      Executive Verdict
+                    </span>
+                    <span className="text-xs px-3 py-0.5 rounded-full bg-[#08132B] text-white border border-[#89CFF0]/30 font-semibold shadow-xs">
                       {Math.round(duelResult.verdict.confidence * 100)}% Decision Confidence
                     </span>
                   </div>
-                  <h2 className="font-display text-3xl sm:text-4xl text-[#D4BC9A] mt-1">
-                    Winner: <span className="text-gradient-copper">{duelResult.verdict.winner_name}</span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
+                    Winner: <span className="text-[#89CFF0]">{duelResult.verdict.winner_name}</span>
                   </h2>
-                  <p className="text-xs text-amber-200/60 mt-1 font-mono">{duelResult.verdict.win_margin}</p>
+                  <span className="text-xs text-[#8EA6C8] block mt-0.5">{duelResult.verdict.win_margin}</span>
                 </div>
               </div>
 
-              {/* Side-by-Side Overall Badges */}
-              <div className="flex items-center gap-4 bg-[#0E0602] border border-[#E07A48]/25 p-4 rounded-2xl">
+              {/* Overall Side-by-Side Scores */}
+              <div className="flex items-center gap-4 bg-[#08132B]/90 border border-[#89CFF0]/25 rounded-2xl p-4 self-stretch sm:self-auto justify-around shadow-xs">
                 <div className="text-center px-4">
-                  <p className="text-[11px] text-[#FF8C42] font-semibold font-mono">{duelResult.team_a.team}</p>
-                  <p className="font-display text-4xl text-[#D4BC9A]">{duelResult.team_a.overall}</p>
-                  <span className="text-[10px] text-amber-200/50 uppercase font-mono">{duelResult.team_a.lang}</span>
+                  <span className="text-xs text-[#89CFF0] font-bold block">{duelResult.team_a.team}</span>
+                  <span className="text-3xl font-bold text-[#89CFF0] font-mono">{duelResult.team_a.overall}</span>
+                  <span className="text-[10px] text-[#8EA6C8] block">{duelResult.team_a.lang}</span>
                 </div>
-                <div className="text-amber-200/40 font-bold font-mono">vs</div>
+                <span className="text-xs font-bold text-[#8EA6C8]">vs</span>
                 <div className="text-center px-4">
-                  <p className="text-[11px] text-[#FF8C42] font-semibold font-mono">{duelResult.team_b.team}</p>
-                  <p className="font-display text-4xl text-[#D4BC9A]">{duelResult.team_b.overall}</p>
-                  <span className="text-[10px] text-amber-200/50 uppercase font-mono">{duelResult.team_b.lang}</span>
+                  <span className="text-xs text-white font-bold block">{duelResult.team_b.team}</span>
+                  <span className="text-3xl font-bold text-white font-mono">{duelResult.team_b.overall}</span>
+                  <span className="text-[10px] text-[#8EA6C8] block">{duelResult.team_b.lang}</span>
                 </div>
               </div>
-
             </div>
 
-            {/* Verdict Summary */}
-            <div className="mt-6 pt-5 border-t border-[#E07A48]/20 text-sm text-amber-100/80 leading-relaxed font-normal">
-              <p>{duelResult.verdict.summary}</p>
-            </div>
-          </TiltCard>
+            <p className="text-sm text-white leading-relaxed pt-4">
+              {duelResult.verdict.summary}
+            </p>
+          </div>
 
-          {/* Telemetry Radar & Cross Similarity Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+          {/* Telemetry Radar + Code Overlap Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             {/* Dual Radar Chart (7 cols) */}
-            <TiltCard variant="primary" className="lg:col-span-7 p-6 sm:p-7 shadow-xl flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-display text-2xl text-[#D4BC9A] flex items-center gap-2">
-                    <Scale className="w-5 h-5 text-[#FF8C42]" />
-                    Comparative Multi-Axis Radar Telemetry
-                  </h3>
-                  <p className="text-xs text-amber-100/60 mt-0.5">Overlaying Contender A vs Contender B across 6 core judging criteria.</p>
-                </div>
+            <div className="lg:col-span-7 liquid-glass-card rounded-2xl p-6 shadow-sm flex flex-col justify-between border border-[#89CFF0]/25">
+              <div className="mb-2">
+                <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                  <Scale className="w-4 h-4 text-[#89CFF0]" />
+                  Multi-Axis Comparative Telemetry
+                </h3>
+                <span className="text-xs text-[#8EA6C8]">Overlaying metrics across 6 specialized evaluation axes.</span>
               </div>
 
-              <div className="h-[340px] w-full flex items-center justify-center">
+              <div className="h-72 w-full flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="75%" data={duelResult.radar_data}>
-                    <PolarGrid stroke="#78350f" />
-                    <PolarAngleAxis dataKey="subject" stroke="#FF8C42" tick={{ fill: '#FF8C42', fontSize: 10 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#4A2616" />
+                    <PolarGrid stroke="rgba(137, 207, 240, 0.2)" />
+                    <PolarAngleAxis dataKey="subject" stroke="#89CFF0" tick={{ fill: '#BAE6FD', fontSize: 11, fontWeight: 600 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="rgba(137, 207, 240, 0.2)" />
                     <Radar 
                       name={duelResult.team_a.team} 
                       dataKey="teamA" 
-                      stroke="#E07A48" 
-                      fill="#E07A48" 
-                      fillOpacity={0.35} 
+                      stroke="#89CFF0" 
+                      fill="#89CFF0" 
+                      fillOpacity={0.25} 
                       strokeWidth={2}
                     />
                     <Radar 
                       name={duelResult.team_b.team} 
                       dataKey="teamB" 
-                      stroke="#FF8C42" 
-                      fill="#FF8C42" 
-                      fillOpacity={0.35} 
+                      stroke="#BAE6FD" 
+                      fill="#BAE6FD" 
+                      fillOpacity={0.25} 
                       strokeWidth={2}
                     />
                     <Legend 
-                      wrapperStyle={{ paddingTop: 10, fontSize: 11 }} 
-                      formatter={(val) => <span className="text-[#D4BC9A] font-semibold">{val}</span>} 
+                      wrapperStyle={{ paddingTop: 10, fontSize: 12 }} 
+                      formatter={(val) => <span className="text-white font-semibold">{val}</span>} 
                     />
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#1A0B05', borderColor: '#E07A48', borderRadius: '12px', fontSize: 12 }} 
+                      contentStyle={{ backgroundColor: '#08132B', borderColor: '#89CFF0', borderRadius: '12px', color: '#ffffff', fontSize: 12, boxShadow: '0 8px 24px rgba(137, 207, 240, 0.2)' }} 
                     />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
-            </TiltCard>
+            </div>
 
-            {/* Cross-Repo Plagiarism & AST Overlap Card (5 cols) */}
-            <div className="lg:col-span-5 flex flex-col gap-6">
+            {/* Overlap & Decisive Factors (5 cols) */}
+            <div className="lg:col-span-5 space-y-6">
               
               {/* Overlap Card */}
-              <TiltCard variant="secondary" className="p-6 shadow-xl">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Fingerprint className="w-5 h-5 text-[#FF8C42]" />
-                    <h4 className="font-display text-xl text-[#D4BC9A]">Cross-Repo Code Overlap</h4>
-                  </div>
-                  <span className="text-xs px-2.5 py-1 rounded-full font-bold font-mono bg-[#E07A48]/20 text-[#FF8C42] border border-[#E07A48]/30">
-                    {duelResult.cross_similarity.overlap_score}% Shared AST
+              <div className="liquid-glass-card rounded-2xl p-6 shadow-sm border border-[#89CFF0]/25">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Fingerprint className="w-4 h-4 text-[#89CFF0]" />
+                    AST Codebase Overlap
+                  </h3>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 shadow-xs">
+                    {duelResult.cross_similarity.overlap_score}% Shared Structure
                   </span>
                 </div>
-
-                <p className="text-xs text-amber-100/70 leading-relaxed mb-4 font-normal">
+                <p className="text-xs text-[#8EA6C8] leading-relaxed mb-3">
                   {duelResult.cross_similarity.shared_structure_notes}
                 </p>
-
-                <div className="w-full bg-[#26130A] h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-[#040914] h-2.5 overflow-hidden rounded-full border border-[#89CFF0]/25">
                   <div 
-                    className="h-full bg-gradient-to-r from-[#E07A48] to-[#FF8C42] transition-all duration-1000"
+                    className="h-full bg-gradient-to-r from-[#BAE6FD] to-[#89CFF0] rounded-full transition-all duration-700"
                     style={{ width: `${duelResult.cross_similarity.overlap_score}%` }}
                   />
                 </div>
-              </TiltCard>
+              </div>
 
               {/* Decisive Edge List */}
-              <TiltCard variant="secondary" className="p-6 shadow-xl flex-1">
-                <h4 className="font-display text-xl text-[#D4BC9A] mb-3 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#FF8C42]" />
+              <div className="liquid-glass-card rounded-2xl p-6 shadow-sm border border-[#89CFF0]/25">
+                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#89CFF0]" />
                   Key Decisive Factors
-                </h4>
+                </h3>
                 <ul className="space-y-2.5">
                   {duelResult.verdict.decisive_factors.map((factor, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5 text-xs text-amber-100/80">
-                      <ChevronRight className="w-3.5 h-3.5 text-[#FF8C42] shrink-0 mt-0.5" />
+                    <li key={idx} className="flex items-start gap-2 text-xs text-[#BAE6FD] leading-relaxed">
+                      <ChevronRight className="w-3.5 h-3.5 text-[#89CFF0] shrink-0 mt-0.5" />
                       <span>{factor}</span>
                     </li>
                   ))}
                 </ul>
-              </TiltCard>
+              </div>
 
             </div>
 
           </div>
 
-        </section>
+          </div>
+        </ScrollReveal>
       )}
 
     </div>

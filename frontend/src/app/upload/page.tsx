@@ -1,9 +1,21 @@
 "use client";
 
 import React, { useState } from 'react';
-import { UploadCloud, File, Trash2, Play, CheckCircle2, AlertCircle, FileText, Download, Sparkles } from 'lucide-react';
-import { TiltCard } from '@/components/TiltCard';
+import { 
+  UploadCloud, 
+  FileText, 
+  Trash2, 
+  Play, 
+  CheckCircle2, 
+  AlertCircle, 
+  Download, 
+  FileSpreadsheet,
+  Check,
+  Sparkles,
+  Layers
+} from 'lucide-react';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
+import { ScrollReveal } from '@/components/ui/motion-primitives';
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -64,9 +76,10 @@ export default function UploadPage() {
     setIsProcessing(true);
     const validRepos = parsedData.filter(d => d.status === 'Ready');
     
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     for (const repo of validRepos) {
       try {
-        await fetch('http://' + window.location.hostname + ':8000/api/v1/evaluate/', {
+        await fetch(`http://${host}:8000/api/v1/evaluate/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ repo_url: repo.url })
@@ -79,175 +92,205 @@ export default function UploadPage() {
     setIsProcessing(false);
     setFile(null);
     setParsedData([]);
-    alert(`Successfully dispatched ${validRepos.length} analysis jobs to the Celery workers!`);
+    alert(`Successfully queued ${validRepos.length} repository evaluation jobs.`);
+  };
+
+  const handleDownloadSample = () => {
+    const csvContent = "github_url,team_name\nhttps://github.com/facebook/react,UI Systems\nhttps://github.com/fastapi/fastapi,PyEngineers\nhttps://github.com/vercel/next.js,Next Team";
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "codebeast_bulk_sample.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div className="space-y-12 sm:space-y-14 max-w-[1700px] mx-auto pb-20 px-3 sm:px-6 text-[#D4BC9A]">
+    <div className="space-y-8 pb-12 text-white">
       
-      {/* SECTION 1: Page Header */}
-      <section className="border-b border-[#E07A48]/20 pb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E07A48]/15 border border-[#E07A48]/30 text-[#FF8C42] text-xs font-semibold tracking-wide mb-3">
-          <UploadCloud className="w-3.5 h-3.5" />
-          <span>Batch Ingestion Pipeline</span>
-        </div>
-        <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-[#D4BC9A] tracking-tight uppercase leading-none font-normal">
-          BULK CSV <span className="text-gradient-copper">UPLOAD</span>
-        </h1>
-        <p className="text-amber-100/70 text-sm mt-2 max-w-xl font-normal leading-relaxed">
-          Upload a structured CSV containing GitHub repository URLs to evaluate entire hackathon cohorts concurrently.
-        </p>
-      </section>
-
-      {/* SECTION 2: 2-Column Asymmetric Dropzone & Instructions */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Left 8-col: Dropzone & Uploaded Table */}
-        <div className="lg:col-span-8 space-y-6">
-          <TiltCard variant="hero" className="p-8 sm:p-10 shadow-2xl">
-            <div 
-              className={`border-2 border-dashed rounded-3xl p-10 sm:p-14 text-center transition-all ${
-                isDragging ? 'border-[#FF8C42] bg-[#E07A48]/10' : 'border-[#E07A48]/30 bg-[#0E0602] hover:border-[#FF8C42]/50'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="w-16 h-16 rounded-2xl bg-[#261208] border border-[#E07A48]/40 flex items-center justify-center mx-auto mb-4 text-[#FF8C42] shadow-inner">
-                <UploadCloud className="w-8 h-8" />
-              </div>
-              <h3 className="font-display text-2xl sm:text-3xl text-[#D4BC9A] uppercase tracking-wider mb-2 font-normal">Drag and drop your CSV here</h3>
-              <p className="text-amber-100/60 text-xs sm:text-sm mb-6 font-normal">or browse your filesystem (up to 50MB batch files)</p>
-              
-              <label className="inline-block cursor-pointer">
-                <CodeBeastLiquidButton
-                  variant="primary"
-                  size="md"
-                  label="BROWSE FILES"
-                  hasArrow
-                />
-                <input type="file" className="hidden" accept=".csv" onChange={(e) => {
-                  if (e.target.files && e.target.files.length > 0) {
-                    setFile(e.target.files[0]);
-                    parseCSV(e.target.files[0]);
-                  }
-                }} />
-              </label>
-            </div>
-          </TiltCard>
-
-          {file && (
-            <TiltCard variant="primary" className="p-6 sm:p-8 shadow-xl">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#E07A48]/15">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-[#261208] border border-[#E07A48]/30 rounded-xl text-[#FF8C42] shrink-0 shadow-inner">
-                    <File className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-[#D4BC9A] font-bold text-sm sm:text-base font-mono">{file.name}</h4>
-                    <p className="text-amber-100/50 text-xs font-mono">{(file.size / 1024).toFixed(2)} KB &bull; CSV Document &bull; {parsedData.length} records</p>
-                  </div>
-                </div>
-                <button onClick={() => setFile(null)} className="text-amber-200/40 hover:text-red-400 p-2 transition-colors">
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="border border-[#E07A48]/20 rounded-2xl overflow-hidden mb-6">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-[#120703] text-xs font-mono font-bold text-[#FF8C42] uppercase tracking-wider">
-                      <th className="p-4">Repository</th>
-                      <th className="p-4">Type</th>
-                      <th className="p-4">Validation</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E07A48]/10 text-xs">
-                    {parsedData.map((row) => (
-                      <tr key={row.id} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="p-4 text-[#D4BC9A] font-mono">{row.repo}</td>
-                        <td className="p-4 text-amber-100/60">{row.type}</td>
-                        <td className="p-4">
-                          {row.status === 'Ready' ? (
-                            <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full w-fit">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              Valid
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1.5 text-red-400 text-xs font-semibold px-2.5 py-1 bg-red-500/10 border border-red-500/20 rounded-full w-fit">
-                              <AlertCircle className="w-3.5 h-3.5" />
-                              Invalid URL
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex justify-end">
-                <CodeBeastLiquidButton 
-                  onClick={handleProcess}
-                  disabled={isProcessing}
-                  isLoading={isProcessing}
-                  variant="primary"
-                  size="md"
-                  label="START BULK ANALYSIS"
-                  hasArrow
-                  icon={<Play className="w-4 h-4 fill-current" />}
-                />
-              </div>
-            </TiltCard>
-          )}
+      {/* 1. Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#08132B] border border-[#89CFF0]/30 text-[#89CFF0] text-[11px] font-semibold tracking-wider uppercase rounded-full shadow-xs mb-2">
+            <Layers className="w-3.5 h-3.5" />
+            Batch Pipeline Orchestration
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Bulk Repository Ingestion (CSV)
+          </h1>
+          <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1">
+            Evaluate entire hackathon cohorts or organizational repositories concurrently via batch upload.
+          </p>
         </div>
 
-        {/* Right 4-col: Instructions & Sample Template Card */}
-        <div className="lg:col-span-4 space-y-6">
-          <TiltCard variant="secondary" className="p-6 sm:p-7 shadow-xl">
-            <h3 className="font-display text-2xl text-[#D4BC9A] uppercase tracking-wider mb-4 font-normal">Formatting Guide</h3>
-            <ul className="space-y-4 text-xs text-amber-100/70">
-              <li className="flex gap-3 items-start">
-                <div className="w-6 h-6 rounded-full bg-[#261208] border border-[#E07A48]/40 text-[#FF8C42] flex items-center justify-center shrink-0 font-mono font-bold">1</div>
-                <p>Upload a standard comma-separated CSV with a header row.</p>
-              </li>
-              <li className="flex gap-3 items-start">
-                <div className="w-6 h-6 rounded-full bg-[#261208] border border-[#E07A48]/40 text-[#FF8C42] flex items-center justify-center shrink-0 font-mono font-bold">2</div>
-                <p>Ensure there is a column named <code className="bg-[#261208] border border-[#E07A48]/30 px-1.5 py-0.5 rounded text-[#FF8C42] font-mono">github_url</code>.</p>
-              </li>
-              <li className="flex gap-3 items-start">
-                <div className="w-6 h-6 rounded-full bg-[#261208] border border-[#E07A48]/40 text-[#FF8C42] flex items-center justify-center shrink-0 font-mono font-bold">3</div>
-                <p>Optionally include <code className="bg-[#261208] border border-[#E07A48]/30 px-1.5 py-0.5 rounded text-[#FF8C42] font-mono">team_name</code> or <code className="bg-[#261208] border border-[#E07A48]/30 px-1.5 py-0.5 rounded text-[#FF8C42] font-mono">project_type</code>.</p>
-              </li>
-            </ul>
-          </TiltCard>
+        <button
+          onClick={handleDownloadSample}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 rounded-full shadow-xs transition-colors self-start sm:self-auto"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span>Download Sample CSV</span>
+        </button>
+      </div>
+
+      {/* 2. Upload Grid */}
+      <ScrollReveal distance={16} duration={0.45}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          <TiltCard variant="primary" className="p-6 sm:p-7 shadow-xl">
-            <h3 className="font-display text-2xl text-[#FF8C42] uppercase tracking-wider mb-2 font-normal">Need a template?</h3>
-            <p className="text-amber-100/70 text-xs mb-5 font-normal leading-relaxed">
-              Download our sample CSV template to ensure your headers and formatting match the parser.
-            </p>
-            <CodeBeastLiquidButton 
-              onClick={() => {
-                const csvContent = "github_url,team_name,project_type\nhttps://github.com/torvalds/subsurface-for-dir,Team Alpha,Desktop App\nhttps://github.com/pallets/flask,Team Beta,Web Backend\nhttps://github.com/expressjs/express,Team Gamma,Node API\n";
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', 'codebeast_bulk_template.csv');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }}
-              variant="outline"
-              size="sm"
-              label="DOWNLOAD TEMPLATE (CSV)"
-              icon={<Download className="w-4 h-4 text-[#FF8C42]" />}
-            />
-          </TiltCard>
-        </div>
+          {/* Left 8-col: Dropzone & Parse Table */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            <div className="liquid-glass-card rounded-3xl p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] relative">
+              <div 
+                className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all ${
+                  isDragging 
+                    ? 'border-[#89CFF0] bg-[#08132B]' 
+                    : 'border-[#89CFF0]/30 bg-[#08132B]/60 backdrop-blur-md hover:border-[#89CFF0]'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-b from-[#08132B] to-[#0E2248] border border-[#89CFF0]/30 flex items-center justify-center mx-auto mb-3 text-[#89CFF0] shadow-sm">
+                  <UploadCloud className="w-7 h-7" />
+                </div>
 
-      </section>
+                <h2 className="text-base font-bold text-white mb-1">
+                  Drag and drop your batch CSV file here
+                </h2>
+                <p className="text-xs text-[#8EA6C8] mb-5 max-w-md mx-auto">
+                  File must contain a column with GitHub repository URLs (up to 50MB batch size limit)
+                </p>
+
+                <label className="inline-block cursor-pointer">
+                  <span className="inline-flex items-center justify-center h-10 px-6 liquid-btn-primary text-[#040914] text-xs font-bold rounded-full shadow-md">
+                    Browse Files
+                  </span>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept=".csv" 
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setFile(e.target.files[0]);
+                        parseCSV(e.target.files[0]);
+                      }
+                    }} 
+                  />
+                </label>
+              </div>
+            </div>
+
+            {file && (
+              <div className="liquid-glass-card rounded-2xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-4 border-b border-[#89CFF0]/20">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-gradient-to-b from-[#08132B] to-[#0E2248] border border-[#89CFF0]/30 text-[#89CFF0] shadow-xs">
+                      <FileSpreadsheet className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white font-mono">{file.name}</h3>
+                      <span className="text-[11px] text-[#8EA6C8]">
+                        {(file.size / 1024).toFixed(1)} KB &bull; {parsedData.length} records parsed
+                      </span>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => { setFile(null); setParsedData([]); }}
+                    className="p-1.5 text-[#8EA6C8] hover:text-rose-400 rounded-full hover:bg-white/10 transition-colors"
+                    title="Remove File"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Parsed Records Table */}
+                <div className="border border-[#89CFF0]/20 rounded-xl overflow-hidden shadow-xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#08132B]/80 border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold">
+                      <tr>
+                        <th className="py-2.5 px-3">Repository</th>
+                        <th className="py-2.5 px-3">Type</th>
+                        <th className="py-2.5 px-3">Validation</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#89CFF0]/15">
+                      {parsedData.map((row) => (
+                        <tr key={row.id} className="hover:bg-white/5">
+                          <td className="py-2.5 px-3 font-mono font-medium text-white">{row.repo}</td>
+                          <td className="py-2.5 px-3 text-[#89CFF0] font-medium">{row.type}</td>
+                          <td className="py-2.5 px-3">
+                            {row.status === 'Ready' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                Ready
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30 rounded-full">
+                                <AlertCircle className="w-3 h-3 text-rose-400" />
+                                Invalid Format
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <CodeBeastLiquidButton
+                    onClick={handleProcess}
+                    disabled={isProcessing || parsedData.filter(d => d.status === 'Ready').length === 0}
+                    isLoading={isProcessing}
+                    variant="primary"
+                    size="md"
+                    label={`Queue ${parsedData.filter(d => d.status === 'Ready').length} Repositories`}
+                    hasArrow={true}
+                    icon={<Play className="w-4 h-4" />}
+                  />
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          {/* Right 4-col: Specification Guide */}
+          <div className="lg:col-span-4 liquid-glass-card rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-sm font-bold text-white tracking-tight">
+              CSV File Structure Specifications
+            </h2>
+            <p className="text-xs text-[#8EA6C8] leading-relaxed">
+              Ensure your uploaded CSV contains standard GitHub URLs. The pipeline will automatically parse, clone, and queue evaluation runs.
+            </p>
+
+            <div className="p-3.5 bg-[#08132B]/90 border border-[#89CFF0]/25 rounded-xl space-y-1 font-mono text-[11px] text-white shadow-inner">
+              <span className="text-[#8EA6C8] block"># Expected Header Format:</span>
+              <span>github_url,team_name</span>
+              <span className="text-[#8EA6C8] block pt-1"># Example Record:</span>
+              <span className="text-[#89CFF0] font-bold">https://github.com/facebook/react,React Team</span>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-[#89CFF0]/20 text-xs text-[#8EA6C8]">
+              <div className="flex items-start gap-2">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <span>Public repositories are cloned asynchronously</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <span>Capped at 500MB per repository size limit</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <span>Populates both the Live Queue and History records</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </ScrollReveal>
 
     </div>
   );

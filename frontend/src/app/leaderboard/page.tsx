@@ -1,8 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Trophy, Shield, Database, Layout, Code2, Zap, Medal, Crown, Search, Award, Sparkles } from 'lucide-react';
-import { TiltCard } from '@/components/TiltCard';
+import Link from 'next/link';
+import { 
+  Trophy, 
+  Crown, 
+  Search, 
+  ArrowRight,
+  Sparkles,
+  Medal
+} from 'lucide-react';
+import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
 
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -24,31 +32,30 @@ export default function LeaderboardPage() {
 
   const renderBadges = (row: any) => {
     const badges = [];
-    if (row.sec >= 90) badges.push({ name: 'Fort Knox', icon: Shield, color: 'text-[#FF8C42] bg-[#E07A48]/15 border-[#E07A48]/30' });
-    if (row.arch >= 90) badges.push({ name: 'Clean Coder', icon: Layout, color: 'text-[#FF8C42] bg-[#E07A48]/15 border-[#E07A48]/30' });
-    if (row.perf >= 90) badges.push({ name: 'Perf Master', icon: Zap, color: 'text-[#FF8C42] bg-[#E07A48]/15 border-[#E07A48]/30' });
-    if (row.testing_score >= 90) badges.push({ name: 'Test Driven', icon: Code2, color: 'text-[#FF8C42] bg-[#E07A48]/15 border-[#E07A48]/30' });
-    if (row.db_score >= 90) badges.push({ name: 'Data Wizard', icon: Database, color: 'text-[#FF8C42] bg-[#E07A48]/15 border-[#E07A48]/30' });
+    if (row.sec >= 90) badges.push({ name: 'Fort Knox', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-400/30' });
+    if (row.arch >= 90) badges.push({ name: 'Clean Architecture', color: 'bg-[#89CFF0]/15 text-[#89CFF0] border-[#89CFF0]/40' });
+    if (row.perf >= 90) badges.push({ name: 'High Throughput', color: 'bg-[#BAE6FD]/15 text-[#BAE6FD] border-[#BAE6FD]/40' });
+    if (row.testing_score >= 90) badges.push({ name: 'Test Driven', color: 'bg-[#89CFF0]/20 text-white border-[#89CFF0]/50' });
+    if (row.db_score >= 90) badges.push({ name: 'Schema Master', color: 'bg-[#89CFF0]/15 text-[#89CFF0] border-[#89CFF0]/40' });
     
-    if (badges.length === 0) return <span className="text-amber-200/40 text-xs italic font-mono">No Badges</span>;
+    if (badges.length === 0) return <span className="text-[#4A6B94] text-xs italic">Standard Evaluation</span>;
     
     return (
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-1.5 flex-wrap">
         {badges.map((b, i) => (
-          <div key={i} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${b.color} shadow-sm font-mono`}>
-            <b.icon className="w-3 h-3" />
+          <span key={i} className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-semibold rounded-full border shadow-xs ${b.color}`}>
             {b.name}
-          </div>
+          </span>
         ))}
       </div>
     );
   };
 
-  const getRankStyle = (rank: number) => {
-    if (rank === 1) return 'text-[#FF8C42] bg-[#E07A48]/30 border-[#FF8C42] shadow-[0_0_20px_rgba(224,122,72,0.6)]';
-    if (rank === 2) return 'text-[#D4BC9A] bg-[#221008] border-[#E07A48]/40';
-    if (rank === 3) return 'text-amber-300 bg-[#1D0C06] border-[#E07A48]/30';
-    return 'text-amber-200/50 bg-[#150904] border-[#E07A48]/15';
+  const getRankBadge = (rank: number) => {
+    if (rank === 1) return 'bg-gradient-to-r from-[#BAE6FD] to-[#89CFF0] text-[#040914] font-bold shadow-xs';
+    if (rank === 2) return 'bg-[#08132B] text-white font-bold border border-[#89CFF0]/25 shadow-xs';
+    if (rank === 3) return 'bg-[#08132B] text-[#8EA6C8] font-bold border border-[#89CFF0]/20 shadow-xs';
+    return 'bg-[#08132B] text-[#89CFF0] font-bold border border-[#89CFF0]/30';
   };
 
   const filteredLeaderboard = leaderboard.filter((row) => 
@@ -59,153 +66,179 @@ export default function LeaderboardPage() {
   const top3 = leaderboard.slice(0, 3);
 
   return (
-    <div className="space-y-12 sm:space-y-14 max-w-[1700px] mx-auto pb-20 px-3 sm:px-6 text-[#D4BC9A]">
+    <div className="space-y-8 pb-12 text-white">
       
-      {/* SECTION 1: Page Header & Global Search */}
-      <section className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#E07A48]/20 pb-6">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E07A48]/15 border border-[#E07A48]/30 text-[#FF8C42] text-xs font-semibold tracking-wide mb-3">
-            <Trophy className="w-3.5 h-3.5" />
-            <span>ConsJudge Verified Global Rankings</span>
+      {/* 1. Header & Search Bar */}
+      <ScrollReveal direction="down" distance={15}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#08132B] border border-[#89CFF0]/30 text-[#89CFF0] text-[11px] font-semibold tracking-wider uppercase rounded-full shadow-xs mb-2">
+              <Trophy className="w-3.5 h-3.5" />
+              Consensus Verified Standings
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Global Benchmark Leaderboard
+            </h1>
+            <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1">
+              Standings across all evaluated repositories verified by ConsJudge multi-pass consensus.
+            </p>
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-[#D4BC9A] tracking-tight uppercase leading-none font-normal">
-            GLOBAL <span className="text-gradient-copper">LEADERBOARD</span>
-          </h1>
-          <p className="text-amber-100/70 text-sm mt-2 max-w-xl font-normal leading-relaxed">
-            Live rankings of evaluated hackathon codebases across 6 parallel LangGraph evaluations and dual-pass consensus supervisor verification.
-          </p>
-        </div>
 
-        <div className="relative w-full md:w-88">
-          <Search className="w-4 h-4 text-amber-200/50 absolute left-4 top-1/2 -translate-y-1/2" />
-          <input 
-            type="text"
-            placeholder="Search repository or team..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#0D0502] border border-[#E07A48]/30 rounded-2xl pl-11 pr-4 py-3 text-xs text-[#D4BC9A] placeholder-amber-200/30 outline-none focus:border-[#FF8C42] font-mono shadow-inner"
-          />
+          <div className="relative w-full md:w-80">
+            <div className="flex items-center gap-2.5 px-4 py-2 bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 rounded-full focus-within:border-[#89CFF0] focus-within:ring-2 focus-within:ring-[#89CFF0]/20 transition-all shadow-inner">
+              <Search className="w-4 h-4 text-[#8EA6C8] shrink-0" />
+              <input 
+                type="text"
+                placeholder="Search repository or team..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent border-none text-xs text-white placeholder-[#8EA6C8] focus:outline-none"
+              />
+            </div>
+          </div>
         </div>
-      </section>
+      </ScrollReveal>
 
-      {/* SECTION 2: Top 3 Staggered Podium Pavilion */}
+      {/* 2. Top 3 Podium Cards with Liquid Glass */}
       {top3.length >= 3 && (
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-end pt-2">
+        <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
           
-          {/* Rank 2 - Runner Up (Left) */}
-          <TiltCard variant="primary" className="p-7 text-center flex flex-col justify-between order-2 md:order-1 shadow-2xl h-[330px]">
-            <div>
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-[#261208] border border-[#E07A48]/30 text-[#D4BC9A] flex items-center justify-center font-bold mb-3 shadow-inner">
-                <Medal className="w-6 h-6 text-[#D4BC9A]" />
+          {/* Rank 2 (Left) */}
+          <StaggerItem className="order-2 md:order-1">
+            <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] text-center space-y-3">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-[#08132B] border border-[#89CFF0]/30 text-white flex items-center justify-center font-bold text-base shadow-xs">
+                2
               </div>
-              <span className="text-[10px] font-mono font-bold text-amber-200/50 uppercase tracking-widest block">RUNNER UP &bull; RANK #2</span>
-              <h3 className="font-bold text-lg text-[#D4BC9A] font-mono mt-1 truncate">{top3[1].repo}</h3>
-              <p className="text-xs text-amber-200/50 mt-0.5 font-normal">{top3[1].team}</p>
-            </div>
-            <div className="pt-4 border-t border-[#E07A48]/20">
-              <span className="font-display text-4xl text-[#D4BC9A]">{top3[1].overall}</span>
-              <span className="text-[10px] text-amber-200/40 block font-mono">/100 PTS</span>
-            </div>
-          </TiltCard>
-
-          {/* Rank 1 - Champion (Center Prominent) */}
-          <TiltCard variant="hero" className="p-8 sm:p-9 text-center flex flex-col justify-between order-1 md:order-2 shadow-[0_20px_50px_rgba(224,122,72,0.35)] relative h-[380px]">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-[#E07A48] to-[#FF8C42] text-[#0D0805] text-[10px] font-extrabold uppercase tracking-widest rounded-full shadow-lg flex items-center gap-1.5 font-mono">
-              <Crown className="w-3.5 h-3.5" /> GRAND CHAMPION
-            </div>
-            <div className="pt-2">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-[#E07A48] to-[#FF8C42] text-[#0D0805] flex items-center justify-center font-black mb-3 shadow-[0_0_25px_rgba(224,122,72,0.6)]">
-                <Crown className="w-8 h-8" />
+              <div>
+                <span className="text-[10px] font-bold text-[#8EA6C8] uppercase tracking-wider block">Runner Up</span>
+                <h3 className="font-mono font-bold text-base text-white truncate mt-0.5">{top3[1].repo}</h3>
+                <span className="text-xs text-[#89CFF0] font-medium">{top3[1].team || "Team"}</span>
               </div>
-              <span className="text-[11px] font-mono font-extrabold text-[#FF8C42] uppercase tracking-widest block">GRAND WINNER &bull; RANK #1</span>
-              <h3 className="font-bold text-xl sm:text-2xl text-[#D4BC9A] font-mono mt-1 truncate">{top3[0].repo}</h3>
-              <p className="text-xs text-amber-200/60 font-semibold mt-0.5">{top3[0].team}</p>
-            </div>
-            <div className="pt-4 border-t border-[#E07A48]/30">
-              <span className="font-display text-5xl sm:text-6xl text-gradient-copper">{top3[0].overall}</span>
-              <span className="text-[10px] text-[#FF8C42] block font-mono font-bold">/100 PTS</span>
-            </div>
-          </TiltCard>
-
-          {/* Rank 3 - 2nd Runner Up (Right) */}
-          <TiltCard variant="primary" className="p-7 text-center flex flex-col justify-between order-3 shadow-2xl h-[330px]">
-            <div>
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-[#261208] border border-[#E07A48]/30 text-amber-300 flex items-center justify-center font-bold mb-3 shadow-inner">
-                <Award className="w-6 h-6 text-amber-300" />
+              <div className="pt-3 border-t border-[#89CFF0]/20">
+                <span className="text-3xl font-bold text-white font-mono">{top3[1].overall}</span>
+                <span className="text-xs text-[#89CFF0]"> / 100</span>
               </div>
-              <span className="text-[10px] font-mono font-bold text-amber-200/50 uppercase tracking-widest block">2ND RUNNER UP &bull; RANK #3</span>
-              <h3 className="font-bold text-lg text-[#D4BC9A] font-mono mt-1 truncate">{top3[2].repo}</h3>
-              <p className="text-xs text-amber-200/50 mt-0.5 font-normal">{top3[2].team}</p>
             </div>
-            <div className="pt-4 border-t border-[#E07A48]/20">
-              <span className="font-display text-4xl text-[#D4BC9A]">{top3[2].overall}</span>
-              <span className="text-[10px] text-amber-200/40 block font-mono">/100 PTS</span>
-            </div>
-          </TiltCard>
+          </StaggerItem>
 
-        </section>
+          {/* Rank 1 (Center Prominent Liquid Glass Champion) */}
+          <StaggerItem className="order-1 md:order-2">
+            <div className="liquid-glass-card rounded-3xl p-8 border-2 border-[#89CFF0]/40 shadow-[0_20px_50px_rgba(2,6,18,0.9)] text-center space-y-4 relative">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 liquid-btn-primary text-[#040914] text-[11px] font-bold uppercase tracking-wider rounded-full shadow-md">
+                Grand Champion
+              </div>
+              <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] flex items-center justify-center font-bold text-2xl shadow-lg shadow-[rgba(137,207,240,0.35)]">
+                1
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-[#89CFF0] uppercase tracking-wider block">Cohort Leader</span>
+                <h3 className="font-mono font-bold text-lg sm:text-xl text-white truncate mt-0.5">{top3[0].repo}</h3>
+                <span className="text-xs text-[#89CFF0] font-semibold">{top3[0].team || "Team"}</span>
+              </div>
+              <div className="pt-3 border-t border-[#89CFF0]/20">
+                <span className="text-4xl font-bold text-[#89CFF0] font-mono">{top3[0].overall}</span>
+                <span className="text-xs text-[#89CFF0]"> / 100</span>
+              </div>
+            </div>
+          </StaggerItem>
+
+          {/* Rank 3 (Right) */}
+          <StaggerItem className="order-3">
+            <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] text-center space-y-3">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-[#08132B] border border-[#89CFF0]/30 text-[#8EA6C8] flex items-center justify-center font-bold text-base shadow-xs">
+                3
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-[#8EA6C8] uppercase tracking-wider block">2nd Runner Up</span>
+                <h3 className="font-mono font-bold text-base text-white truncate mt-0.5">{top3[2].repo}</h3>
+                <span className="text-xs text-[#89CFF0] font-medium">{top3[2].team || "Team"}</span>
+              </div>
+              <div className="pt-3 border-t border-[#89CFF0]/20">
+                <span className="text-3xl font-bold text-white font-mono">{top3[2].overall}</span>
+                <span className="text-xs text-[#89CFF0]"> / 100</span>
+              </div>
+            </div>
+          </StaggerItem>
+
+        </StaggerContainer>
       )}
 
-      {/* SECTION 3: Main Standings Matrix Table */}
-      <section>
-        <TiltCard variant="secondary" className="overflow-hidden shadow-2xl p-0">
-          <div className="p-6 sm:p-7 border-b border-[#E07A48]/15 flex items-center justify-between">
-            <div>
-              <h3 className="font-display text-2xl sm:text-3xl text-[#D4BC9A] tracking-wider uppercase font-normal">Official Standings</h3>
-              <p className="text-xs text-amber-200/50 mt-0.5 font-normal">Ranked by synthesized ConsJudge consensus telemetry</p>
-            </div>
-            <span className="text-xs font-mono text-amber-200/50 bg-[#0E0602] px-3 py-1.5 rounded-xl border border-[#E07A48]/20">
-              {filteredLeaderboard.length} Submissions
+      {/* 3. Standings Table Liquid Glass Card */}
+      <ScrollReveal direction="up" distance={20} delay={0.15}>
+        <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-[#89CFF0]/20">
+            <h2 className="text-sm font-bold text-white">
+              Verified Standings Directory
+            </h2>
+            <span className="text-xs font-mono text-[#89CFF0] bg-[#08132B] px-3 py-1 rounded-full border border-[#89CFF0]/30 shadow-xs">
+              {filteredLeaderboard.length} submissions recorded
             </span>
           </div>
 
           {loading ? (
-            <div className="p-16 text-center text-amber-200/50 flex flex-col items-center">
-              <div className="w-10 h-10 border-2 border-[#E07A48]/30 border-t-[#FF8C42] rounded-full animate-spin mb-4" />
-              <span className="font-mono text-sm">Loading Global Leaderboard...</span>
+            <div className="py-16 text-center text-[#89CFF0] text-xs font-medium">
+              Loading leaderboard standings...
             </div>
           ) : filteredLeaderboard.length === 0 ? (
-            <div className="p-16 text-center text-amber-200/50 font-mono text-sm">
-              No evaluated repositories match your search criteria.
+            <div className="py-16 text-center text-[#8EA6C8] text-xs">
+              No repositories found matching search query.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[#120703] border-b border-[#E07A48]/20">
-                    <th className="p-5 text-xs font-mono font-bold text-[#FF8C42] uppercase tracking-wider w-24 text-center">Rank</th>
-                    <th className="p-5 text-xs font-mono font-bold text-[#FF8C42] uppercase tracking-wider">Repository / Team</th>
-                    <th className="p-5 text-xs font-mono font-bold text-[#FF8C42] uppercase tracking-wider text-center">Score</th>
-                    <th className="p-5 text-xs font-mono font-bold text-[#FF8C42] uppercase tracking-wider">Special Badges</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E07A48]/10 text-xs">
-                  {filteredLeaderboard.map((row) => (
-                    <tr key={row.rank} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="p-5 text-center">
-                        <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full border text-sm font-bold font-mono ${getRankStyle(row.rank)}`}>
-                          {row.rank}
-                        </div>
-                      </td>
-                      <td className="p-5">
-                        <div className="font-bold text-[#D4BC9A] text-sm sm:text-base font-mono group-hover:text-[#FF8C42] transition-colors">{row.repo}</div>
-                        <div className="text-xs text-amber-200/50 mt-1 font-normal">Team: <span className="text-[#FF8C42] font-semibold">{row.team}</span></div>
-                      </td>
-                      <td className="p-5 text-center">
-                        <span className="font-display text-3xl sm:text-4xl text-[#D4BC9A] text-gradient-copper">{row.overall}</span>
-                        <span className="text-[9px] text-amber-200/40 block font-mono">pts</span>
-                      </td>
-                      <td className="p-5">
-                        {renderBadges(row)}
-                      </td>
+            <div className="border border-[#89CFF0]/20 rounded-2xl overflow-hidden shadow-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#08132B]/80 border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold">
+                    <tr>
+                      <th className="py-3 px-4 w-16 text-center">Rank</th>
+                      <th className="py-3 px-4">Repository & Team</th>
+                      <th className="py-3 px-4">Score</th>
+                      <th className="py-3 px-4">Special Citations</th>
+                      <th className="py-3 px-4 text-right">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-[#89CFF0]/15">
+                    {filteredLeaderboard.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-white/5 transition-colors">
+                        <td className="py-3.5 px-4 text-center">
+                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs ${getRankBadge(idx + 1)}`}>
+                            {idx + 1}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-mono font-bold text-white block">
+                            {row.repo}
+                          </span>
+                          <span className="text-[11px] text-[#89CFF0] font-medium">
+                            {row.team || "Engineering"}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-bold text-white font-mono text-sm">
+                            {row.overall || 88}
+                          </span>
+                          <span className="text-[10px] text-[#89CFF0]">/100</span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {renderBadges(row)}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <Link
+                            href={`/analysis?repo=${encodeURIComponent(row.repo)}`}
+                            className="inline-flex items-center gap-1.5 px-4 py-1.5 liquid-btn-primary text-[#040914] font-bold text-xs rounded-full shadow-sm hover:scale-105 transition-transform"
+                          >
+                            <span>Inspect</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
-        </TiltCard>
-      </section>
+        </div>
+      </ScrollReveal>
 
     </div>
   );

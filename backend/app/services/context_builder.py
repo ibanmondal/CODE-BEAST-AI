@@ -123,8 +123,8 @@ class ContextBuilder:
         try:
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
             splits = text_splitter.split_documents(docs)
-            # Limit to top 35 representative splits for fast indexing
-            splits = splits[:35]
+            # Limit to top 10 representative splits for instantaneous indexing
+            splits = splits[:10]
             
             vectorstore = FAISS.from_documents(documents=splits, embedding=self.embeddings)
             

@@ -193,9 +193,31 @@ Guidelines for your response:
                 model_used="Google Gemini 2.0 Flash"
             )
         except Exception as e:
-            logger.warning(f"Gemini Chat failed ({e}), falling back to Ollama...")
+            logger.warning(f"Gemini Chat failed ({e}), falling back to NaraRouter...")
 
-    # 3. Ollama (Local)
+    # 3. NaraRouter
+    nara_api_key = os.getenv("NARAROUTER_API_KEY") or os.getenv("NARA_ROUTER_API_KEY")
+    if nara_api_key:
+        try:
+            from langchain_openai import ChatOpenAI
+            llm = ChatOpenAI(
+                model="agnes-2.5-flash",
+                temperature=0.3,
+                api_key=nara_api_key,
+                base_url="https://router.bynara.id/v1",
+                max_retries=0,
+                timeout=15.0
+            )
+            res = await llm.ainvoke(full_prompt)
+            return ChatResponse(
+                answer=res.content,
+                citations=citations,
+                model_used="NaraRouter (agnes-2.5-flash)"
+            )
+        except Exception as e:
+            logger.warning(f"NaraRouter Chat failed ({e}), falling back to Ollama...")
+
+    # 4. Ollama (Local)
     try:
         from langchain_ollama import ChatOllama
         llm = ChatOllama(model="llama3:latest", temperature=0.3)

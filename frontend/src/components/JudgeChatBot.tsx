@@ -1,9 +1,9 @@
 "use client";
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Bot, 
   Send, 
-  Sparkles, 
   Trash2, 
   ShieldAlert, 
   Cpu, 
@@ -12,7 +12,9 @@ import {
   Copy, 
   Check, 
   Terminal,
-  X
+  X,
+  Loader2,
+  Sparkles
 } from 'lucide-react';
 import { FinalReport } from './ScoreDashboard';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
@@ -33,8 +35,8 @@ export function JudgeChatBot({ report, onClose }: JudgeChatBotProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: `👋 **Welcome, Judge!** I'm your **CodeBeast Judge Copilot** grounded in this repository's 6-agent evaluation.\n\nYou can interrogate the **ConsJudge score (${report.overall_score || 0}/100)**, inspect AutoReview security patches, or generate an executive briefing. Click a prompt below or type your question!`,
-      modelUsed: 'CodeBeast Intelligence System'
+      content: `Hello! I am your CodeBeast Intelligence Copilot, grounded in this repository's 8-agent evaluation report.\n\nYou can query the ConsJudge score (${report.overall_score || 0}/100), inspect AutoReview security patches, or request an architectural breakdown. Click a recommended question below or type your inquiry.`,
+      modelUsed: 'ConsJudge Intelligence Copilot'
     }
   ]);
   const [input, setInput] = useState('');
@@ -59,9 +61,9 @@ export function JudgeChatBot({ report, onClose }: JudgeChatBotProps) {
       query: "Show me the AutoReview unified diff remediation patches for the top detected vulnerabilities."
     },
     {
-      label: "30s Awards Pitch",
+      label: "Executive Summary",
       icon: Award,
-      query: "Generate a 30-second executive awards summary highlighting this project's top engineering strengths."
+      query: "Generate a concise executive summary highlighting this project's top engineering strengths."
     }
   ];
 
@@ -88,7 +90,8 @@ export function JudgeChatBot({ report, onClose }: JudgeChatBotProps) {
         content: m.content
       }));
 
-      const res = await fetch('http://' + window.location.hostname + ':8000/api/v1/chat/repository', {
+      const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+      const res = await fetch(`http://${host}:8000/api/v1/chat/repository`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -98,26 +101,25 @@ export function JudgeChatBot({ report, onClose }: JudgeChatBotProps) {
         })
       });
 
-      if (!res.ok) {
-        throw new Error(`API Error: ${res.statusText}`);
-      }
-
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: data.answer,
-        citations: data.citations || [],
-        modelUsed: data.model_used || 'CodeBeast Judge Copilot'
-      };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: data.reply || data.answer || "No response received.",
+          citations: data.citations || [],
+          modelUsed: data.model || "ConsJudge Engine"
+        }
+      ]);
     } catch (err: any) {
       setMessages(prev => [
         ...prev,
         {
           role: 'assistant',
-          content: `⚠️ **Error connecting to Judge Copilot:** ${err.message || 'Could not reach backend chat service.'}`,
-          modelUsed: 'Fallback System'
+          content: `Unable to connect to the Copilot service (${err.message}). Is the backend active on port 8000?`,
+          modelUsed: 'System Notice'
         }
       ]);
     } finally {
@@ -125,231 +127,142 @@ export function JudgeChatBot({ report, onClose }: JudgeChatBotProps) {
     }
   };
 
-  const handleCopy = (text: string, idx: number) => {
+  const copyToClipboard = (text: string, idx: number) => {
     navigator.clipboard.writeText(text);
     setCopiedIdx(idx);
     setTimeout(() => setCopiedIdx(null), 2000);
   };
 
-  const clearChat = () => {
-    setMessages([
-      {
-        role: 'assistant',
-        content: `Chat cleared. Ask any new question about **${report.repoName || 'this repository'}**!`,
-        modelUsed: 'CodeBeast Intelligence System'
-      }
-    ]);
-  };
-
-  const renderFormattedContent = (content: string) => {
-    const lines = content.split('\n');
-    return (
-      <div className="space-y-2 text-sm leading-relaxed">
-        {lines.map((line, idx) => {
-          if (line.startsWith('```')) {
-            return (
-              <div key={idx} className="bg-[#0D0805] rounded px-3 py-1 font-mono text-xs text-[#FF8C42] border border-[#E07A48]/30">
-                {line.replace(/```/g, '') || 'code'}
-              </div>
-            );
-          }
-          if (line.startsWith('### ')) {
-            return <h4 key={idx} className="font-bold text-[#D4BC9A] text-sm mt-3 mb-1">{line.replace('### ', '')}</h4>;
-          }
-          if (line.startsWith('## ')) {
-            return <h3 key={idx} className="font-bold text-[#FF8C42] text-base mt-3 mb-1">{line.replace('## ', '')}</h3>;
-          }
-          if (line.startsWith('- ') || line.startsWith('* ')) {
-            const text = line.substring(2);
-            return (
-              <div key={idx} className="flex items-start gap-2 pl-2">
-                <span className="text-[#FF8C42] font-bold">•</span>
-                <span className="text-amber-100/90">{formatInline(text)}</span>
-              </div>
-            );
-          }
-          return line ? <p key={idx} className="text-amber-100/90">{formatInline(line)}</p> : <div key={idx} className="h-1" />;
-        })}
-      </div>
-    );
-  };
-
-  const formatInline = (text: string) => {
-    const parts = text.split(/(\*\*.*?\*\*|`.*?`)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="text-[#D4BC9A] font-semibold">{part.slice(2, -2)}</strong>;
-      }
-      if (part.startsWith('`') && part.endsWith('`')) {
-        return <code key={i} className="bg-[#241209] text-[#FFB085] px-1.5 py-0.5 rounded text-xs font-mono border border-[#E07A48]/20">{part.slice(1, -1)}</code>;
-      }
-      return part;
-    });
-  };
-
   return (
-    <div className="flex flex-col h-full bg-[#120703] border border-[#E07A48]/40 rounded-3xl shadow-2xl overflow-hidden backdrop-blur-xl">
+    <div className="liquid-glass-card rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(2,6,18,0.8)] flex flex-col text-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3.5 bg-[#1C0E07] border-b border-[#E07A48]/20">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#E07A48] to-[#FF8C42] flex items-center justify-center text-[#0D0805] shadow-[0_0_15px_rgba(224,122,72,0.4)]">
-            <Bot className="w-5 h-5" />
+      <div className="px-5 py-3.5 border-b border-[#89CFF0]/20 bg-[#08132B]/90 backdrop-blur-md flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-[#08132B] border border-[#89CFF0]/30 shadow-xs flex items-center justify-center text-[#89CFF0]">
+            <Bot className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-[#D4BC9A] text-sm font-mono">Talk to Repository</h3>
-              <span className="px-2 py-0.5 bg-[#E07A48]/20 border border-[#E07A48]/40 text-[#FF8C42] text-[10px] font-semibold rounded-full uppercase tracking-wider font-mono">
-                Judge AI Copilot
+            <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+              Repository Intelligence Copilot
+              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30">
+                Active
               </span>
-            </div>
-            <p className="text-xs text-amber-200/50 truncate max-w-[280px]">
-              {report.repoName || 'Active Evaluation'} • Overall: {report.overall_score || 0}/100
-            </p>
+            </h3>
+            <span className="text-[11px] text-[#8EA6C8]">
+              Grounded in evaluated Git AST & multi-agent metrics
+            </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <CodeBeastLiquidButton
-            onClick={clearChat}
-            variant="secondary"
-            size="sm"
-            viewMode="icon"
-            icon={<Trash2 className="w-3.5 h-3.5 text-amber-200/60" />}
-            aria-label="Clear Chat History"
-          />
+          <button
+            onClick={() => setMessages([messages[0]])}
+            className="p-1.5 text-[#8EA6C8] hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            title="Clear Chat History"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
           {onClose && (
-            <CodeBeastLiquidButton
+            <button
               onClick={onClose}
-              variant="secondary"
-              size="sm"
-              viewMode="icon"
-              icon={<X className="w-4 h-4 text-amber-200/60" />}
-              aria-label="Close Chat"
-            />
+              className="p-1.5 text-[#8EA6C8] hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              title="Close Drawer"
+            >
+              <X className="w-4 h-4" />
+            </button>
           )}
         </div>
       </div>
 
-      {/* Messages Feed */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[420px] custom-scrollbar">
-        {messages.map((msg, idx) => (
+      {/* Quick Prompts Bar */}
+      <div className="px-4 py-2.5 bg-[#08132B]/60 border-b border-[#89CFF0]/20 flex items-center gap-2 overflow-x-auto">
+        <span className="text-[10px] font-bold text-[#89CFF0] uppercase tracking-wider shrink-0 flex items-center gap-1">
+          <Sparkles className="w-3 h-3 text-[#89CFF0]" /> Suggestions:
+        </span>
+        {quickPrompts.map((qp, i) => (
+          <button
+            key={i}
+            onClick={() => handleSend(qp.query)}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-[#08132B] border border-[#89CFF0]/25 hover:bg-[#89CFF0]/15 hover:text-[#89CFF0] text-white rounded-full shadow-xs transition-colors shrink-0 disabled:opacity-50"
+          >
+            <qp.icon className="w-3.5 h-3.5 text-[#89CFF0]" />
+            <span>{qp.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Messages Scroll Area */}
+      <div className="p-4 space-y-4 max-h-[420px] overflow-y-auto bg-[#040914]/80 backdrop-blur-sm">
+        {messages.map((m, idx) => (
           <div
             key={idx}
-            className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+            className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
           >
             <div
-              className={`max-w-[88%] rounded-2xl px-4 py-3 shadow-md ${
-                msg.role === 'user'
-                  ? 'bg-gradient-to-r from-[#E07A48] to-[#FF8C42] text-[#0D0805] rounded-br-none font-medium'
-                  : 'bg-[#1C0E07] border border-[#E07A48]/30 text-amber-100 rounded-bl-none'
+              className={`max-w-[85%] p-3.5 text-xs leading-relaxed rounded-2xl ${
+                m.role === 'user'
+                  ? 'bg-gradient-to-r from-[#BAE6FD] to-[#89CFF0] text-[#040914] font-semibold shadow-sm'
+                  : 'bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 text-white shadow-xs'
               }`}
             >
-              {msg.role === 'assistant' ? (
-                <div>
-                  {renderFormattedContent(msg.content)}
-                  
-                  {/* Citations / Evidence Tags */}
-                  {msg.citations && msg.citations.length > 0 && (
-                    <div className="mt-3 pt-2 border-t border-[#E07A48]/20 flex flex-wrap items-center gap-1.5">
-                      <span className="text-[10px] text-amber-200/50 font-semibold uppercase tracking-wider flex items-center gap-1">
-                        <Terminal className="w-3 h-3 text-[#FF8C42]" /> Evidence:
-                      </span>
-                      {msg.citations.map((cite, cIdx) => (
-                        <span key={cIdx} className="text-[10px] bg-[#29130A] border border-[#E07A48]/30 text-[#FF8C42] px-2 py-0.5 rounded font-mono">
-                          {cite}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+              <p className="whitespace-pre-wrap">{m.content}</p>
 
-                  {/* Footer metadata & Copy button */}
-                  <div className="mt-2.5 flex items-center justify-between text-[10px] text-amber-200/40 pt-1 border-t border-[#E07A48]/10">
-                    <span>⚡ {msg.modelUsed || 'CodeBeast Copilot'}</span>
-                    <button
-                      onClick={() => handleCopy(msg.content, idx)}
-                      className="hover:text-[#FF8C42] flex items-center gap-1 transition-colors"
-                      title="Copy message text"
-                    >
-                      {copiedIdx === idx ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-emerald-400">Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span>Copy</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+              {m.citations && m.citations.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-[#89CFF0]/20 text-[10px] text-[#89CFF0]">
+                  <span className="font-bold block mb-0.5">Grounding Citations:</span>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {m.citations.map((c, ci) => (
+                      <li key={ci} className="truncate">{c}</li>
+                    ))}
+                  </ul>
                 </div>
-              ) : (
-                <p className="text-sm font-semibold text-[#0D0805]">{msg.content}</p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 mt-1 px-1 text-[10px] text-[#8EA6C8]">
+              <span>{m.role === 'user' ? 'You' : m.modelUsed || 'Copilot'}</span>
+              {m.role === 'assistant' && (
+                <button
+                  onClick={() => copyToClipboard(m.content, idx)}
+                  className="hover:text-white transition-colors"
+                  title="Copy message"
+                >
+                  {copiedIdx === idx ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                </button>
               )}
             </div>
           </div>
         ))}
 
         {loading && (
-          <div className="flex items-center gap-2 text-amber-200/60 text-xs pl-2 py-2">
-            <div className="w-2 h-2 rounded-full bg-[#E07A48] animate-pulse" />
-            <div className="w-2 h-2 rounded-full bg-[#FF8C42] animate-pulse delay-75" />
-            <div className="w-2 h-2 rounded-full bg-[#FFB085] animate-pulse delay-150" />
-            <span className="text-amber-200/50 font-mono">Synthesizing multi-agent repository telemetry...</span>
+          <div className="flex items-center gap-2 text-xs text-[#89CFF0] p-2.5 bg-[#08132B] backdrop-blur-sm border border-[#89CFF0]/30 rounded-xl w-fit">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#89CFF0]" />
+            <span>Synthesizing repository intelligence...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Prompt Chips */}
-      <div className="px-4 py-2.5 bg-[#180A04] border-t border-[#E07A48]/20 flex items-center gap-2 overflow-x-auto no-scrollbar">
-        <span className="text-[10px] text-amber-200/40 uppercase font-semibold flex items-center gap-1 shrink-0 font-mono">
-          <Sparkles className="w-3 h-3 text-[#FF8C42]" /> Suggested:
-        </span>
-        {quickPrompts.map((p, pIdx) => {
-          const IconComponent = p.icon;
-          return (
-            <button
-              key={pIdx}
-              onClick={() => handleSend(p.query)}
-              disabled={loading}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#241108] hover:bg-[#34180A] border border-[#E07A48]/30 hover:border-[#FF8C42] text-amber-100 hover:text-[#D4BC9A] text-xs transition-all disabled:opacity-50 font-mono shadow-sm"
-            >
-              <IconComponent className="w-3 h-3 text-[#FF8C42]" />
-              <span>{p.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Input Form */}
-      <div className="p-3.5 bg-[#1C0E07] border-t border-[#E07A48]/20">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSend();
-          }}
-          className="flex items-center gap-2.5"
-        >
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask a technical question about this repository..."
-            disabled={loading}
-            className="flex-1 bg-[#100602] border border-[#E07A48]/30 rounded-2xl px-4 py-2.5 text-xs text-[#D4BC9A] placeholder-amber-200/30 outline-none focus:border-[#FF8C42] transition-colors disabled:opacity-50 font-mono"
-          />
-          <CodeBeastLiquidButton
-            type="submit"
-            disabled={loading || !input.trim()}
-            variant="primary"
-            size="sm"
-            viewMode="icon"
-            icon={<Send className="w-4 h-4 text-[#FF8C42]" />}
-            aria-label="Send message"
-          />
-        </form>
+      {/* Input Area */}
+      <div className="p-3 border-t border-[#89CFF0]/20 bg-[#08132B]/90 backdrop-blur-md flex items-center gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+          placeholder="Ask a technical evaluation question about this codebase..."
+          className="flex-1 bg-[#040914] border border-[#89CFF0]/30 px-3.5 py-2 text-xs text-white placeholder-[#8EA6C8] focus:outline-none focus:border-[#89CFF0] rounded-full shadow-inner"
+          disabled={loading}
+        />
+        <CodeBeastLiquidButton
+          onClick={() => handleSend()}
+          disabled={loading || !input.trim()}
+          variant="primary"
+          size="sm"
+          icon={<Send className="w-3.5 h-3.5" />}
+          label="Send"
+        />
       </div>
     </div>
   );
