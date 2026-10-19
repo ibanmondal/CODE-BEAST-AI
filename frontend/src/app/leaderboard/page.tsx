@@ -89,10 +89,10 @@ export default function LeaderboardPage() {
   };
 
   const getRankBadge = (rank: number) => {
-    if (rank === 1) return 'bg-gradient-to-r from-[#BAE6FD] to-[#89CFF0] text-[#040914] font-bold shadow-xs';
-    if (rank === 2) return 'bg-[#08132B] text-white font-bold border border-[#89CFF0]/25 shadow-xs';
-    if (rank === 3) return 'bg-[#08132B] text-[#8EA6C8] font-bold border border-[#89CFF0]/20 shadow-xs';
-    return 'bg-[#08132B] text-[#89CFF0] font-bold border border-[#89CFF0]/30';
+    if (rank === 1) return 'podium-rank-gold';
+    if (rank === 2) return 'podium-rank-silver';
+    if (rank === 3) return 'podium-rank-bronze';
+    return 'bg-[#08132B] text-[#89CFF0] font-bold border border-[#89CFF0]/30 shadow-xs';
   };
 
   const filteredLeaderboard = leaderboard.filter((row) => 
@@ -109,6 +109,7 @@ export default function LeaderboardPage() {
     (row.repo_name && row.repo_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (row.team_name && row.team_name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+  const batchTop3 = batchRankings.slice(0, 3);
 
   return (
     <div className="space-y-8 pb-12 text-white">
@@ -185,63 +186,102 @@ export default function LeaderboardPage() {
       {/* ========================================================= */}
       {viewMode === 'global' && (
         <>
-          {/* Top 3 Podium Cards with Liquid Glass */}
+          {/* Top 3 Podium Cards with Gold, Silver, Bronze Luxury Glass */}
           {top3.length >= 3 && (
             <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
               
-              {/* Rank 2 (Left) */}
+              {/* Rank 2 (Left - Silver Runner Up) */}
               <StaggerItem className="order-2 md:order-1">
-                <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] text-center space-y-3">
-                  <div className="w-12 h-12 mx-auto rounded-2xl bg-[#08132B] border border-[#89CFF0]/30 text-white flex items-center justify-center font-bold text-base shadow-xs">
-                    2
+                <div className="podium-card-silver rounded-3xl p-6 text-center space-y-3 relative group">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 podium-pill-silver text-[10px] font-black uppercase tracking-wider rounded-full shadow-md">
+                    <Medal className="w-3.5 h-3.5 text-slate-900" />
+                    <span>Runner Up</span>
+                  </div>
+                  <div className="w-14 h-14 mx-auto rounded-2xl podium-rank-silver flex items-center justify-center font-black text-xl shadow-md relative">
+                    <span>2</span>
+                    <Medal className="w-3.5 h-3.5 text-slate-800 absolute -top-1 -right-1" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-[#8EA6C8] uppercase tracking-wider block">Runner Up</span>
+                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest block">2nd Place</span>
                     <h3 className="font-mono font-bold text-base text-white truncate mt-0.5">{top3[1].repo}</h3>
-                    <span className="text-xs text-[#89CFF0] font-medium">{top3[1].team || "Team"}</span>
+                    <span className="text-xs text-slate-300 font-medium">{top3[1].team || "Team"}</span>
                   </div>
-                  <div className="pt-3 border-t border-[#89CFF0]/20">
-                    <span className="text-3xl font-bold text-white font-mono">{top3[1].overall}</span>
-                    <span className="text-xs text-[#89CFF0]"> / 100</span>
+                  <div className="pt-3 border-t border-slate-300/20 flex items-center justify-between">
+                    <div>
+                      <span className="text-3xl font-black text-slate-200 font-mono drop-shadow-[0_2px_8px_rgba(203,213,225,0.3)]">{top3[1].overall}</span>
+                      <span className="text-xs text-slate-400"> / 100</span>
+                    </div>
+                    <Link
+                      href={`/analysis?repo=${encodeURIComponent(top3[1].repo)}`}
+                      className="inline-flex items-center gap-1 px-3 py-1 text-[11px] font-bold rounded-full bg-slate-300/15 hover:bg-slate-300/25 text-slate-100 border border-slate-300/30 transition-all"
+                    >
+                      <span>Inspect</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
                   </div>
                 </div>
               </StaggerItem>
 
-              {/* Rank 1 (Center Prominent Liquid Glass Champion) */}
+              {/* Rank 1 (Center Prominent Gold Champion) */}
               <StaggerItem className="order-1 md:order-2">
-                <div className="liquid-glass-card rounded-3xl p-8 border-2 border-[#89CFF0]/40 shadow-[0_20px_50px_rgba(2,6,18,0.9)] text-center space-y-4 relative">
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 liquid-btn-primary text-[#040914] text-[11px] font-bold uppercase tracking-wider rounded-full shadow-md">
-                    Grand Champion
+                <div className="podium-card-gold rounded-3xl p-8 text-center space-y-4 relative group">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 podium-pill-gold text-[11px] font-black uppercase tracking-wider rounded-full shadow-lg flex items-center gap-1.5">
+                    <Crown className="w-3.5 h-3.5 text-slate-950 fill-slate-950" />
+                    <span>Grand Champion</span>
                   </div>
-                  <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] flex items-center justify-center font-bold text-2xl shadow-lg shadow-[rgba(137,207,240,0.35)]">
-                    1
+                  <div className="w-16 h-16 mx-auto rounded-3xl podium-rank-gold flex items-center justify-center font-black text-2xl shadow-xl relative mt-1">
+                    <span>1</span>
+                    <Crown className="w-4 h-4 text-amber-950 absolute -top-1.5 -right-1 fill-amber-950" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-[#89CFF0] uppercase tracking-wider block">Cohort Leader</span>
+                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">Cohort Leader</span>
                     <h3 className="font-mono font-bold text-lg sm:text-xl text-white truncate mt-0.5">{top3[0].repo}</h3>
-                    <span className="text-xs text-[#89CFF0] font-semibold">{top3[0].team || "Team"}</span>
+                    <span className="text-xs text-amber-200 font-semibold">{top3[0].team || "Team"}</span>
                   </div>
-                  <div className="pt-3 border-t border-[#89CFF0]/20">
-                    <span className="text-4xl font-bold text-[#89CFF0] font-mono">{top3[0].overall}</span>
-                    <span className="text-xs text-[#89CFF0]"> / 100</span>
+                  <div className="pt-3 border-t border-amber-400/20 flex items-center justify-between">
+                    <div>
+                      <span className="text-4xl font-black text-amber-400 font-mono drop-shadow-[0_2px_12px_rgba(245,158,11,0.4)]">{top3[0].overall}</span>
+                      <span className="text-xs text-amber-400/80"> / 100</span>
+                    </div>
+                    <Link
+                      href={`/analysis?repo=${encodeURIComponent(top3[0].repo)}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-black rounded-full podium-pill-gold hover:scale-105 transition-transform shadow-md"
+                    >
+                      <span>Inspect Repository</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
                   </div>
                 </div>
               </StaggerItem>
 
-              {/* Rank 3 (Right) */}
+              {/* Rank 3 (Right - Bronze 2nd Runner Up) */}
               <StaggerItem className="order-3">
-                <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] text-center space-y-3">
-                  <div className="w-12 h-12 mx-auto rounded-2xl bg-[#08132B] border border-[#89CFF0]/30 text-[#8EA6C8] flex items-center justify-center font-bold text-base shadow-xs">
-                    3
+                <div className="podium-card-bronze rounded-3xl p-6 text-center space-y-3 relative group">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 podium-pill-bronze text-[10px] font-black uppercase tracking-wider rounded-full shadow-md">
+                    <Award className="w-3.5 h-3.5 text-white" />
+                    <span>2nd Runner Up</span>
+                  </div>
+                  <div className="w-14 h-14 mx-auto rounded-2xl podium-rank-bronze flex items-center justify-center font-black text-xl shadow-md relative">
+                    <span>3</span>
+                    <Award className="w-3.5 h-3.5 text-amber-100 absolute -top-1 -right-1" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-[#8EA6C8] uppercase tracking-wider block">2nd Runner Up</span>
+                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">3rd Place</span>
                     <h3 className="font-mono font-bold text-base text-white truncate mt-0.5">{top3[2].repo}</h3>
-                    <span className="text-xs text-[#89CFF0] font-medium">{top3[2].team || "Team"}</span>
+                    <span className="text-xs text-amber-300/80 font-medium">{top3[2].team || "Team"}</span>
                   </div>
-                  <div className="pt-3 border-t border-[#89CFF0]/20">
-                    <span className="text-3xl font-bold text-white font-mono">{top3[2].overall}</span>
-                    <span className="text-xs text-[#89CFF0]"> / 100</span>
+                  <div className="pt-3 border-t border-amber-700/30 flex items-center justify-between">
+                    <div>
+                      <span className="text-3xl font-black text-amber-500 font-mono drop-shadow-[0_2px_8px_rgba(180,83,9,0.3)]">{top3[2].overall}</span>
+                      <span className="text-xs text-amber-500/80"> / 100</span>
+                    </div>
+                    <Link
+                      href={`/analysis?repo=${encodeURIComponent(top3[2].repo)}`}
+                      className="inline-flex items-center gap-1 px-3 py-1 text-[11px] font-bold rounded-full bg-amber-600/20 hover:bg-amber-600/30 text-amber-200 border border-amber-600/30 transition-all"
+                    >
+                      <span>Inspect</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
                   </div>
                 </div>
               </StaggerItem>
@@ -286,7 +326,7 @@ export default function LeaderboardPage() {
                         {filteredLeaderboard.map((row, idx) => (
                           <tr key={idx} className="hover:bg-white/5 transition-colors">
                             <td className="py-3.5 px-4 text-center">
-                              <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs ${getRankBadge(idx + 1)}`}>
+                              <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-black ${getRankBadge(idx + 1)}`}>
                                 {idx + 1}
                               </span>
                             </td>
@@ -435,6 +475,157 @@ export default function LeaderboardPage() {
                 </div>
               </ScrollReveal>
 
+              {/* Top 3 Cohort Champions Podium (Gold, Silver, Bronze) */}
+              {batchTop3.length >= 3 && (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#89CFF0] uppercase tracking-wider">
+                    <Trophy className="w-4 h-4 text-amber-400" />
+                    <span>Cohort Top 3 Podium Champions</span>
+                  </div>
+                  <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                    
+                    {/* Rank 2 (Left - Silver Runner Up) */}
+                    <StaggerItem className="order-2 md:order-1">
+                      <div className="podium-card-silver rounded-3xl p-6 text-center space-y-3 relative group">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 podium-pill-silver text-[10px] font-black uppercase tracking-wider rounded-full shadow-md">
+                          <Medal className="w-3.5 h-3.5 text-slate-900" />
+                          <span>Runner Up</span>
+                        </div>
+                        <div className="w-14 h-14 mx-auto rounded-2xl podium-rank-silver flex items-center justify-center font-black text-xl shadow-md relative">
+                          <span>2</span>
+                          <Medal className="w-3.5 h-3.5 text-slate-800 absolute -top-1 -right-1" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest block">2nd Place</span>
+                          <h3 className="font-mono font-bold text-base text-white truncate mt-0.5">{batchTop3[1].repo_name}</h3>
+                          <span className="text-xs text-slate-300 font-medium">{batchTop3[1].team_name || "Team"}</span>
+                        </div>
+
+                        {batchTop3[1].badge && (
+                          <div className="pt-0.5">
+                            <span className="inline-flex items-center px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-slate-300/15 text-slate-200 border border-slate-300/30 max-w-full truncate">
+                              {batchTop3[1].badge}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="pt-3 border-t border-slate-300/20 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-3xl font-black text-slate-200 font-mono drop-shadow-[0_2px_8px_rgba(203,213,225,0.3)]">{batchTop3[1].overall_score}</span>
+                            <span className="text-xs text-slate-400"> / 100</span>
+                            {batchTop3[1].grade && (
+                              <span className="px-1.5 py-0.2 rounded-md font-mono text-[10px] font-bold bg-slate-300/20 text-slate-100 border border-slate-300/30">
+                                {batchTop3[1].grade}
+                              </span>
+                            )}
+                          </div>
+                          <Link
+                            href={`/analysis?repo=${encodeURIComponent(batchTop3[1].repo_name)}`}
+                            className="inline-flex items-center gap-1 px-3 py-1 text-[11px] font-bold rounded-full bg-slate-300/15 hover:bg-slate-300/25 text-slate-100 border border-slate-300/30 transition-all"
+                          >
+                            <span>Inspect</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    </StaggerItem>
+
+                    {/* Rank 1 (Center Prominent Gold Champion) */}
+                    <StaggerItem className="order-1 md:order-2">
+                      <div className="podium-card-gold rounded-3xl p-8 text-center space-y-4 relative group">
+                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 podium-pill-gold text-[11px] font-black uppercase tracking-wider rounded-full shadow-lg flex items-center gap-1.5">
+                          <Crown className="w-3.5 h-3.5 text-slate-950 fill-slate-950" />
+                          <span>Cohort Grand Champion</span>
+                        </div>
+                        <div className="w-16 h-16 mx-auto rounded-3xl podium-rank-gold flex items-center justify-center font-black text-2xl shadow-xl relative mt-1">
+                          <span>1</span>
+                          <Crown className="w-4 h-4 text-amber-950 absolute -top-1.5 -right-1 fill-amber-950" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">Cohort Leader</span>
+                          <h3 className="font-mono font-bold text-lg sm:text-xl text-white truncate mt-0.5">{batchTop3[0].repo_name}</h3>
+                          <span className="text-xs text-amber-200 font-semibold">{batchTop3[0].team_name || "Team"}</span>
+                        </div>
+
+                        {batchTop3[0].badge && (
+                          <div className="pt-0.5">
+                            <span className="inline-flex items-center px-3 py-0.5 text-[11px] font-bold rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-xs max-w-full truncate">
+                              {batchTop3[0].badge}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="pt-3 border-t border-amber-400/20 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-4xl font-black text-amber-400 font-mono drop-shadow-[0_2px_12px_rgba(245,158,11,0.4)]">{batchTop3[0].overall_score}</span>
+                            <span className="text-xs text-amber-400/80"> / 100</span>
+                            {batchTop3[0].grade && (
+                              <span className="px-2 py-0.5 rounded-md font-mono text-xs font-bold bg-amber-400/25 text-amber-200 border border-amber-400/40">
+                                {batchTop3[0].grade}
+                              </span>
+                            )}
+                          </div>
+                          <Link
+                            href={`/analysis?repo=${encodeURIComponent(batchTop3[0].repo_name)}`}
+                            className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-black rounded-full podium-pill-gold hover:scale-105 transition-transform shadow-md"
+                          >
+                            <span>Inspect Repository</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                      </div>
+                    </StaggerItem>
+
+                    {/* Rank 3 (Right - Bronze 2nd Runner Up) */}
+                    <StaggerItem className="order-3">
+                      <div className="podium-card-bronze rounded-3xl p-6 text-center space-y-3 relative group">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 podium-pill-bronze text-[10px] font-black uppercase tracking-wider rounded-full shadow-md">
+                          <Award className="w-3.5 h-3.5 text-white" />
+                          <span>2nd Runner Up</span>
+                        </div>
+                        <div className="w-14 h-14 mx-auto rounded-2xl podium-rank-bronze flex items-center justify-center font-black text-xl shadow-md relative">
+                          <span>3</span>
+                          <Award className="w-3.5 h-3.5 text-amber-100 absolute -top-1 -right-1" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">3rd Place</span>
+                          <h3 className="font-mono font-bold text-base text-white truncate mt-0.5">{batchTop3[2].repo_name}</h3>
+                          <span className="text-xs text-amber-300/80 font-medium">{batchTop3[2].team_name || "Team"}</span>
+                        </div>
+
+                        {batchTop3[2].badge && (
+                          <div className="pt-0.5">
+                            <span className="inline-flex items-center px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-amber-700/20 text-amber-200 border border-amber-600/30 max-w-full truncate">
+                              {batchTop3[2].badge}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="pt-3 border-t border-amber-700/30 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-3xl font-black text-amber-500 font-mono drop-shadow-[0_2px_8px_rgba(180,83,9,0.3)]">{batchTop3[2].overall_score}</span>
+                            <span className="text-xs text-amber-500/80"> / 100</span>
+                            {batchTop3[2].grade && (
+                              <span className="px-1.5 py-0.2 rounded-md font-mono text-[10px] font-bold bg-amber-700/25 text-amber-200 border border-amber-600/30">
+                                {batchTop3[2].grade}
+                              </span>
+                            )}
+                          </div>
+                          <Link
+                            href={`/analysis?repo=${encodeURIComponent(batchTop3[2].repo_name)}`}
+                            className="inline-flex items-center gap-1 px-3 py-1 text-[11px] font-bold rounded-full bg-amber-600/20 hover:bg-amber-600/30 text-amber-200 border border-amber-600/30 transition-all"
+                          >
+                            <span>Inspect</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    </StaggerItem>
+
+                  </StaggerContainer>
+                </div>
+              )}
+
               {/* Special Category Awards Grid */}
               {batchReport.awards && batchReport.awards.length > 0 && (
                 <div className="space-y-3">
@@ -497,13 +688,8 @@ export default function LeaderboardPage() {
                             return (
                               <tr key={idx} className="hover:bg-white/5 transition-colors">
                                 <td className="py-3.5 px-4 text-center">
-                                  <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
-                                    rank === 1 ? 'bg-gradient-to-tr from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914]' :
-                                    rank === 2 ? 'bg-slate-200 text-[#040914]' :
-                                    rank === 3 ? 'bg-amber-600 text-white' :
-                                    'bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30'
-                                  }`}>
-                                    {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
+                                  <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-black ${getRankBadge(rank)}`}>
+                                    {rank}
                                   </span>
                                 </td>
 

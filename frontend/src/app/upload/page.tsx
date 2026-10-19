@@ -800,13 +800,13 @@ export default function UploadPage() {
                             return (
                               <tr key={idx} className="hover:bg-white/5 transition-colors">
                                 <td className="py-3 px-4 text-center">
-                                  <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
-                                    rank === 1 ? 'bg-gradient-to-tr from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914]' :
-                                    rank === 2 ? 'bg-slate-200 text-[#040914]' :
-                                    rank === 3 ? 'bg-amber-600 text-white' :
+                                  <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-black ${
+                                    rank === 1 ? 'podium-rank-gold' :
+                                    rank === 2 ? 'podium-rank-silver' :
+                                    rank === 3 ? 'podium-rank-bronze' :
                                     'bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30'
                                   }`}>
-                                    {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
+                                    {rank}
                                   </span>
                                 </td>
 
