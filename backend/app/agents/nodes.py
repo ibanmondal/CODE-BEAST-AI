@@ -49,6 +49,7 @@ def broadcast_agent_status(task_id, repo_url, status, agent_name):
             "testing_agent": "CI Flake Risk & Test Assertion Verification...",
             "database_agent": "Schema Quality & ORM Query Indexing...",
             "similarity_agent": "AST & CodeBERT Plagiarism Verification...",
+            "nararouter_supervisor": "ConsJudge Multi-Pass Consensus Verification...",
             "gemini_supervisor": "ConsJudge Multi-Pass Consensus Verification..."
         }
 
@@ -199,22 +200,6 @@ async def run_with_nararouter(prompt, parser, invoke_data, temp=0.1, model="agne
     chain = prompt | llm | parser
     return await asyncio.wait_for(chain.ainvoke(invoke_data), timeout=2.5)
 
-# --- Helper for Gemini Flash (Heavy/Fast Tasks) ---
-async def run_with_gemini(prompt, parser, invoke_data, temp=0.1, model="gemini-2.5-flash"):
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise Exception("No Gemini API key found")
-    from langchain_google_genai import ChatGoogleGenerativeAI
-    llm = ChatGoogleGenerativeAI(
-        model=model,
-        temperature=temp,
-        google_api_key=api_key,
-        max_retries=0,
-        timeout=3.0
-    )
-    chain = prompt | llm | parser
-    return await asyncio.wait_for(chain.ainvoke(invoke_data), timeout=3.0)
-
 # --- Helper for Groq (Heavy Tasks) ---
 async def run_with_groq(prompt, parser, invoke_data, temp=0.1, model="openai/gpt-oss-20b"):
     keys = []
@@ -241,9 +226,9 @@ async def run_with_groq(prompt, parser, invoke_data, temp=0.1, model="openai/gpt
                 continue
     raise Exception(f"All Groq keys/models failed. Last error: {last_err}")
 
-# --- Unified Heavy Agent Router ---
+# --- Unified Heavy Agent Router (Exclusively Groq & NaraRouter) ---
 async def run_heavy_agent(prompt, parser, invoke_data, temp=0.1):
-    # Try Groq with snappy 1.5s timeout
+    # 1. Try Groq with snappy 1.5s timeout
     try:
         return await asyncio.wait_for(run_with_groq(prompt, parser, invoke_data, temp, model="openai/gpt-oss-20b"), timeout=1.5)
     except Exception:
@@ -254,8 +239,14 @@ async def run_heavy_agent(prompt, parser, invoke_data, temp=0.1):
     except Exception:
         pass
 
-    # Instant failover: do NOT hang on uninstalled Ollama
-    raise Exception("Groq rate limited or unavailable; falling over to deterministic AST engine")
+    # 2. Try NaraRouter
+    try:
+        return await asyncio.wait_for(run_with_nararouter(prompt, parser, invoke_data, temp, model="agnes-2.5-flash"), timeout=2.0)
+    except Exception:
+        pass
+
+    # Fall over to deterministic AST engine
+    raise Exception("Groq and NaraRouter rate limited or unavailable; falling over to deterministic AST engine")
 
 # --- Helper for Fast Fallback ---
 async def run_with_ollama_fallback(prompt, parser, invoke_data, temp=0.1):
@@ -564,7 +555,6 @@ async def nararouter_supervisor_node(state: AgentState) -> dict:
     print("-> Running Supervisor Node with ConsJudge Multi-Pass Consistency (Fast Consensus)...")
     task_id = state.get("task_id")
     repo_url = state.get("repo_url", "")
-    broadcast_agent_status(task_id, repo_url, "AgentRunning", "gemini_supervisor")
     broadcast_agent_status(task_id, repo_url, "AgentRunning", "nararouter_supervisor")
     
     # Read outputs from all prior stages
@@ -633,24 +623,26 @@ async def nararouter_supervisor_node(state: AgentState) -> dict:
                 return await run_with_groq(prompt, parser, invoke_args, temp=temp, model="openai/gpt-oss-20b")
             elif model_type == "groq_qwen":
                 return await run_with_groq(prompt, parser, invoke_args, temp=temp, model="qwen/qwen3.8-27b")
-            elif model_type == "gemini":
-                return await run_with_gemini(prompt, parser, invoke_args, temp=temp)
             elif model_type == "nararouter":
-                return await run_with_nararouter(prompt, parser, invoke_args, temp=temp)
+                return await run_with_nararouter(prompt, parser, invoke_args, temp=temp, model="agnes-2.5-flash")
         except Exception as err:
             return None
 
-    # Ultra-fast dual-pass consensus using high-throughput Groq models (1.5s timeout)
+    # Ultra-fast dual-pass consensus using Groq & NaraRouter models (2.0s timeout)
     try:
         passes = await asyncio.wait_for(
             asyncio.gather(
                 run_single_pass("groq_20b", 0.1),
-                run_single_pass("groq_qwen", 0.25),
+                run_single_pass("nararouter", 0.25),
                 return_exceptions=True
             ),
-            timeout=1.5
+            timeout=2.0
         )
         valid_passes = [p for p in passes if p and isinstance(p, dict) and "overall_score" in p]
+        if len(valid_passes) < 2:
+            fb = await run_single_pass("groq_qwen", 0.2)
+            if fb and isinstance(fb, dict) and "overall_score" in fb:
+                valid_passes.append(fb)
     except Exception:
         valid_passes = []
     
@@ -697,7 +689,6 @@ async def nararouter_supervisor_node(state: AgentState) -> dict:
             final_rep["structural_evidence"] = sim_rep.get("structural_evidence", [])
             final_rep["clone_risk_level"] = sim_rep.get("clone_risk_level", "LOW")
             
-        broadcast_agent_status(task_id, repo_url, "AgentCompleted", "gemini_supervisor")
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "nararouter_supervisor")
         return {"final_report": final_rep}
     elif len(valid_passes) == 1:
@@ -723,12 +714,10 @@ async def nararouter_supervisor_node(state: AgentState) -> dict:
             p["detected_clones"] = sim_rep.get("detected_clones", [])
             p["structural_evidence"] = sim_rep.get("structural_evidence", [])
             p["clone_risk_level"] = sim_rep.get("clone_risk_level", "LOW")
-        broadcast_agent_status(task_id, repo_url, "AgentCompleted", "gemini_supervisor")
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "nararouter_supervisor")
         return {"final_report": p}
     else:
         # Robust honest deterministic fallback
-        broadcast_agent_status(task_id, repo_url, "AgentCompleted", "gemini_supervisor")
         broadcast_agent_status(task_id, repo_url, "AgentCompleted", "nararouter_supervisor")
         return {"final_report": {
             "executive_summary": f"Honest multi-dimensional deterministic audit complete. Codebase evaluated with static heuristics, AST slicing, and dependency graphs.",
@@ -768,4 +757,8 @@ async def nararouter_supervisor_node(state: AgentState) -> dict:
             "structural_evidence": sim_rep.get("structural_evidence", []) if isinstance(sim_rep, dict) else [],
             "clone_risk_level": sim_rep.get("clone_risk_level", "LOW") if isinstance(sim_rep, dict) else "LOW"
         }}
+
+# Backwards compatibility alias for external test scripts
+gemini_supervisor_node = nararouter_supervisor_node
+
 

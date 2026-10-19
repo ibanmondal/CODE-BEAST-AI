@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Mono, Anton, Bebas_Neue, Barlow_Condensed } from "next/font/google";
 import "./globals.css";
 import { ClientLayout } from "@/components/ClientLayout";

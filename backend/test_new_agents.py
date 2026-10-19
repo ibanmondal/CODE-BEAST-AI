@@ -8,7 +8,7 @@ load_dotenv()
 from app.agents.nodes import testing_agent_node, database_agent_node
 
 async def run_tests():
-    print("Testing New Agents (Groq & Gemini Mixture)...\n")
+    print("Testing New Agents (Groq & NaraRouter Mixture)...\n")
     
     mock_state = {
         "repo_url": "https://github.com/test/repo",
@@ -26,7 +26,7 @@ async def run_tests():
     print(test_result)
     print("\n" + "="*50 + "\n")
 
-    print("--- Running Database Agent (Gemini) ---")
+    print("--- Running Database Agent (NaraRouter / Groq) ---")
     db_result = await database_agent_node(mock_state)
     print("\nResult:")
     print(db_result)

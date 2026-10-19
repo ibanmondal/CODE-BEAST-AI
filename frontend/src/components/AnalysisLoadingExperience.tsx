@@ -32,7 +32,7 @@ const AGENT_TASKS = [
   { id: "arch", name: "Cyclic Dependency & SOLID Graph", tech: "Llama 3.3 70B", icon: Layers },
   { id: "perf", name: "Algorithmic Complexity & Profiler", tech: "Llama 3.3 70B", icon: Zap },
   { id: "test", name: "Assertion Density & CI Flake Risk", tech: "Llama 3.1 8B", icon: TestTube },
-  { id: "db", name: "Database Schema & Query Indexing", tech: "Gemini Flash Core", icon: Database },
+  { id: "db", name: "Database Schema & Query Indexing", tech: "NaraRouter Agnes", icon: Database },
   { id: "clone", name: "AST Semantic Clone Vector Check", tech: "CodeBERT FAISS", icon: Fingerprint },
   { id: "judge", name: "ConsJudge Dual-Pass Consensus", tech: "ConsJudge Arbiter '25", icon: CheckCircle2 }
 ];

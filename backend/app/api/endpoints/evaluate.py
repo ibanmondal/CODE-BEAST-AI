@@ -205,9 +205,9 @@ async def get_status(task_id: str):
                 "status": "SUCCESS", 
                 "result": mem.get("result"), 
                 "overall_score": mem.get("overall_score"),
-                "active_agent": "gemini_supervisor",
+                "active_agent": "nararouter_supervisor",
                 "stage_label": "Synthesis & Consensus Complete",
-                "completed_agents": ["ingestion", "security_agent", "architecture_agent", "performance_agent", "testing_agent", "database_agent", "similarity_agent", "gemini_supervisor"]
+                "completed_agents": ["ingestion", "security_agent", "architecture_agent", "performance_agent", "testing_agent", "database_agent", "similarity_agent", "nararouter_supervisor"]
             }
         elif mem.get("status") == "FAILURE":
             return {
@@ -244,9 +244,9 @@ async def get_status(task_id: str):
                     "status": "SUCCESS",
                     "result": final,
                     "overall_score": job.overall_score,
-                    "active_agent": "gemini_supervisor",
+                    "active_agent": "nararouter_supervisor",
                     "stage_label": "Synthesis & Consensus Complete",
-                    "completed_agents": ["ingestion", "security_agent", "architecture_agent", "performance_agent", "testing_agent", "database_agent", "similarity_agent", "gemini_supervisor"]
+                    "completed_agents": ["ingestion", "security_agent", "architecture_agent", "performance_agent", "testing_agent", "database_agent", "similarity_agent", "nararouter_supervisor"]
                 }
             elif job.status == "Failed":
                 return {

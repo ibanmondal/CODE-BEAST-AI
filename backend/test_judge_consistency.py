@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from app.agents.nodes import gemini_supervisor_node
+from app.agents.nodes import nararouter_supervisor_node
 
 async def test_cons_judge():
     print("[TEST] Running Test: ConsJudge Multi-Pass Supervisor Consistency Layer")
@@ -45,7 +45,7 @@ async def test_cons_judge():
         }
     }
     
-    result = await gemini_supervisor_node(mock_state)
+    result = await nararouter_supervisor_node(mock_state)
     final_report = result.get("final_report", {})
     
     print("\n[SUCCESS] --- ConsJudge Evaluation Output ---")

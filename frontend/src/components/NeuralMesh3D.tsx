@@ -47,7 +47,7 @@ const AGENT_NODES: AgentNode[] = [
     telemetry: {
       status: "DUAL-PASS CONSENSUS ACTIVE",
       metric: "ConsJudge 99.4% Confidence",
-      subtext: "Gemini Flash + Groq Llama 3.3 Arbiter"
+      subtext: "NaraRouter + Groq Llama 3.3 Arbiter"
     }
   },
   {

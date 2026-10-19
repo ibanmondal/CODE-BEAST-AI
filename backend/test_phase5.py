@@ -6,7 +6,7 @@ from app.agents.graph import create_orchestrator_graph
 load_dotenv()
 
 async def run_test():
-    print("Testing Phase 5: Gemini Supervisor")
+    print("Testing Phase 5: NaraRouter + Groq Supervisor")
     
     graph = create_orchestrator_graph()
     
@@ -31,7 +31,7 @@ async def run_test():
     result_state = await graph.ainvoke(initial_state)
     
     print("\n--- Execution Complete ---")
-    print("\n[Final Report (Gemini)]")
+    print("\n[Final Report (NaraRouter + Groq)]")
     if "final_report" in result_state:
         print(json.dumps(result_state["final_report"], indent=2))
     else:

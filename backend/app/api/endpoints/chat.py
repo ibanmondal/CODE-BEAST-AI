@@ -156,14 +156,14 @@ Guidelines for your response:
             if v.get("file_path") and v.get("file_path") != "N/A":
                 citations.append(f"{v.get('file_path')}:{v.get('line_range', '')}")
 
-    # Attempt LLM invocation with multi-provider fallback
+    # Attempt LLM invocation with multi-provider fallback (Groq & NaraRouter)
     # 1. Groq (Llama 3.3 70B)
     groq_api_key = os.getenv("GROQ_API_KEY")
     if groq_api_key:
         try:
             from langchain_groq import ChatGroq
             llm = ChatGroq(
-                model="openai/gpt-oss-120b",
+                model="llama-3.3-70b-versatile",
                 temperature=0.3,
                 groq_api_key=groq_api_key
             )
@@ -174,28 +174,9 @@ Guidelines for your response:
                 model_used="Groq (Llama-3.3-70b-versatile)"
             )
         except Exception as e:
-            logger.warning(f"Groq Chat failed ({e}), falling back to Gemini...")
+            logger.warning(f"Groq Chat failed ({e}), falling back to NaraRouter...")
 
-    # 2. Gemini Flash
-    gemini_api_key = os.getenv("GEMINI_API_KEY")
-    if gemini_api_key:
-        try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            llm = ChatGoogleGenerativeAI(
-                model="gemini-2.0-flash",
-                temperature=0.3,
-                google_api_key=gemini_api_key
-            )
-            res = await llm.ainvoke(full_prompt)
-            return ChatResponse(
-                answer=res.content,
-                citations=citations,
-                model_used="Google Gemini 2.0 Flash"
-            )
-        except Exception as e:
-            logger.warning(f"Gemini Chat failed ({e}), falling back to NaraRouter...")
-
-    # 3. NaraRouter
+    # 2. NaraRouter (Agnes 2.5 Flash)
     nara_api_key = os.getenv("NARAROUTER_API_KEY") or os.getenv("NARA_ROUTER_API_KEY")
     if nara_api_key:
         try:
@@ -215,7 +196,7 @@ Guidelines for your response:
                 model_used="NaraRouter (agnes-2.5-flash)"
             )
         except Exception as e:
-            logger.warning(f"NaraRouter Chat failed ({e}), falling back to Ollama...")
+            logger.warning(f"NaraRouter Chat failed ({e}), falling back to local fallback...")
 
     # 4. Ollama (Local)
     try:

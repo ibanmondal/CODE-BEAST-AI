@@ -50,7 +50,7 @@ Similarity Engine
 ↓
 Deterministic Scoring Engine
 ↓
-Gemini Supervisor
+ConsJudge Supervisor (NaraRouter + Groq)
 ↓
 Markdown + PDF + JSON Report
 ```
@@ -108,11 +108,11 @@ Preferred Model: Qwen2.5-Coder (Fine-tuned Local)
 
 ## Agent 2 – Architecture
 Responsibilities: Folder organization, Layer separation, Design patterns, Modularity, Scalability, Maintainability, SOLID principles, Project structure.
-Preferred Model: DeepSeek-Coder (Local) or Gemini
+Preferred Model: Groq Llama 3.3 or NaraRouter
 
 ## Agent 3 – Developer Experience (DX)
 Responsibilities: README quality, Documentation, Code comments, CI/CD, Docker, Tests, Setup experience.
-Preferred Model: Qwen2.5-Instruct (Local) or Gemini
+Preferred Model: Groq Llama 3.1 or NaraRouter
 
 ## Agent 4 – Originality
 This agent should primarily rely on deterministic methods.
@@ -138,16 +138,16 @@ Return: Final score, Individual scores, Evidence, Confidence.
 
 ---
 
-# Gemini Supervisor
-Gemini is used only once.
+# Supervisor Node (ConsJudge: NaraRouter + Groq)
+Dual-pass consensus using NaraRouter and Groq Cloud.
 Responsibilities: Receive JSON outputs, Scores, Evidence, Findings.
 Generate: Executive summary, Strengths, Weaknesses, Recommendations, Professional report, Markdown output, PDF-ready output.
-Gemini must never analyze raw repository code.
+Supervisor must never analyze raw repository code.
 
 ---
 
 # Offline Mode
-If Gemini or Local models are unavailable, fallback to deterministic heuristics. The system must never fail.
+If external models are unavailable, fallback to deterministic heuristics. The system must never fail.
 
 ---
 
@@ -164,7 +164,7 @@ Features: Repository input, Live analysis, Agent status, Score dashboard, Eviden
 
 # Future Roadmap
 Do not implement now.
-Design the system so that later it supports: LoRA fine-tuned agents, Fine-tuned CodeBERT similarity model, ML-based Early Exit classifier, Local report generation replacing Gemini.
+Design the system so that later it supports: LoRA fine-tuned agents, Fine-tuned CodeBERT similarity model, ML-based Early Exit classifier, Local on-device report generation.
 
 ---
 

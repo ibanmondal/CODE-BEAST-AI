@@ -58,11 +58,11 @@ function AnalysisContent() {
     { id: "architecture_agent", num: "03", label: "Architecture", desc: "SOLID Modularity", icon: Layers, tech: "Llama 3.3 70B" },
     { id: "performance_agent", num: "04", label: "Performance", desc: "Resource & Hot Paths", icon: Zap, tech: "Llama 3.3 70B" },
     { id: "testing_agent", num: "05", label: "Testing & CI", desc: "Assertion & Flake Risk", icon: TestTube, tech: "Llama 3.1 8B" },
-    { id: "database_agent", num: "06", label: "Database Layer", desc: "Schema & Migrations", icon: Database, tech: "Gemini Flash" },
+    { id: "database_agent", num: "06", label: "Database Layer", desc: "Schema & Migrations", icon: Database, tech: "NaraRouter / Groq" },
     { id: "similarity_agent", num: "07", label: "Originality", desc: "CodeBERT FAISS Clones", icon: Fingerprint, tech: "AST Vector" },
     { id: "dx_agent", num: "08", label: "Developer Exp", desc: "Tooling & DX Hygiene", icon: BookOpen, tech: "Groq Llama 3.3" },
     { id: "finops_agent", num: "09", label: "FinOps & Cloud", desc: "Cost & Resource Sizing", icon: Activity, tech: "Groq Llama 3.3" },
-    { id: "gemini_supervisor", num: "10", label: "Consensus Synthesis", desc: "ConsJudge Dual-Pass", icon: Cpu, tech: "Consensus Arbiter" }
+    { id: "nararouter_supervisor", num: "10", label: "Consensus Synthesis", desc: "ConsJudge Dual-Pass", icon: Cpu, tech: "NaraRouter + Groq" }
   ];
 
   const fetchHistory = () => {
@@ -474,7 +474,7 @@ function AnalysisContent() {
           repoUrl={url || searchParams.get('repo') || "target-repository"}
           repoName={url || searchParams.get('repo') || "target-repository"}
           completedAgents={completedAgents}
-          activeAgent={activeAgent}
+          activeAgent={activeAgent || undefined}
           onCancel={() => setLoading(false)}
           onComplete={handleLoadingComplete}
         />
@@ -600,6 +600,7 @@ function AnalysisContent() {
       {inspectAgentId && (
         <AgentInspectorModal
           agentId={inspectAgentId}
+          isOpen={Boolean(inspectAgentId)}
           onClose={() => setInspectAgentId(null)}
         />
       )}

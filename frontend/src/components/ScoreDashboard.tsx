@@ -173,7 +173,7 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
     { id: "architecture_agent", name: "Architecture", score: report.arch || 88, desc: "SOLID & Modularity", icon: Layers, tech: "Llama 3.3" },
     { id: "performance_agent", name: "Performance", score: report.perf || 84, desc: "Resource & Caching", icon: Zap, tech: "Llama 3.3" },
     { id: "testing_agent", name: "Testing", score: report.testing_score || 80, desc: "CI & Flake Risk", icon: TestTube, tech: "Llama 3.1" },
-    { id: "database_agent", name: "Database", score: report.db_score || 86, desc: "Schema & ORM", icon: Database, tech: "Gemini Flash" },
+    { id: "database_agent", name: "Database", score: report.db_score || 86, desc: "Schema & ORM", icon: Database, tech: "NaraRouter" },
     { id: "similarity_agent", name: "Originality", score: report.orig || 94, desc: "CodeBERT FAISS", icon: Fingerprint, tech: "AST Vector" },
     { id: "dx_agent", name: "Dev Experience", score: report.dx_score || 85, desc: "DX & Tooling", icon: BookOpen, tech: "Groq Llama" },
     { id: "finops_agent", name: "FinOps & Cloud", score: report.finops_score || 85, desc: "Cost & Sizing", icon: Activity, tech: "Groq Llama" },
@@ -326,7 +326,7 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
               </span>
             </div>
             <p className="text-xs text-[#8EA6C8] leading-relaxed mb-4">
-              Runs dual concurrent LLM passes (Gemini Flash + Groq Llama 3.3) over evaluator nodes to bound score hallucination within statistically verified margins.
+              Runs dual concurrent LLM passes (NaraRouter + Groq Llama 3.3) over evaluator nodes to bound score hallucination within statistically verified margins.
             </p>
           </div>
 
@@ -540,6 +540,7 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
       {inspectAgentId && (
         <AgentInspectorModal
           agentId={inspectAgentId}
+          isOpen={Boolean(inspectAgentId)}
           onClose={() => setInspectAgentId(null)}
         />
       )}

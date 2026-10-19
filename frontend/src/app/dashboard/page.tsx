@@ -194,7 +194,7 @@ export default function DashboardPage() {
               <span className="text-xl font-bold text-white font-mono">Dual-Pass</span>
             </div>
             <span className="text-[10px] text-[#89CFF0] font-medium mt-1 block">
-              Gemini + Llama 3.3
+              NaraRouter + Groq Llama 3.3
             </span>
           </div>
         </StaggerItem>

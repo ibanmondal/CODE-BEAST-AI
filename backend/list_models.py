@@ -3,15 +3,17 @@ import requests
 from dotenv import load_dotenv
 
 load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
 
-url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
-response = requests.get(url)
-print(f"Status Code: {response.status_code}")
-if response.status_code == 200:
-    models = response.json().get('models', [])
-    print("Available Models:")
-    for m in models:
-        print(f" - {m.get('name')}")
+groq_key = os.getenv("GROQ_API_KEY")
+nara_key = os.getenv("NARAROUTER_API_KEY") or os.getenv("NARA_ROUTER_API_KEY")
+
+print("--- Checking Groq & NaraRouter API Configuration ---")
+if groq_key:
+    print(f"Groq API Key: {groq_key[:6]}...{groq_key[-4:]} [CONFIGURED]")
 else:
-    print(response.text)
+    print("Groq API Key: [NOT SET]")
+
+if nara_key:
+    print(f"NaraRouter API Key: {nara_key[:6]}...{nara_key[-4:]} [CONFIGURED]")
+else:
+    print("NaraRouter API Key: [NOT SET]")

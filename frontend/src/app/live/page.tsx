@@ -167,7 +167,7 @@ export default function LiveMonitorPage() {
               if (data.agent === "ingestion") {
                 current.ingestion = data.status === "AgentRunning" ? "running" : "completed";
               }
-              if (data.agent === "supervisor" || data.agent === "gemini_supervisor") {
+              if (data.agent === "supervisor" || data.agent === "gemini_supervisor" || data.agent === "nararouter_supervisor") {
                 current.supervisor = data.status === "AgentRunning" ? "running" : "completed";
               }
               addLog(`Node '${data.agent}' transitioned to state: ${data.status}`, "agent");
@@ -223,7 +223,7 @@ export default function LiveMonitorPage() {
     { id: "architecture_agent", name: "Architecture & SOLID", tech: "Llama 3.3 70B", icon: Layers, state: pipeline.agents.architecture_agent },
     { id: "performance_agent", name: "Resource Performance", tech: "Llama 3.3 70B", icon: Zap, state: pipeline.agents.performance_agent },
     { id: "testing_agent", name: "Testing & CI Flakes", tech: "Llama 3.1 8B", icon: TestTube, state: pipeline.agents.testing_agent },
-    { id: "database_agent", name: "Database & Schema", tech: "Gemini Flash", icon: Database, state: pipeline.agents.database_agent },
+    { id: "database_agent", name: "Database & Schema", tech: "NaraRouter", icon: Database, state: pipeline.agents.database_agent },
     { id: "similarity_agent", name: "AST Neural Clones", tech: "CodeBERT FAISS", icon: Fingerprint, state: pipeline.agents.similarity_agent },
   ];
 

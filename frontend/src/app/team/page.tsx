@@ -48,10 +48,10 @@ const TEAM_MEMBERS: TeamMember[] = [
     contributions: [
       "Engineered high-throughput asynchronous backend utilizing FastAPI with non-blocking concurrency pipelines.",
       "Designed LangGraph parallel orchestrator executing 8 specialized evaluator agent nodes concurrently.",
-      "Built multi-provider LLM inference router with resilient fallbacks across Groq, Google Gemini, and Ollama.",
+      "Built multi-provider LLM inference router with resilient fallbacks across Groq, NaraRouter, and local models.",
       "Developed the deterministic scoring engine with strict quality metrics, hard caps, and static heuristics."
     ],
-    technicalExpertise: ["FastAPI", "LangGraph", "LangChain", "Groq / Llama", "Google Gemini", "Tree-Sitter", "FAISS Vector Store", "AsyncPG"],
+    technicalExpertise: ["FastAPI", "LangGraph", "LangChain", "Groq / Llama", "NaraRouter", "Tree-Sitter", "FAISS Vector Store", "AsyncPG"],
     coreImpact: "Multi-Agent Graph Orchestration & Deterministic Scoring Core"
   },
   {

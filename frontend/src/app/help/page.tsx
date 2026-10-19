@@ -37,7 +37,7 @@ export default function HelpPage() {
     },
     {
       q: "How do I configure API keys or local Ollama models?",
-      a: "Navigate to the Settings tab (/settings). CodeBeast seamlessly supports Google Gemini Flash API, Groq Cloud (Llama-3.3 70B & Llama-3.1 8B), and local Ollama models with automatic offline graceful degradation."
+      a: "Navigate to the Settings tab (/settings). CodeBeast exclusively supports Groq Cloud (Llama-3.3 70B & Qwen) and NaraRouter (Agnes 2.5 Flash), with automatic offline graceful degradation."
     },
     {
       q: "Can I export evaluation reports as PDFs or Markdown?",

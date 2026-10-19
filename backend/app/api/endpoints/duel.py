@@ -149,7 +149,7 @@ def _calculate_cross_similarity(data_a: Dict[str, Any], data_b: Dict[str, Any]) 
     )
 
 def _synthesize_llm_verdict(team_a: Dict[str, Any], team_b: Dict[str, Any], metrics: List[MetricDelta], prompt_override: Optional[str] = None) -> JuryVerdict:
-    """Uses Groq Llama 3.3 or Gemini to produce a formal Head Judge verdict."""
+    """Uses Groq Llama 3.3 or NaraRouter to produce a formal Head Judge verdict."""
     score_a = team_a.get("overall", 0.0)
     score_b = team_b.get("overall", 0.0)
     name_a = team_a.get("team", team_a.get("repo", "Team A"))
@@ -160,13 +160,7 @@ def _synthesize_llm_verdict(team_a: Dict[str, Any], team_b: Dict[str, Any], metr
     diff = abs(round(score_a - score_b, 1))
     margin_str = f"+{diff} pts Advantage" if diff > 0 else "Evenly Matched (0.0 pts)"
     
-    # Try calling Groq / Gemini for deep reasoning
-    try:
-        if settings.GROQ_API_KEY:
-            from groq import Groq
-            client = Groq(api_key=settings.GROQ_API_KEY)
-            
-            prompt = f"""You are the Chief AI Hackathon Judge presiding over an A/B Finalist Duel between two software engineering repositories:
+    prompt = f"""You are the Chief AI Hackathon Judge presiding over an A/B Finalist Duel between two software engineering repositories:
 - Contender A: {name_a} (Overall Score: {score_a}/100, Sec: {team_a.get('sec')}, Arch: {team_a.get('arch')}, Perf: {team_a.get('perf')}, Tests: {team_a.get('testing_score')}, DB: {team_a.get('db_score')}, Originality: {team_a.get('orig')})
 - Contender B: {name_b} (Overall Score: {score_b}/100, Sec: {team_b.get('sec')}, Arch: {team_b.get('arch')}, Perf: {team_b.get('perf')}, Tests: {team_b.get('testing_score')}, DB: {team_b.get('db_score')}, Originality: {team_b.get('orig')})
 
@@ -182,8 +176,15 @@ Return a valid JSON object ONLY with the following exact keys:
   "jury_recommendation": "A 1-2 sentence final verdict recommendation for the hackathon committee."
 }}"""
 
+    # 1. Try Groq
+    try:
+        groq_key = settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY")
+        if groq_key:
+            from groq import Groq
+            client = Groq(api_key=groq_key)
+            
             response = client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are a master engineering judge. Respond in pure JSON format without markdown wrapping."},
                     {"role": "user", "content": prompt}
@@ -206,7 +207,38 @@ Return a valid JSON object ONLY with the following exact keys:
                 jury_recommendation=parsed.get("jury_recommendation", f"Award 1st Place to {winner_name} based on comprehensive evaluation telemetry.")
             )
     except Exception as e:
-        logger.warning(f"LLM Arbiter failed, using deterministic consensus fallback: {e}")
+        logger.warning(f"Groq Duel Arbiter failed ({e}), checking NaraRouter...")
+
+    # 2. Try NaraRouter
+    try:
+        nara_key = os.getenv("NARAROUTER_API_KEY") or os.getenv("NARA_ROUTER_API_KEY")
+        if nara_key:
+            from openai import OpenAI
+            nara_client = OpenAI(base_url="https://router.bynara.id/v1", api_key=nara_key)
+            resp = nara_client.chat.completions.create(
+                model="agnes-2.5-flash",
+                messages=[
+                    {"role": "system", "content": "You are a master engineering judge. Respond in pure JSON format without markdown wrapping."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                response_format={"type": "json_object"}
+            )
+            parsed = json.loads(resp.choices[0].message.content)
+            return JuryVerdict(
+                winner=winner_key,
+                winner_name=winner_name,
+                win_margin=margin_str,
+                confidence=round(0.85 + (diff / 100) * 0.14, 2),
+                summary=parsed.get("summary", f"{winner_name} takes the lead with superior code structure."),
+                decisive_factors=parsed.get("decisive_factors", ["Higher security resilience", "Better test coverage"]),
+                strengths_a=parsed.get("strengths_a", ["Solid modular separation"]),
+                strengths_b=parsed.get("strengths_b", ["Strong database modeling"]),
+                tradeoffs=parsed.get("tradeoffs", "Contender A prioritized velocity and security, whereas Contender B emphasized relational integrity."),
+                jury_recommendation=parsed.get("jury_recommendation", f"Award 1st Place to {winner_name} based on comprehensive evaluation telemetry.")
+            )
+    except Exception as e:
+        logger.warning(f"NaraRouter Duel Arbiter failed ({e}), falling back to deterministic consensus...")
 
     # Deterministic Rule-Based Fallback
     factors = []

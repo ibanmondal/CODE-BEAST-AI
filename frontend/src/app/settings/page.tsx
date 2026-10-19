@@ -19,7 +19,6 @@ export default function SettingsPage() {
 
   // Settings State
   const [githubToken, setGithubToken] = useState('');
-  const [geminiKey, setGeminiKey] = useState('');
   const [groqKey, setGroqKey] = useState('');
   const [naraKey, setNaraKey] = useState('');
   const [ollamaEndpoint, setOllamaEndpoint] = useState('http://localhost:11434');
@@ -47,7 +46,6 @@ export default function SettingsPage() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed.githubToken) setGithubToken(parsed.githubToken);
-        if (parsed.geminiKey) setGeminiKey(parsed.geminiKey);
         if (parsed.groqKey) setGroqKey(parsed.groqKey);
         if (parsed.naraKey) setNaraKey(parsed.naraKey);
         if (parsed.ollamaEndpoint) setOllamaEndpoint(parsed.ollamaEndpoint);
@@ -62,7 +60,6 @@ export default function SettingsPage() {
     try {
       const payload = {
         githubToken,
-        geminiKey,
         groqKey,
         naraKey,
         ollamaEndpoint,
@@ -172,7 +169,7 @@ export default function SettingsPage() {
                   LLM Inference Providers & Endpoints
                 </h2>
                 <span className="text-xs text-[#8EA6C8]">
-                  CodeBeast utilizes Google Gemini Flash and Groq Cloud for dual-pass consensus.
+                  CodeBeast exclusively utilizes NaraRouter and Groq Cloud for dual-pass consensus and multi-agent evaluation.
                 </span>
               </div>
 
@@ -190,19 +187,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-white font-semibold mb-1.5">Google Gemini API Key</label>
-                  <input
-                    type="password"
-                    placeholder="AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    value={geminiKey}
-                    onChange={(e) => setGeminiKey(e.target.value)}
-                    className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
-                  />
-                  <span className="text-[11px] text-[#8EA6C8] mt-1 block">Used for the ConsJudge Primary Supervisor, Repository Chat Copilot, and Database analysis node.</span>
-                </div>
-
-                <div>
-                  <label className="block text-white font-semibold mb-1.5">Groq Cloud API Key (Llama 3.3 70B)</label>
+                  <label className="block text-white font-semibold mb-1.5">Groq Cloud API Key (Llama 3.3 70B & Qwen)</label>
                   <input
                     type="password"
                     placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -210,11 +195,11 @@ export default function SettingsPage() {
                     onChange={(e) => setGroqKey(e.target.value)}
                     className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
                   />
-                  <span className="text-[11px] text-[#8EA6C8] mt-1 block">Used for ConsJudge Second-Pass Arbiter and Architecture evaluation node.</span>
+                  <span className="text-[11px] text-[#8EA6C8] mt-1 block">Used for ultra-high throughput agent nodes, architecture analysis, and ConsJudge consensus.</span>
                 </div>
 
                 <div>
-                  <label className="block text-white font-semibold mb-1.5">Nara Router API Key</label>
+                  <label className="block text-white font-semibold mb-1.5">Nara Router API Key (Agnes 2.5 Flash / Router by Nara)</label>
                   <input
                     type="password"
                     placeholder="sk-nry-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -222,7 +207,7 @@ export default function SettingsPage() {
                     onChange={(e) => setNaraKey(e.target.value)}
                     className="w-full bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 px-4 py-2.5 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#89CFF0] focus:ring-2 focus:ring-[#89CFF0]/20 transition-all shadow-inner"
                   />
-                  <span className="text-[11px] text-[#8EA6C8] mt-1 block">Used for cloud agent orchestration and high-speed consensus routing.</span>
+                  <span className="text-[11px] text-[#8EA6C8] mt-1 block">Used for cloud agent orchestration, ConsJudge dual-pass consensus, and repository copilot chat.</span>
                 </div>
 
                 <div>
@@ -288,7 +273,7 @@ export default function SettingsPage() {
 
               <div className="space-y-3">
                 {[
-                  { key: 'consJudgeMultiPass', label: 'ConsJudge Dual-Pass Consensus (2025)', desc: 'Executes concurrent Gemini + Llama-3.3 passes to bound score hallucination within ±5 points.' },
+                  { key: 'consJudgeMultiPass', label: 'ConsJudge Dual-Pass Consensus (2025)', desc: 'Executes concurrent NaraRouter + Groq Llama-3.3 passes to bound score hallucination within ±5 points.' },
                   { key: 'autoReviewCWESlicing', label: 'AutoReview 3-Stage CWE Slicing (ACM FSE 2025)', desc: 'Detect → Locate → Repair pipeline extracting exploit triggers and generating unified patches.' },
                   { key: 'astCodeBertClones', label: 'Tree-Sitter AST & CodeBERT Neural Vectors', desc: 'Computes deep semantic clone vectors stored in FAISS for cross-repository clone detection.' },
                   { key: 'gitDiffGeneration', label: 'Automated Git Diff Remediation Synthesis', desc: 'Synthesizes clean unified diff blocks for identified CWE vulnerabilities.' },

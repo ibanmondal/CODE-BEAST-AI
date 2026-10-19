@@ -527,7 +527,7 @@ export default function HomePage() {
               name: "Database Agent",
               category: "SCHEMA HYGIENE",
               desc: "Analyzes relational schema normalization, indexing strategies, transaction boundaries, and query efficiency.",
-              tech: "Google Gemini 2.5 Flash",
+              tech: "NaraRouter Agnes 2.5",
               icon: Database
             },
             {
@@ -551,7 +551,7 @@ export default function HomePage() {
               name: "FinOps & Cloud",
               category: "RESOURCE SIZING",
               desc: "Models cloud deployment footprint, container image optimization, compute rightsizing, and monthly operating cost.",
-              tech: "Google Gemini 2.5 Flash",
+              tech: "Groq Llama 3.3 70B",
               icon: Cpu
             }
           ].map((agent) => (

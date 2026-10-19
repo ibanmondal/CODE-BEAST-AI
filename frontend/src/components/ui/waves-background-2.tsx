@@ -644,6 +644,7 @@ export function ShaderBackground({ className }: { className?: string }) {
           return;
         }
       }
+      if (!glCtx || !program) return;
       try {
         const dt = lastNow === null ? 0 : Math.min((now - lastNow) / 1000, 0.1);
         lastNow = now;

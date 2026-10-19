@@ -38,7 +38,7 @@ const AGENT_DATA: Record<string, AgentDetails> = {
     id: "security",
     name: "AutoReview Security Evaluator",
     category: "VULNERABILITY & CWE REMEDIATION",
-    model: "Google Gemini 2.5 Flash / Groq Llama 3.3",
+    model: "Groq Llama 3.3 70B / NaraRouter Agnes",
     tech: "AST Slicing + OWASP Top 10 Taxonomy",
     iconName: "ShieldCheck",
     description: "Executes the 3-stage AutoReview sequential pipeline (ACM FSE 2025): Detects vulnerabilities against the CWE taxonomy, locates precise line ranges via AST code slicing, and synthesizes verifiable unified git diff patches.",
@@ -110,7 +110,7 @@ const AGENT_DATA: Record<string, AgentDetails> = {
     id: "database",
     name: "Database & Schema Engine Evaluator",
     category: "TRANSACTION INTEGRITY & QUERY HYGIENE",
-    model: "Google Gemini 2.5 Flash",
+    model: "NaraRouter Agnes 2.5 Flash",
     tech: "SQLAlchemy & ORM Query Slicing",
     iconName: "Database",
     description: "Detects classic ORM N+1 query antipatterns, missing composite indexes on frequently filtered foreign keys, long-running transaction locks, and improper connection handling.",
@@ -164,7 +164,7 @@ const AGENT_DATA: Record<string, AgentDetails> = {
     id: "finops",
     name: "Cloud Cost & FinOps Efficiency",
     category: "INFRASTRUCTURE & COMPUTE OPTIMIZATION",
-    model: "Google Gemini 2.5 Flash",
+    model: "Groq Llama 3.3 70B Versatile",
     tech: "Cloud Resource Mapping & Dockerfile Optimization",
     iconName: "Award",
     description: "Evaluates container layer caching, memory limits, excessive cloud egress patterns, and serverless cold-start footprint to maximize compute efficiency.",
@@ -182,11 +182,11 @@ const AGENT_DATA: Record<string, AgentDetails> = {
 
 interface ModalProps {
   agentId: string | null;
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
 }
 
-export function AgentInspectorModal({ agentId, isOpen, onClose }: ModalProps) {
+export function AgentInspectorModal({ agentId, isOpen = true, onClose }: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();

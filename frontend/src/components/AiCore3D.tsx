@@ -9,7 +9,7 @@ export function AiCore3D() {
   const stages = [
     { label: "CODE", desc: "Raw Git repository ingestion & AST tree parsing" },
     { label: "ANALYSIS", desc: "6-Agent parallel evaluation (Security, Architecture, Performance...)" },
-    { label: "AI CORE", desc: "ConsJudge Dual-Pass supervisor synthesis (Gemini + Llama 3.3)" },
+    { label: "AI CORE", desc: "ConsJudge Dual-Pass supervisor synthesis (NaraRouter + Groq Llama 3.3)" },
     { label: "INTELLIGENCE", desc: "Executive verdict, confidence badge & AutoReview git diff patches" }
   ];
 

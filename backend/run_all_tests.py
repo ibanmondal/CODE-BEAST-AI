@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.agents.nodes import (
-    gemini_supervisor_node,
+    nararouter_supervisor_node,
     similarity_agent_node,
     security_agent_node,
     architecture_agent_node,
@@ -32,7 +32,7 @@ async def test_feature_1_consjudge():
         "similarity_report": {"originality_score": 96, "clone_risk_level": "ORIGINAL"},
         "deterministic_score_result": {"final_score": 89}
     }
-    res = await gemini_supervisor_node(mock_state)
+    res = await nararouter_supervisor_node(mock_state)
     report = res.get("final_report", {})
     
     assert "overall_score" in report, "Missing overall_score"

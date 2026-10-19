@@ -30,7 +30,7 @@ CodeBeast AI incorporates three major peer-reviewed and preprint advancements in
 
 | # | Research Foundation | Problem Solved | Implementation in CodeBeast AI |
 |---|---|---|---|
-| **1** | **ConsJudge: Multi-Pass Consensus** (*LLM-as-a-Judge Consistency*) | Unverified, potentially hallucinated single-pass scores | Runs dual concurrent supervisor passes (Gemini + Groq Llama 3.3). Computes variance margin ($\pm \text{points}$) and issues a **ConsJudge Verified Confidence Badge** (High / Moderate / Low). |
+| **1** | **ConsJudge: Multi-Pass Consensus** (*LLM-as-a-Judge Consistency*) | Unverified, potentially hallucinated single-pass scores | Runs dual concurrent supervisor passes (NaraRouter Agnes + Groq Llama 3.3). Computes variance margin ($\pm \text{points}$) and issues a **ConsJudge Verified Confidence Badge** (High / Moderate / Low). |
 | **2** | **ASTNN & CodeBERT Neural Embeddings** (*Semantic Clone Detection*) | Fragile commit heuristics that fail on copy-paste code | Extracts Tree-Sitter normalized AST syntax trees and computes CodeBERT semantic embeddings with FAISS vector similarity to calculate a true **Originality Score (0-100)** and detect template clones. |
 | **3** | **AutoReview: 3-Stage Pipeline** (*ACM FSE 2025: Detect → Locate → Repair*) | Shallow, single-pass security reviews with no actionable fixes | **Detect**: Classifies CWE taxonomy (CWE-89, CWE-798, CWE-78).<br>**Locate**: Pinpoints exact file coordinates and exploit vectors.<br>**Repair**: Generates unified diffs and defensive test guidance. |
 
@@ -49,7 +49,7 @@ graph TD
     C -->|Structural Design| E["Architecture Agent<br/>Modularity & SOLID (Llama 3.3)"]
     C -->|Resource Analysis| F["Performance Agent<br/>Complexity & Caching (Llama 3.3)"]
     C -->|Quality & CI/CD| G["Testing Agent<br/>Coverage & Frameworks (Llama 3.1)"]
-    C -->|Data Layer| H["Database Agent<br/>Schema & ORM (Gemini Flash)"]
+    C -->|Data Layer| H["Database Agent<br/>Schema & ORM (NaraRouter)"]
     C -->|Clone Analysis| K["Similarity & Originality Agent<br/>AST + CodeBERT Neural Vector"]
     
     D --> I{"ConsJudge Multi-Pass Supervisor"}
@@ -59,7 +59,7 @@ graph TD
     H --> I
     K --> I
     
-    I -->|Pass 1: Gemini Flash| P1["Score Pass 1"]
+    I -->|Pass 1: NaraRouter Agnes| P1["Score Pass 1"]
     I -->|Pass 2: Groq Llama 3.3| P2["Score Pass 2"]
     
     P1 --> CM["Consensus & Variance Computation"]
