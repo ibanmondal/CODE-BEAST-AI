@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { FinalReport } from './ScoreDashboard';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
+import { apiUrl } from '@/lib/api';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -301,8 +302,7 @@ export function JudgeChatBot({ report, onClose }: JudgeChatBotProps) {
         content: m.content
       }));
 
-      const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-      const res = await fetch(`http://${host}:8000/api/v1/chat/repository`, {
+      const res = await fetch(apiUrl('/api/v1/chat/repository'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -329,7 +329,7 @@ export function JudgeChatBot({ report, onClose }: JudgeChatBotProps) {
         ...prev,
         {
           role: 'assistant',
-          content: `Unable to connect to the Copilot service (${err.message}). Is the backend active on port 8000?`,
+          content: `Unable to connect to the Copilot service (${err.message}). Verify backend API availability.`,
           modelUsed: 'System Notice'
         }
       ]);

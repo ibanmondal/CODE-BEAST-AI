@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { apiUrl } from '@/lib/api';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -145,11 +146,9 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
     setCopiedPatchIdx(idx);
     setTimeout(() => setCopiedPatchIdx(null), 2000);
   };
-
   const handleCopyBadge = () => {
     const repo = report.repoName || "repository";
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    const badgeUrl = `http://${host}:8000/api/v1/stats/badge?repo=${encodeURIComponent(repo)}`;
+    const badgeUrl = apiUrl(`/api/v1/stats/badge?repo=${encodeURIComponent(repo)}`);
     const md = `[![CodeBeast Score](${badgeUrl})](https://github.com/ibanmondal/CODE-BEAST-AI)`;
     navigator.clipboard.writeText(md);
     setCopiedBadge(true);

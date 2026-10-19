@@ -21,7 +21,7 @@ start "CodeBeast - FastAPI Backend" cmd /k "cd /d %~dp0backend && (if exist venv
 
 :: 3. Start Celery Worker in a new window
 echo [3/4] Starting Celery Multi-Agent Worker...
-start "CodeBeast - Celery Worker" cmd /k "cd /d %~dp0backend && (if exist venv\Scripts\activate.bat call venv\Scripts\activate.bat) && celery -A app.worker.celery_app worker --loglevel=info -P threads -c 4"
+start "CodeBeast - Celery Worker" cmd /k "cd /d %~dp0backend && (if exist venv\Scripts\activate.bat call venv\Scripts\activate.bat) && celery -A app.worker worker --loglevel=info -P threads -c 4"
 
 :: 4. Start Next.js Frontend in a new window
 echo [4/4] Starting Next.js Frontend Dashboard...

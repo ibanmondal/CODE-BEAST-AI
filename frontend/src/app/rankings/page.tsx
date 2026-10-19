@@ -4,13 +4,13 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Trophy, ArrowRight, Sparkles, Crown, Medal, Award } from 'lucide-react';
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
+import { apiUrl } from '@/lib/api';
 
 export default function RankingsPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   useEffect(() => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    fetch(`http://${host}:8000/api/v1/stats/leaderboard`)
+    fetch(apiUrl('/api/v1/stats/leaderboard'))
       .then(res => res.json())
       .then(data => setLeaderboard(data.leaderboard || []))
       .catch(() => {});

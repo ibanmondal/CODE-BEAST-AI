@@ -18,6 +18,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
+import { apiUrl } from '@/lib/api';
 
 export default function LeaderboardPage() {
   const [viewMode, setViewMode] = useState<'global' | 'batch'>('global');
@@ -28,10 +29,8 @@ export default function LeaderboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    
     // 1. Fetch Global Standings
-    fetch(`http://${host}:8000/api/v1/stats/leaderboard`)
+    fetch(apiUrl('/api/v1/stats/leaderboard'))
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(data => {
         if (data?.leaderboard) setLeaderboard(data.leaderboard);
@@ -42,7 +41,7 @@ export default function LeaderboardPage() {
       });
 
     // 2. Fetch Latest Batch Leaderboard (Curated by BatchLeaderboardAgent)
-    fetch(`http://${host}:8000/api/v1/stats/batch-leaderboard`)
+    fetch(apiUrl('/api/v1/stats/batch-leaderboard'))
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(data => {
         if (data?.leaderboard) setBatchData(data);
@@ -54,8 +53,7 @@ export default function LeaderboardPage() {
     setViewMode(mode);
     if (mode === 'batch' && !batchData) {
       setBatchLoading(true);
-      const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-      fetch(`http://${host}:8000/api/v1/stats/batch-leaderboard`)
+      fetch(apiUrl('/api/v1/stats/batch-leaderboard'))
         .then(res => res.ok ? res.json() : Promise.reject(res))
         .then(data => {
           if (data?.leaderboard) setBatchData(data);

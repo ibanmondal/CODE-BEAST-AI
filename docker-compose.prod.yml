@@ -2,43 +2,36 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: codebeast_db_prod
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: codebeast
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-codebeast}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-codebeast}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
     container_name: codebeast_redis_prod
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_prod_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
-
-  ollama:
-    image: ollama/ollama:latest
-    container_name: codebeast_ollama_prod
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_prod_data:/root/.ollama
-    restart: always
-    # Enable NVIDIA GPU acceleration
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
 
   api:
     build: 
@@ -46,16 +39,23 @@ services:
       dockerfile: Dockerfile
     container_name: codebeast_api_prod
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/codebeast
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-codebeast}
       - REDIS_URL=redis://redis:6379/0
       - GROQ_API_KEY=${GROQ_API_KEY}
       - NARAROUTER_API_KEY=${NARAROUTER_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
     restart: always
 
   celery_worker:
@@ -63,29 +63,37 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: codebeast_celery_prod
-    command: celery -A app.worker.celery_app worker --loglevel=info
+    command: celery -A app.worker worker --loglevel=info
     environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/codebeast
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-codebeast}
       - REDIS_URL=redis://redis:6379/0
       - GROQ_API_KEY=${GROQ_API_KEY}
       - NARAROUTER_API_KEY=${NARAROUTER_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
     depends_on:
-      - db
-      - redis
-      - ollama
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: always
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-}
+        - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-}
     container_name: codebeast_frontend_prod
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-}
+      - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-}
+    depends_on:
+      - api
     restart: always
 
 volumes:
   postgres_prod_data:
   redis_prod_data:
-  ollama_prod_data:

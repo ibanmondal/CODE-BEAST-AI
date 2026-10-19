@@ -13,6 +13,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
+import { apiUrl } from '@/lib/api';
 
 export default function HelpPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -87,7 +88,7 @@ export default function HelpPage() {
       <StaggerContainer staggerDelay={0.08} className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <StaggerItem>
           <a 
-            href="http://localhost:8000/docs" 
+            href={apiUrl("/docs")} 
             target="_blank" 
             rel="noopener noreferrer"
             className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] block group"
@@ -100,7 +101,7 @@ export default function HelpPage() {
               <ExternalLink className="w-4 h-4 text-[#89CFF0]" />
             </div>
             <p className="text-xs text-[#8EA6C8] mt-1.5 leading-relaxed">
-              Direct interactive API endpoint documentation hosted on port 8000 (/docs).
+              Direct interactive API endpoint documentation hosted at /docs.
             </p>
           </a>
         </StaggerItem>

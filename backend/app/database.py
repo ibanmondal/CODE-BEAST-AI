@@ -58,11 +58,13 @@ class BatchEvaluation(Base):
 
 def init_engine():
     global DATABASE_URL
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     try:
         if DATABASE_URL.startswith("sqlite"):
             eng = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
         else:
-            eng = create_engine(DATABASE_URL)
+            eng = create_engine(DATABASE_URL, pool_pre_ping=True)
         # Attempt a quick connection test
         with eng.connect():
             pass

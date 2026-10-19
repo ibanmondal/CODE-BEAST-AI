@@ -16,14 +16,14 @@ import {
 } from 'lucide-react';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
+import { apiUrl } from '@/lib/api';
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [filterQuery, setFilterQuery] = useState('');
 
   const fetchJobs = () => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    fetch(`http://${host}:8000/api/v1/stats/history`)
+    fetch(apiUrl('/api/v1/stats/history'))
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(data => {
         const h = data?.history || [];

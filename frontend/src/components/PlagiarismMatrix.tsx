@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Fingerprint, Loader2 } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 
 interface HeatmapData {
   labels: string[];
@@ -18,8 +19,7 @@ export function PlagiarismMatrix() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-        const res = await fetch(`http://${host}:8000/api/v1/matrix/heatmap`);
+        const res = await fetch(apiUrl('/api/v1/matrix/heatmap'));
         if (!res.ok) throw new Error("Failed to fetch matrix data");
         const json = await res.json();
         setData(json);

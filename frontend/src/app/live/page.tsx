@@ -15,6 +15,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/motion-primitives";
+import { apiUrl, wsUrl } from "@/lib/api";
 
 type NodeState = "idle" | "running" | "completed" | "error";
 
@@ -69,8 +70,7 @@ export default function LiveMonitorPage() {
   };
 
   useEffect(() => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    fetch(`http://${host}:8000/api/v1/stats/history`)
+    fetch(apiUrl('/api/v1/stats/history'))
       .then((res) => res.ok ? res.json() : Promise.reject(res))
       .then((data) => {
         const historyList = data?.history || (Array.isArray(data) ? data : []);
@@ -106,8 +106,8 @@ export default function LiveMonitorPage() {
         return;
       }
 
-      const wsUrl = `ws://${host}:8000/api/v1/ws/updates`;
-      const ws = new WebSocket(wsUrl);
+      const endpoint = wsUrl('/api/v1/ws/updates');
+      const ws = new WebSocket(endpoint);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -253,7 +253,7 @@ export default function LiveMonitorPage() {
                 : 'bg-amber-500/10 text-amber-300 border-amber-400/30'
             }`}>
               <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400' : 'bg-amber-400'} animate-ping`} />
-              <span>{wsConnected ? "Connected (Port 8000)" : "Reconnecting..."}</span>
+              <span>{wsConnected ? "Connected (Live Stream)" : "Reconnecting..."}</span>
             </span>
           </div>
         </div>

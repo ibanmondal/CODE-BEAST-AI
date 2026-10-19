@@ -47,6 +47,7 @@ import {
   Legend
 } from 'recharts';
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
+import { apiUrl } from '@/lib/api';
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<any>(null);
@@ -58,11 +59,10 @@ export default function AnalyticsPage() {
   const [activeVector, setActiveVector] = useState<'all' | 'sec' | 'arch' | 'perf'>('all');
 
   useEffect(() => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     Promise.all([
-      fetch(`http://${host}:8000/api/v1/stats/dashboard`).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`http://${host}:8000/api/v1/stats/history`).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`http://${host}:8000/api/v1/stats/leaderboard`).then(r => r.ok ? r.json() : null).catch(() => null)
+      fetch(apiUrl('/api/v1/stats/dashboard')).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(apiUrl('/api/v1/stats/history')).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(apiUrl('/api/v1/stats/leaderboard')).then(r => r.ok ? r.json() : null).catch(() => null)
     ]).then(([dashData, histData, leadData]) => {
       if (dashData) setData(dashData);
       if (histData?.history) setHistory(histData.history);

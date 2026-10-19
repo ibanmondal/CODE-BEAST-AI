@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { ScoreDashboard } from '@/components/ScoreDashboard';
 import { ScrollReveal } from '@/components/ui/motion-primitives';
+import { apiUrl } from '@/lib/api';
 
 export default function ReportsPage() {
   const [viewingReport, setViewingReport] = useState<any>(null);
@@ -18,8 +19,7 @@ export default function ReportsPage() {
   const [searchFilter, setSearchFilter] = useState('');
 
   useEffect(() => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    fetch(`http://${host}:8000/api/v1/stats/history`)
+    fetch(apiUrl('/api/v1/stats/history'))
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(data => {
         const h = data?.history || (Array.isArray(data) ? data : []);

@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
+import { apiUrl } from '@/lib/api';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({ 
@@ -45,8 +46,7 @@ export default function DashboardPage() {
   const [history, setHistory] = useState<any[]>([]);
 
   useEffect(() => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    fetch(`http://${host}:8000/api/v1/stats/dashboard`)
+    fetch(apiUrl('/api/v1/stats/dashboard'))
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(data => {
         if (data?.stats) setStats(data.stats);
@@ -54,7 +54,7 @@ export default function DashboardPage() {
       })
       .catch(() => {});
 
-    fetch(`http://${host}:8000/api/v1/stats/history`)
+    fetch(apiUrl('/api/v1/stats/history'))
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(data => {
         if (data?.history && Array.isArray(data.history)) {

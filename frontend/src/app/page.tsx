@@ -26,6 +26,7 @@ import {
 import { CodeBeastLiquidButton } from "@/components/ui/codebeast-liquid-button";
 import { AgentInspectorModal } from "@/components/AgentInspectorModal";
 import { InteractiveAgentCard } from "@/components/InteractiveAgentCard";
+import { apiUrl } from "@/lib/api";
 
 export default function HomePage() {
   const router = useRouter();
@@ -53,10 +54,8 @@ export default function HomePage() {
   ]);
 
   useEffect(() => {
-    const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-    
     // Fetch live dashboard telemetry
-    fetch(`http://${host}:8000/api/v1/stats/dashboard`)
+    fetch(apiUrl("/api/v1/stats/dashboard"))
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
       .then((data) => {
         if (data?.stats) {
@@ -71,7 +70,7 @@ export default function HomePage() {
       .catch(() => {});
 
     // Fetch real audit history
-    fetch(`http://${host}:8000/api/v1/stats/history`)
+    fetch(apiUrl("/api/v1/stats/history"))
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
       .then((data) => {
         if (data?.history && Array.isArray(data.history) && data.history.length > 0) {

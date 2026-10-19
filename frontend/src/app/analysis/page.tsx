@@ -32,6 +32,7 @@ import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
 import { AnalysisLoadingExperience } from '@/components/AnalysisLoadingExperience';
 import { AgentInspectorModal } from '@/components/AgentInspectorModal';
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
+import { apiUrl, wsUrl } from '@/lib/api';
 
 function AnalysisContent() {
   const searchParams = useSearchParams();
@@ -72,8 +73,7 @@ function AnalysisContent() {
   ];
 
   const fetchHistory = () => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    fetch(`http://${host}:8000/api/v1/stats/history`)
+    fetch(apiUrl('/api/v1/stats/history'))
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(data => {
         if (data?.history) setHistory(data.history);
@@ -174,8 +174,7 @@ function AnalysisContent() {
     if (repoParam) {
       setUrl(repoParam);
       // Check if it already exists in database history first
-      const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-      fetch(`http://${host}:8000/api/v1/stats/history`)
+      fetch(apiUrl('/api/v1/stats/history'))
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           const cleanParam = repoParam.replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "").toLowerCase();
@@ -227,8 +226,7 @@ function AnalysisContent() {
     ]);
 
     try {
-      const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-      const res = await fetch(`http://${host}:8000/api/v1/evaluate/`, {
+      const res = await fetch(apiUrl('/api/v1/evaluate/'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repo_url: targetUrl.trim() })
@@ -253,7 +251,7 @@ function AnalysisContent() {
         pollCount++;
 
         try {
-          const stRes = await fetch(`http://${host}:8000/api/v1/evaluate/status/${taskId}`);
+          const stRes = await fetch(apiUrl(`/api/v1/evaluate/status/${taskId}`));
           if (stRes.ok) {
             const stData = await stRes.json();
 
@@ -294,7 +292,7 @@ function AnalysisContent() {
 
           // Check history after a few seconds
           if (pollCount > 5) {
-            const histRes = await fetch(`http://${host}:8000/api/v1/stats/history`);
+            const histRes = await fetch(apiUrl('/api/v1/stats/history'));
             if (histRes.ok) {
               const histData = await histRes.json();
               const cleanTarget = targetUrl.replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "").toLowerCase();
@@ -325,7 +323,7 @@ function AnalysisContent() {
       }, 350);
 
     } catch (err: any) {
-      setError(`Backend connection error: ${err.message}. Ensure the FastAPI server is active on port 8000.`);
+      setError(`Backend connection error: ${err.message}. Ensure the CodeBeast API service is running.`);
       setLoading(false);
     }
   };
@@ -336,14 +334,13 @@ function AnalysisContent() {
       return;
     }
 
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     const taskId = currentTaskIdRef.current;
     const targetUrl = url || searchParams.get('repo') || "";
 
     // 1. Immediately check status endpoint
     if (taskId) {
       try {
-        const stRes = await fetch(`http://${host}:8000/api/v1/evaluate/status/${taskId}`);
+        const stRes = await fetch(apiUrl(`/api/v1/evaluate/status/${taskId}`));
         if (stRes.ok) {
           const stData = await stRes.json();
           if ((stData.status === 'SUCCESS' || stData.status === 'Completed') && (stData.result || stData.final_report)) {
@@ -358,7 +355,7 @@ function AnalysisContent() {
 
     // 2. Fast check history
     try {
-      const histRes = await fetch(`http://${host}:8000/api/v1/stats/history`);
+      const histRes = await fetch(apiUrl('/api/v1/stats/history'));
       if (histRes.ok) {
         const histData = await histRes.json();
         const cleanTarget = targetUrl.replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "").toLowerCase();
@@ -395,9 +392,8 @@ function AnalysisContent() {
 
     const connect = () => {
       if (isDisposed) return;
-      const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
       try {
-        ws = new WebSocket(`ws://${host}:8000/api/v1/ws/updates`);
+        ws = new WebSocket(wsUrl('/api/v1/ws/updates'));
         wsRef.current = ws;
 
         ws.onmessage = (event) => {

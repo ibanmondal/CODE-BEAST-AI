@@ -30,7 +30,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd backend; if (T
 
 # Start Celery Worker
 Write-Host "[3/4] Starting Multi-Agent Celery Worker..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd backend; if (Test-Path venv\Scripts\Activate.ps1) { .\venv\Scripts\Activate.ps1 }; Write-Host '--- Starting Celery Worker (LangGraph Multi-Agent Orchestrator) ---' -ForegroundColor Magenta; celery -A app.worker.celery_app worker --loglevel=info -P threads -c 4"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd backend; if (Test-Path venv\Scripts\Activate.ps1) { .\venv\Scripts\Activate.ps1 }; Write-Host '--- Starting Celery Worker (LangGraph Multi-Agent Orchestrator) ---' -ForegroundColor Magenta; celery -A app.worker worker --loglevel=info -P threads -c 4"
 
 # Start Next.js Frontend
 Write-Host "[4/4] Starting Next.js Frontend Dashboard (Port 3000)..." -ForegroundColor Green

@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
 import { ScrollReveal } from '@/components/ui/motion-primitives';
+import { apiUrl, wsUrl } from '@/lib/api';
 
 export interface BatchItem {
   id: string | number;
@@ -116,10 +117,9 @@ export default function UploadPage() {
 
   // WebSocket for real-time window and batch updates
   useEffect(() => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     let ws: WebSocket | null = null;
     try {
-      ws = new WebSocket(`ws://${host}:8000/api/v1/ws/updates`);
+      ws = new WebSocket(wsUrl('/api/v1/ws/updates'));
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
@@ -148,10 +148,9 @@ export default function UploadPage() {
   }, []);
 
   const fetchHistoryAndSync = async () => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     try {
       // 1. Sync global history
-      const res = await fetch(`http://${host}:8000/api/v1/stats/history`);
+      const res = await fetch(apiUrl('/api/v1/stats/history'));
       if (res.ok) {
         const data = await res.json();
         const historyList: any[] = data.history || [];
@@ -232,7 +231,7 @@ export default function UploadPage() {
       const targetBatchId = activeBatchId || localStorage.getItem('codebeast_active_batch_id');
       if (targetBatchId) {
         try {
-          const bRes = await fetch(`http://${host}:8000/api/v1/evaluate/batch/${targetBatchId}`);
+          const bRes = await fetch(apiUrl(`/api/v1/evaluate/batch/${targetBatchId}`));
           if (bRes.ok) {
             const bData = await bRes.json();
             setBatchDetails(bData);
@@ -241,7 +240,7 @@ export default function UploadPage() {
       } else {
         // Check if there is a recent completed batch report
         try {
-          const lRes = await fetch(`http://${host}:8000/api/v1/evaluate/batch/latest/report`);
+          const lRes = await fetch(apiUrl('/api/v1/evaluate/batch/latest/report'));
           if (lRes.ok) {
             const lData = await lRes.json();
             if (lData && lData.leaderboard) {
@@ -374,7 +373,7 @@ export default function UploadPage() {
         chunk_size: 5
       };
 
-      const res = await fetch(`http://${host}:8000/api/v1/evaluate/bulk`, {
+      const res = await fetch(apiUrl('/api/v1/evaluate/bulk'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bulkPayload)

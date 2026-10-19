@@ -31,6 +31,7 @@ import {
 } from "recharts";
 import { CodeBeastLiquidButton } from "@/components/ui/codebeast-liquid-button";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/motion-primitives";
+import { apiUrl } from "@/lib/api";
 
 interface MetricDelta {
   category: string;
@@ -94,8 +95,7 @@ export default function RepoDuelPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    fetch(`http://${host}:8000/api/v1/stats/history`)
+    fetch(apiUrl('/api/v1/stats/history'))
       .then(res => res.json())
       .then(data => {
         if (data.history && data.history.length > 0) {
@@ -125,8 +125,7 @@ export default function RepoDuelPage() {
     setError(null);
 
     try {
-      const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-      const res = await fetch(`http://${host}:8000/api/v1/duel/compare`, {
+      const res = await fetch(apiUrl('/api/v1/duel/compare'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
