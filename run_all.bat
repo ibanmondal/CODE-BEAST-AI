@@ -4,11 +4,16 @@ echo ===================================================
 echo 🚀 Starting CodeBeast AI Multi-Agent Platform
 echo ===================================================
 
-:: 1. Start Redis in Docker (if docker is running)
-echo [1/4] Checking Redis container...
-docker start codebeast_redis 2>nul || docker run --name codebeast_redis -p 6379:6379 -d redis 2>nul
-echo Purging old tasks from Redis queue...
-docker exec codebeast_redis redis-cli FLUSHALL 2>nul
+:: 1. Start Redis Server
+echo [1/4] Starting Redis Server on Port 6379...
+set "REDIS_EXE=%LOCALAPPDATA%\Microsoft\WinGet\Packages\taizod1024.redis-windows-fork_Microsoft.Winget.Source_8wekyb3d8bbwe\Redis-8.10.2-Windows-x64-msys2\redis-server.exe"
+if exist "%REDIS_EXE%" (
+    start "CodeBeast - Redis Server" "%REDIS_EXE%"
+) else (
+    where redis-server >nul 2>&1 && start "CodeBeast - Redis Server" redis-server || (
+        docker start codebeast_redis 2>nul || docker run --name codebeast_redis -p 6379:6379 -d redis 2>nul
+    )
+)
 
 :: 2. Start Backend in a new window
 echo [2/4] Starting FastAPI Backend on Port 8000...
