@@ -8,8 +8,13 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 class RepositoryCloner:
-    def __init__(self, base_dir: str = "./worker_repos", token: str = None):
-        self.base_dir = Path(base_dir)
+    def __init__(self, base_dir: str = None, token: str = None):
+        if base_dir:
+            self.base_dir = Path(base_dir)
+        else:
+            # Place worker_repos in the project root (outside backend) to prevent uvicorn reloads
+            workspace_root = Path(__file__).resolve().parent.parent.parent.parent
+            self.base_dir = workspace_root / "worker_repos"
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.token = token or os.getenv("GITHUB_TOKEN") or getattr(settings, "GITHUB_TOKEN", None)
 
@@ -29,13 +34,24 @@ class RepositoryCloner:
         if not path.exists():
             return
         import stat
+        import time
+        import gc
+        gc.collect()
         def remove_readonly(func, p, _):
-            os.chmod(p, stat.S_IWRITE)
-            func(p)
-        try:
-            shutil.rmtree(path, onerror=remove_readonly)
-        except Exception as e:
-            logger.warning(f"Cleanup warning for {path}: {e}")
+            try:
+                os.chmod(p, stat.S_IWRITE)
+                func(p)
+            except Exception:
+                pass
+        for attempt in range(3):
+            try:
+                if path.exists():
+                    shutil.rmtree(path, onerror=remove_readonly)
+                break
+            except Exception as e:
+                time.sleep(0.3)
+                if attempt == 2 and path.exists():
+                    logger.warning(f"Cleanup warning for {path}: {e}")
 
     def clone_repository(self, repo_url: str) -> str:
         import uuid
@@ -58,13 +74,13 @@ class RepositoryCloner:
             
         logger.info(f"Cloning {clean_url} into {repo_dir} (shallow depth=1)")
         try:
-            Repo.clone_from(
+            repo = Repo.clone_from(
                 clone_url, 
                 repo_dir, 
                 depth=1, 
-                single_branch=True,
-                kill_after_timeout=5
+                single_branch=True
             )
+            repo.close()
             logger.info(f"Successfully cloned {clean_url}")
         except Exception as e:
             logger.warning(f"Git clone error ({e}), generating synthetic repository skeleton for analysis")

@@ -30,8 +30,9 @@ export default function JobsPage() {
         const formattedJobs = h.map((job: any) => ({
           id: job.id || 'task-' + Math.random().toString(36).substr(2, 6),
           repo: job.repo,
+          repoId: job.repoId || job.repo,
           status: job.status || 'Completed',
-          overall: job.overall || 88,
+          overall: job.overall ?? 0,
           progress: job.status === 'Completed' ? 100 : job.status === 'Failed' ? 0 : job.status === 'Running' ? 55 : 10,
           time: job.submitted || 'recently',
           agent: job.status === 'Completed' ? 'ConsJudge Verified' : job.status === 'Running' ? 'Analyzing Codebase...' : 'Queued'

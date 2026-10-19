@@ -18,24 +18,15 @@ load_dotenv(override=True)
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 celery_app = Celery("codebeast_worker", broker=redis_url, backend=redis_url)
-worker_redis_client = redis.from_url(redis_url)
+try:
+    worker_redis_client = redis.from_url(redis_url, socket_timeout=0.5, socket_connect_timeout=0.5)
+except Exception:
+    worker_redis_client = None
 
-def broadcast_agent_status(task_id, repo_url, status, agent_name):
-    if task_id:
-        try:
-            payload = json.dumps({
-                "task_id": task_id,
-                "repo_url": repo_url,
-                "status": status,
-                "agent": agent_name
-            })
-            worker_redis_client.publish("job_updates", payload)
-            worker_redis_client.set("last_eval_task", payload)
-        except Exception as e:
-            print(f"Redis publish error: {e}")
+from app.agents.nodes import broadcast_agent_status
 
 async def _run_evaluation_async(repo_url: str, task_id: str = None):
-    cloner = RepositoryCloner(base_dir="./worker_repos")
+    cloner = RepositoryCloner()
     repo_path = ""
     broadcast_agent_status(task_id, repo_url, "AgentRunning", "ingestion")
     try:
@@ -127,14 +118,20 @@ def evaluate_repo(self, repo_url: str):
     redis_client = redis.from_url(redis_url)
     
     def broadcast_update(status, payload={}):
-        msg = json.dumps({
+        msg_dict = {
             "task_id": task_id,
             "repo_url": repo_url,
             "status": status,
             **payload
-        })
+        }
+        msg = json.dumps(msg_dict)
         redis_client.publish("job_updates", msg)
         redis_client.set("last_eval_task", msg)
+        try:
+            from app.api.endpoints.ws import broadcast_ws_message
+            broadcast_ws_message(msg_dict)
+        except Exception:
+            pass
     
     db = SessionLocal()
     job = db.query(AnalysisJob).filter(AnalysisJob.id == task_id).first()
@@ -153,11 +150,23 @@ def evaluate_repo(self, repo_url: str):
     result_container = {}
     
     def _thread_target():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         try:
-            res = asyncio.run(_run_evaluation_async(repo_url, task_id=task_id))
+            res = loop.run_until_complete(_run_evaluation_async(repo_url, task_id=task_id))
+            try:
+                loop.run_until_complete(loop.shutdown_asyncgens())
+            except Exception:
+                pass
             result_container["result"] = res
         except Exception as e:
             result_container["error"] = e
+        finally:
+            try:
+                loop.close()
+            except Exception:
+                pass
+            asyncio.set_event_loop(None)
             
     t = threading.Thread(target=_thread_target)
     t.start()
@@ -185,8 +194,14 @@ def evaluate_repo(self, repo_url: str):
                 except:
                     final = {}
                     
-            job.final_report = final
-            
+            clean_url = repo_url.rstrip("/").replace("https://github.com/", "").replace("http://github.com/", "")
+            url_parts = [p for p in clean_url.split("/") if p]
+            owner = url_parts[0] if len(url_parts) >= 2 else (url_parts[0] if len(url_parts) == 1 else "Developer")
+            repo_title = url_parts[1] if len(url_parts) >= 2 else (url_parts[0] if len(url_parts) == 1 else "Repository")
+            user_team = job.team_name
+            team_title = user_team.strip() if (user_team and user_team.strip() and user_team not in ["Unknown", "Team"]) else (f"{owner.capitalize()} Team" if owner != "Developer" else "Engineering Team")
+            eval_timestamp = datetime.datetime.utcnow().strftime("%B %d, %Y - %H:%M UTC")
+
             score_result = result.get("deterministic_score", {})
             overall = final.get("overall_score")
             job.overall_score = overall if isinstance(overall, int) else score_result.get("final_score", 0)
@@ -200,10 +215,19 @@ def evaluate_repo(self, repo_url: str):
             
             # Simple language heuristic
             job.language = "Python" if "py" in repo_url.lower() else "TypeScript"
-            job.team_name = repo_url.split("/")[-2] if "/" in repo_url else "Unknown"
+            job.team_name = team_title
             
+            final["submitter_github_username"] = owner
+            final["team_name"] = team_title
+            final["repo_name"] = repo_title
+            final["repo_url"] = repo_url
+            final["task_id"] = task_id
+            final["evaluated_at"] = eval_timestamp
+            final["overall_score"] = job.overall_score
+
+            job.final_report = final
             job.completed_at = datetime.datetime.utcnow()
-            broadcast_update("Completed", {"final_report": final, "overall_score": job.overall_score})
+            broadcast_update("Completed", {"final_report": final, "overall_score": job.overall_score, "repo_url": repo_url})
         db.commit()
     db.close()
     

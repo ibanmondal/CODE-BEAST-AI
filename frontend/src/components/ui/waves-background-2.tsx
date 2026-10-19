@@ -656,6 +656,7 @@ export function ShaderBackground({ className }: { className?: string }) {
         const width = cvs.width;
         const height = cvs.height;
 
+        if (!glCtx || !program) return;
         glCtx.useProgram(program);
         if (uni.scene) {
           glCtx.uniform4f(

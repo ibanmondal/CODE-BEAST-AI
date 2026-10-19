@@ -7,8 +7,7 @@ import {
   HelpCircle,
   ShieldCheck,
   Plus,
-  Search,
-  Bell
+  Search
 } from "lucide-react";
 import { CodeBeastLiquidButton } from "@/components/ui/codebeast-liquid-button";
 
@@ -61,22 +60,6 @@ export function Header({ onReplayIntro }: HeaderProps) {
         </div>
       </div>
 
-      {/* Right: Notifications & Controls matching Reference Image */}
-      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-        {/* Notification Bell with Unread Blue Dot */}
-        <button
-          className="relative p-2 text-[#8EA6C8] hover:text-white hover:bg-[#0B1A3A] rounded-lg transition-colors border border-transparent hover:border-[#89CFF0]/25 cursor-pointer"
-          title="Notifications"
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#89CFF0] shadow-[0_0_8px_#89CFF0] animate-pulse" />
-        </button>
-
-        {/* Language Pill (EN in Baby Blue circle from reference image) */}
-        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#BAE6FD] to-[#89CFF0] text-[#040914] flex items-center justify-center font-bold text-xs shadow-[0_0_12px_rgba(137,207,240,0.4)] select-none cursor-pointer hover:scale-105 transition-transform">
-          EN
-        </div>
-      </div>
     </header>
   );
 }

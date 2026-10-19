@@ -21,9 +21,12 @@ class Settings(BaseSettings):
     # Redis / Celery
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # API Keys (Strictly Groq and NaraRouter)
+    # API Keys (Strictly Groq and NaraRouter, optional Gemini)
     GITHUB_TOKEN: Optional[str] = None
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_FALLBACK_KEYS: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
+    GROQ_FALLBACK_KEYS: Optional[str] = None
     NARAROUTER_API_KEY: Optional[str] = None
     NARA_ROUTER_API_KEY: Optional[str] = None
 

@@ -50,8 +50,9 @@ class DuelResponse(BaseModel):
     radar_data: List[Dict[str, Any]]
 
 def _find_job(db, identifier: str) -> Optional[AnalysisJob]:
-    """Find job by repoId, repo_url, or team name."""
+    """Find job by repoId, repo_url, owner/repo, or team name."""
     clean_id = identifier.strip().lower()
+    clean_slug = clean_id.replace("https://github.com/", "").replace("http://github.com/", "").strip("/")
     jobs = db.query(AnalysisJob).filter(AnalysisJob.status == "Completed").order_by(desc(AnalysisJob.created_at)).all()
     
     # 1. Exact match on repo_url
@@ -59,15 +60,16 @@ def _find_job(db, identifier: str) -> Optional[AnalysisJob]:
         if job.repo_url.lower() == clean_id:
             return job
             
-    # 2. Match on repo name (slug) or team_name
+    # 2. Match on owner/repo slug
     for job in jobs:
-        repo_slug = job.repo_url.split("/")[-1].lower() if "/" in job.repo_url else job.repo_url.lower()
-        if repo_slug == clean_id or (job.team_name and job.team_name.lower() == clean_id):
+        url_slug = job.repo_url.lower().replace("https://github.com/", "").replace("http://github.com/", "").strip("/")
+        repo_name = job.repo_url.split("/")[-1].lower() if "/" in job.repo_url else job.repo_url.lower()
+        if url_slug == clean_slug or repo_name == clean_slug or (job.team_name and job.team_name.lower() == clean_id):
             return job
             
     # 3. Substring match
     for job in jobs:
-        if clean_id in job.repo_url.lower() or (job.team_name and clean_id in job.team_name.lower()):
+        if clean_slug in job.repo_url.lower() or (job.team_name and clean_slug in job.team_name.lower()):
             return job
             
     return None
@@ -291,43 +293,50 @@ async def compare_repositories(req: DuelRequest):
     job_b = _find_job(db, req.repo_b)
     db.close()
 
+    if not job_a:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Repository '{req.repo_a}' has not been evaluated yet. Please select an evaluated repository from the database or run its analysis first."
+        )
+    if not job_b:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Repository '{req.repo_b}' has not been evaluated yet. Please select an evaluated repository from the database or run its analysis first."
+        )
+
     # Format Team A
-    if job_a:
-        team_a = {
-            "repo": job_a.repo_url.split("/")[-1] if "/" in job_a.repo_url else job_a.repo_url,
-            "repoId": job_a.repo_url,
-            "team": job_a.team_name or f"Team {job_a.repo_url.split('/')[-1]}",
-            "lang": job_a.language,
-            "overall": job_a.overall_score,
-            "sec": job_a.security_score,
-            "arch": job_a.arch_score,
-            "perf": job_a.perf_score,
-            "testing_score": job_a.testing_score,
-            "db_score": job_a.db_score,
-            "orig": job_a.originality_score,
-            "final_report": job_a.final_report or {}
-        }
-    else:
-        team_a = _create_mock_job_data(req.repo_a, is_alpha=True)
+    repo_a_clean = job_a.repo_url.replace("https://github.com/", "").replace("http://github.com/", "").strip("/") if "github.com" in job_a.repo_url else (job_a.repo_url.split("/")[-1] if "/" in job_a.repo_url else job_a.repo_url)
+    team_a = {
+        "repo": repo_a_clean,
+        "repoId": job_a.repo_url,
+        "team": job_a.team_name or f"Team {repo_a_clean}",
+        "lang": job_a.language,
+        "overall": job_a.overall_score,
+        "sec": job_a.security_score,
+        "arch": job_a.arch_score,
+        "perf": job_a.perf_score,
+        "testing_score": job_a.testing_score,
+        "db_score": job_a.db_score,
+        "orig": job_a.originality_score,
+        "final_report": job_a.final_report or {}
+    }
 
     # Format Team B
-    if job_b:
-        team_b = {
-            "repo": job_b.repo_url.split("/")[-1] if "/" in job_b.repo_url else job_b.repo_url,
-            "repoId": job_b.repo_url,
-            "team": job_b.team_name or f"Team {job_b.repo_url.split('/')[-1]}",
-            "lang": job_b.language,
-            "overall": job_b.overall_score,
-            "sec": job_b.security_score,
-            "arch": job_b.arch_score,
-            "perf": job_b.perf_score,
-            "testing_score": job_b.testing_score,
-            "db_score": job_b.db_score,
-            "orig": job_b.originality_score,
-            "final_report": job_b.final_report or {}
-        }
-    else:
-        team_b = _create_mock_job_data(req.repo_b, is_alpha=False)
+    repo_b_clean = job_b.repo_url.replace("https://github.com/", "").replace("http://github.com/", "").strip("/") if "github.com" in job_b.repo_url else (job_b.repo_url.split("/")[-1] if "/" in job_b.repo_url else job_b.repo_url)
+    team_b = {
+        "repo": repo_b_clean,
+        "repoId": job_b.repo_url,
+        "team": job_b.team_name or f"Team {repo_b_clean}",
+        "lang": job_b.language,
+        "overall": job_b.overall_score,
+        "sec": job_b.security_score,
+        "arch": job_b.arch_score,
+        "perf": job_b.perf_score,
+        "testing_score": job_b.testing_score,
+        "db_score": job_b.db_score,
+        "orig": job_b.originality_score,
+        "final_report": job_b.final_report or {}
+    }
 
     # Metric Deltas across all 6 axes
     categories = [

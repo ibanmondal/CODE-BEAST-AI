@@ -4,7 +4,7 @@ import json
 import asyncio
 import datetime
 import logging
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 from app.database import SessionLocal, AnalysisJob
@@ -15,6 +15,16 @@ router = APIRouter()
 
 class EvaluateRequest(BaseModel):
     repo_url: str
+    team_name: Optional[str] = None
+
+class BulkEvaluateItem(BaseModel):
+    repo_url: str
+    team_name: Optional[str] = None
+
+class BulkEvaluateRequest(BaseModel):
+    items: List[BulkEvaluateItem]
+    batch_name: Optional[str] = "Bulk Evaluation Batch"
+    chunk_size: Optional[int] = 5
 
 # In-memory tracking for active and completed tasks
 _memory_tasks = {}
@@ -74,13 +84,16 @@ async def _execute_evaluation_job(task_id: str, repo_url: str):
                     job.db_score = final.get("db_score") if final.get("db_score") is not None else det_sub.get("db_score", 74)
                     job.originality_score = final.get("originality_score") if final.get("originality_score") is not None else det_sub.get("originality_score", 90)
                     
-                    # Extract GitHub owner and repo name from URL
-                    owner = repo_url.rstrip("/").split("/")[-2] if "/" in repo_url else "Developer"
-                    repo_title = repo_url.rstrip("/").split("/")[-1] if "/" in repo_url else "Repository"
+                    clean_url = repo_url.rstrip("/").replace("https://github.com/", "").replace("http://github.com/", "")
+                    url_parts = [p for p in clean_url.split("/") if p]
+                    owner = url_parts[0] if len(url_parts) >= 2 else (url_parts[0] if len(url_parts) == 1 else "Developer")
+                    repo_title = url_parts[1] if len(url_parts) >= 2 else (url_parts[0] if len(url_parts) == 1 else "Repository")
+                    team_title = f"{owner.capitalize()} Team" if owner != "Developer" else "Engineering Team"
                     eval_timestamp = datetime.datetime.utcnow().strftime("%B %d, %Y - %H:%M UTC")
 
                     final["submitter_github_username"] = owner
-                    final["team_name"] = job.team_name or f"{owner} Team"
+                    final["team_name"] = team_title if (not job.team_name or job.team_name in ["Unknown", owner]) else job.team_name
+                    job.team_name = final["team_name"]
                     final["repo_name"] = repo_title
                     final["repo_url"] = repo_url
                     final["task_id"] = task_id
@@ -102,6 +115,48 @@ async def _execute_evaluation_job(task_id: str, repo_url: str):
                         "overall_score": job.overall_score
                     }
                 db.commit()
+
+                # Broadcast completion to WebSocket and Redis
+                try:
+                    from app.agents.nodes import broadcast_agent_status
+                    broadcast_agent_status(task_id, repo_url, "AgentCompleted", "nararouter_supervisor")
+                    broadcast_agent_status(task_id, repo_url, "AgentCompleted", "gemini_supervisor")
+                except Exception:
+                    pass
+
+                completion_payload = {
+                    "task_id": task_id,
+                    "repo_url": repo_url,
+                    "status": "Completed",
+                    "final_report": final,
+                    "overall_score": job.overall_score,
+                    "completed_agents": [
+                        "ingestion",
+                        "security_agent",
+                        "architecture_agent",
+                        "performance_agent",
+                        "testing_agent",
+                        "database_agent",
+                        "similarity_agent",
+                        "nararouter_supervisor"
+                    ],
+                    "active_agent": "nararouter_supervisor",
+                    "log": "[COMPLETED] ConsJudge Consensus Completed. Final Report Generated."
+                }
+                try:
+                    from app.api.endpoints.ws import broadcast_ws_message
+                    broadcast_ws_message(completion_payload)
+                except Exception:
+                    pass
+
+                try:
+                    import redis
+                    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+                    r_client = redis.from_url(redis_url, socket_timeout=0.3, socket_connect_timeout=0.3)
+                    r_client.publish("job_updates", json.dumps(completion_payload))
+                    r_client.set("last_eval_task", json.dumps(completion_payload))
+                except Exception:
+                    pass
         finally:
             db.close()
     except Exception as e:
@@ -116,6 +171,19 @@ async def _execute_evaluation_job(task_id: str, repo_url: str):
         finally:
             db.close()
 
+        failure_payload = {
+            "task_id": task_id,
+            "repo_url": repo_url,
+            "status": "FAILURE",
+            "error": str(e),
+            "log": f"[FAILED] {e}"
+        }
+        try:
+            from app.api.endpoints.ws import broadcast_ws_message
+            broadcast_ws_message(failure_payload)
+        except Exception:
+            pass
+
 @router.post("/")
 async def start_evaluation(request: EvaluateRequest, background_tasks: BackgroundTasks):
     raw_url = request.repo_url.strip()
@@ -128,10 +196,12 @@ async def start_evaluation(request: EvaluateRequest, background_tasks: Backgroun
     # Store initial job in DB
     db = SessionLocal()
     try:
+        owner = normalized_url.rstrip("/").split("/")[-2] if "/" in normalized_url else "Team"
+        team_title = request.team_name.strip() if (request.team_name and request.team_name.strip()) else (f"{owner.capitalize()} Team" if owner != "Team" else "Engineering Team")
         job = AnalysisJob(
             id=task_id,
             repo_url=normalized_url,
-            team_name=normalized_url.rstrip("/").split("/")[-2] if "/" in normalized_url else "Team",
+            team_name=team_title,
             language="Python" if any(k in normalized_url.lower() for k in ["py", "flask", "django"]) else "TypeScript",
             status="Queued"
         )
@@ -142,16 +212,45 @@ async def start_evaluation(request: EvaluateRequest, background_tasks: Backgroun
         
     _memory_tasks[task_id] = {"status": "PENDING", "repo_url": normalized_url}
     
-    # Try Celery if Redis is available, otherwise run in async BackgroundTasks
+    # Initialize in-memory progress tracker
+    from app.agents.nodes import AGENT_PROGRESS_MAP
+    AGENT_PROGRESS_MAP[task_id] = {
+        "active_agent": "ingestion",
+        "stage_label": "Cloning repository & AST Ingestion...",
+        "completed_agents": []
+    }
+
+    init_payload = {
+        "task_id": task_id,
+        "repo_url": normalized_url,
+        "status": "PENDING",
+        "active_agent": "ingestion",
+        "stage_label": "Cloning repository & AST Ingestion...",
+        "completed_agents": [],
+        "log": f"[STARTED] Initialized evaluation pipeline for {normalized_url}"
+    }
+    try:
+        from app.api.endpoints.ws import broadcast_ws_message
+        broadcast_ws_message(init_payload)
+    except Exception:
+        pass
+    
+    # Try Celery if Redis and active workers are available, otherwise run in async BackgroundTasks
     celery_dispatched = False
     try:
         import redis
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         r_client = redis.from_url(redis_url, socket_timeout=0.4, socket_connect_timeout=0.4)
         if r_client.ping():
-            from app.worker import evaluate_repo
-            evaluate_repo.apply_async(args=[normalized_url], task_id=task_id)
-            celery_dispatched = True
+            from app.worker import celery_app, evaluate_repo
+            inspect_ctrl = celery_app.control.inspect(timeout=0.3)
+            active_workers = inspect_ctrl.ping() if inspect_ctrl else None
+            if active_workers:
+                evaluate_repo.apply_async(args=[normalized_url], task_id=task_id)
+                celery_dispatched = True
+                logger.info(f"Dispatched task {task_id} to Celery workers: {list(active_workers.keys())}")
+            else:
+                logger.info(f"Redis is up but no active Celery worker listening. Using in-process background worker for {task_id}")
     except Exception as e:
         logger.info(f"Celery unavailable ({e}), using async background task for {task_id}")
         
@@ -164,6 +263,47 @@ async def start_evaluation(request: EvaluateRequest, background_tasks: Backgroun
         "repo_url": normalized_url,
         "mode": "celery" if celery_dispatched else "async_worker"
     }
+
+@router.post("/bulk")
+async def bulk_evaluation(request: BulkEvaluateRequest):
+    if not request.items:
+        raise HTTPException(status_code=400, detail="No repository items provided")
+
+    from app.services.batch_orchestrator import start_bulk_pipeline
+    
+    items_data = [
+        {"repo_url": item.repo_url, "team_name": item.team_name}
+        for item in request.items
+    ]
+    batch_name = request.batch_name or "Bulk Evaluation Batch"
+    chunk_size = request.chunk_size if (request.chunk_size and request.chunk_size > 0) else 5
+
+    res = start_bulk_pipeline(items_data, batch_name=batch_name, chunk_size=chunk_size)
+    return res
+
+@router.get("/batch/{batch_id}")
+async def get_batch_info(batch_id: str):
+    from app.services.batch_orchestrator import get_batch_status
+    status = get_batch_status(batch_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="Batch evaluation not found")
+    return status
+
+@router.post("/batch/{batch_id}/resume")
+async def resume_batch(batch_id: str):
+    from app.services.batch_orchestrator import resume_batch_pipeline
+    res = resume_batch_pipeline(batch_id)
+    if res.get("status") == "ERROR":
+        raise HTTPException(status_code=404, detail=res.get("message", "Failed to resume batch"))
+    return res
+
+@router.get("/batch/latest/report")
+async def get_latest_batch():
+    from app.services.batch_orchestrator import get_latest_batch_report
+    report = get_latest_batch_report()
+    if not report:
+        raise HTTPException(status_code=404, detail="No batches available")
+    return report
 
 @router.post("/direct")
 async def direct_evaluation(request: EvaluateRequest):

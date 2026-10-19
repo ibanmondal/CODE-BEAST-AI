@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { 
   Cpu, 
   ShieldCheck, 
@@ -17,24 +17,26 @@ import {
   Sparkles
 } from "lucide-react";
 
-interface AnalysisLoadingExperienceProps {
+export interface AnalysisLoadingExperienceProps {
   repoUrl?: string;
   repoName?: string;
   completedAgents?: string[];
-  activeAgent?: string;
+  activeAgent?: string | null;
+  stageLabel?: string | null;
+  logLines?: string[];
   onCancel?: () => void;
   onComplete?: () => void;
 }
 
 const AGENT_TASKS = [
-  { id: "ingest", name: "Tree-Sitter AST & Git Ingestion", tech: "LibGit2 + AST Parser", icon: Cpu },
-  { id: "sec", name: "AutoReview 3-Stage CWE Slicing", tech: "ACM FSE '25 AutoReview", icon: ShieldCheck },
-  { id: "arch", name: "Cyclic Dependency & SOLID Graph", tech: "Llama 3.3 70B", icon: Layers },
-  { id: "perf", name: "Algorithmic Complexity & Profiler", tech: "Llama 3.3 70B", icon: Zap },
-  { id: "test", name: "Assertion Density & CI Flake Risk", tech: "Llama 3.1 8B", icon: TestTube },
-  { id: "db", name: "Database Schema & Query Indexing", tech: "NaraRouter Agnes", icon: Database },
-  { id: "clone", name: "AST Semantic Clone Vector Check", tech: "CodeBERT FAISS", icon: Fingerprint },
-  { id: "judge", name: "ConsJudge Dual-Pass Consensus", tech: "ConsJudge Arbiter '25", icon: CheckCircle2 }
+  { id: "ingestion", name: "Tree-Sitter AST & Git Ingestion", tech: "LibGit2 + AST Parser", icon: Cpu },
+  { id: "security_agent", name: "AutoReview 3-Stage CWE Slicing", tech: "ACM FSE '25 AutoReview", icon: ShieldCheck },
+  { id: "architecture_agent", name: "Cyclic Dependency & SOLID Graph", tech: "Llama 3.3 70B", icon: Layers },
+  { id: "performance_agent", name: "Algorithmic Complexity & Profiler", tech: "Llama 3.3 70B", icon: Zap },
+  { id: "testing_agent", name: "Assertion Density & CI Flake Risk", tech: "Llama 3.1 8B", icon: TestTube },
+  { id: "database_agent", name: "Database Schema & Query Indexing", tech: "Groq Llama 3.3", icon: Database },
+  { id: "similarity_agent", name: "AST Semantic Clone Vector Check", tech: "CodeBERT FAISS", icon: Fingerprint },
+  { id: "nararouter_supervisor", name: "ConsJudge Dual-Pass Consensus", tech: "ConsJudge Arbiter '25", icon: CheckCircle2 }
 ];
 
 export function AnalysisLoadingExperience({ 
@@ -42,77 +44,59 @@ export function AnalysisLoadingExperience({
   repoName, 
   completedAgents = [], 
   activeAgent, 
+  stageLabel,
+  logLines = [],
   onCancel,
   onComplete
 }: AnalysisLoadingExperienceProps) {
-  const [completedCount, setCompletedCount] = useState<number>(0);
   const targetIdentifier = repoUrl || repoName || "target-repository";
   const displayRepo = targetIdentifier.replace(/^https?:\/\/github\.com\//i, "") || "target-repository";
 
-  const [logLines, setLogLines] = useState<string[]>([
-    "INITIALIZING: LibGit2 shallow repository clone pipeline...",
-    "EXTRACTING: Abstract Syntax Tree tokens via Tree-Sitter grammars...",
-    "FAN-OUT: Spawning specialized evaluator nodes across isolated workers..."
-  ]);
-
-  // Snappy, high-throughput progression (650ms per agent)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCompletedCount((prev) => {
-        if (prev < AGENT_TASKS.length) {
-          const next = prev + 1;
-          const nextTask = AGENT_TASKS[Math.min(next - 1, AGENT_TASKS.length - 1)];
-          setLogLines((logs) => [
-            `VERIFIED: [Node ${next}/${AGENT_TASKS.length}] ${nextTask.name} completed successfully.`,
-            ...logs.slice(0, 9)
-          ]);
-          return next;
-        } else {
-          setLogLines((logs) => [
-            "ALL 8 NODES VERIFIED: Generating final report immediately...",
-            ...logs.slice(0, 9)
-          ]);
-          return prev;
-        }
-      });
-    }, 650);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
-
-  // Trigger instant report compilation 500ms after all 8 boxes turn green
-  useEffect(() => {
-    if (completedCount >= AGENT_TASKS.length) {
-      const finishTimer = setTimeout(() => {
-        if (onComplete) {
-          onComplete();
-        }
-      }, 500);
-      return () => clearTimeout(finishTimer);
+  const isTaskDone = (id: string): boolean => {
+    if (completedAgents.includes(id)) return true;
+    if (id === "nararouter_supervisor" && (completedAgents.includes("nararouter_supervisor") || completedAgents.includes("gemini_supervisor"))) {
+      return true;
     }
-  }, [completedCount, onComplete]);
+    return false;
+  };
 
-  // Sync with real backend progress if backend completes faster
-  useEffect(() => {
-    if (completedAgents && completedAgents.length > 0) {
-      setCompletedCount((prev) => Math.max(prev, completedAgents.length));
+  const isTaskActive = (id: string): boolean => {
+    if (isTaskDone(id)) return false;
+    if (activeAgent === id) return true;
+    if (id === "nararouter_supervisor" && (activeAgent === "nararouter_supervisor" || activeAgent === "gemini_supervisor")) {
+      return true;
     }
-  }, [completedAgents]);
+    // If ingestion is not done and no active agent is specified, ingestion is active
+    if (id === "ingestion" && (!activeAgent || activeAgent === "ingest" || activeAgent === "Repository Ingestion")) {
+      return true;
+    }
+    return false;
+  };
 
+  const completedCount = AGENT_TASKS.filter((task) => isTaskDone(task.id)).length;
   const progressPercent = Math.min(100, Math.round((completedCount / AGENT_TASKS.length) * 100));
+  const allCompleted = completedCount >= AGENT_TASKS.length;
+
+  const displayLogs = logLines.length > 0 
+    ? logLines 
+    : [
+        "INITIALIZING: LibGit2 shallow repository clone pipeline...",
+        "EXTRACTING: Abstract Syntax Tree tokens via Tree-Sitter grammars...",
+        "FAN-OUT: Spawning specialized evaluator nodes across isolated workers..."
+      ];
 
   return (
     <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(137,207,240,0.12)] space-y-6 text-white">
       
-      {/* 1. Header with Live Progress */}
+      {/* 1. Header with Live Real-Time Progress */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className={`w-2.5 h-2.5 rounded-full ${completedCount >= AGENT_TASKS.length ? "bg-emerald-400 animate-pulse" : "bg-[#89CFF0] animate-ping"}`} />
-            <span className={`text-xs font-mono font-bold uppercase tracking-wider ${completedCount >= AGENT_TASKS.length ? "text-emerald-400" : "text-[#89CFF0]"}`}>
-              {completedCount >= AGENT_TASKS.length ? "ALL 8 NODES COMPLETED · SYNTHESIZING REPORT" : "EVALUATION PIPELINE IN PROGRESS"}
+            <span className={`w-2.5 h-2.5 rounded-full ${allCompleted ? "bg-emerald-400 animate-pulse" : "bg-[#89CFF0] animate-ping"}`} />
+            <span className={`text-xs font-mono font-bold uppercase tracking-wider ${allCompleted ? "text-emerald-400" : "text-[#89CFF0]"}`}>
+              {allCompleted 
+                ? "ALL 8 NODES COMPLETED · SYNTHESIZING REPORT" 
+                : stageLabel || "REAL-TIME EVALUATION PIPELINE IN PROGRESS"}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-mono">
@@ -124,11 +108,11 @@ export function AnalysisLoadingExperience({
         </div>
 
         <div className="text-left sm:text-right shrink-0">
-          <span className={`text-2xl sm:text-3xl font-bold font-mono ${completedCount >= AGENT_TASKS.length ? "text-emerald-400" : "text-[#89CFF0]"}`}>
+          <span className={`text-2xl sm:text-3xl font-bold font-mono ${allCompleted ? "text-emerald-400" : "text-[#89CFF0]"}`}>
             {progressPercent}%
           </span>
           <span className="text-xs text-[#8EA6C8] block mt-0.5">
-            {completedCount >= AGENT_TASKS.length ? "Final consensus synthesizing..." : `${completedCount} of 8 nodes finished`}
+            {allCompleted ? "Final consensus synthesizing..." : `${completedCount} of 8 nodes finished`}
           </span>
         </div>
       </div>
@@ -137,25 +121,24 @@ export function AnalysisLoadingExperience({
       <div className="w-full bg-[#08132B] h-3 rounded-full overflow-hidden border border-[#89CFF0]/20 shadow-inner">
         <div 
           className={`h-full rounded-full transition-all duration-500 ease-out shadow-sm ${
-            completedCount >= AGENT_TASKS.length 
+            allCompleted 
               ? "bg-gradient-to-r from-emerald-500 to-teal-400" 
               : "bg-gradient-to-r from-[#BAE6FD] to-[#89CFF0]"
           }`}
-          style={{ width: `${progressPercent}%` }}
+          style={{ width: `${Math.max(progressPercent, 4)}%` }}
         />
       </div>
 
-      {/* 3. Grid of 8 Parallel Agents - Fully Green When Completed */}
+      {/* 3. Grid of 8 Parallel Agents - Turns Green ONLY when completed */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {AGENT_TASKS.map((task, idx) => {
-          const isDone = idx < completedCount;
-          const isRunning = idx === completedCount;
-          const isPending = idx > completedCount;
+        {AGENT_TASKS.map((task) => {
+          const isDone = isTaskDone(task.id);
+          const isRunning = isTaskActive(task.id);
 
           return (
             <div
               key={task.id}
-              className={`p-4 rounded-2xl border transition-all duration-400 transform ${
+              className={`p-4 rounded-2xl border transition-all duration-300 transform ${
                 isDone
                   ? "bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 text-white border-2 border-emerald-400 shadow-[0_10px_25px_rgba(16,185,129,0.32)] ring-2 ring-emerald-300/40 scale-[1.01]"
                   : isRunning
@@ -204,7 +187,7 @@ export function AnalysisLoadingExperience({
         })}
       </div>
 
-      {/* 4. Live Telemetry Stream Terminal */}
+      {/* 4. Live Real-Time Telemetry Stream Terminal */}
       <div className="space-y-2.5">
         <div className="flex items-center justify-between text-xs text-[#8EA6C8]">
           <span className="flex items-center gap-1.5 font-semibold text-white">
@@ -217,7 +200,7 @@ export function AnalysisLoadingExperience({
         </div>
 
         <div className="p-4 bg-[#040914] text-white font-mono text-xs max-h-36 overflow-y-auto space-y-1.5 rounded-2xl border border-[#89CFF0]/25 shadow-inner">
-          {logLines.map((line, i) => (
+          {displayLogs.map((line, i) => (
             <div key={i} className="flex items-start gap-2">
               <span className="text-[#89CFF0]/70 shrink-0">&gt;</span>
               <span className={i === 0 ? "text-emerald-400 font-semibold" : "text-[#BAE6FD]"}>
@@ -231,4 +214,3 @@ export function AnalysisLoadingExperience({
     </div>
   );
 }
-

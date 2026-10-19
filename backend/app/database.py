@@ -33,6 +33,25 @@ class AnalysisJob(Base):
     finops_score = Column(Integer, default=0)
     
     final_report = Column(JSON, nullable=True)
+    batch_id = Column(String, nullable=True, index=True)
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+class BatchEvaluation(Base):
+    __tablename__ = "batch_evaluations"
+
+    id = Column(String, primary_key=True, index=True) # Batch ID e.g. batch_uuid
+    name = Column(String, default="Bulk Evaluation Batch")
+    status = Column(String, default="Processing") # Processing, Synthesizing, Completed, Failed
+    total_repos = Column(Integer, default=0)
+    completed_repos = Column(Integer, default=0)
+    current_chunk = Column(Integer, default=1)
+    total_chunks = Column(Integer, default=1)
+    chunk_size = Column(Integer, default=5)
+    
+    repo_ids = Column(JSON, default=list) # List of task_ids / job specs
+    leaderboard_report = Column(JSON, nullable=True) # Full AI Leaderboard Agent output
     
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
@@ -58,4 +77,20 @@ engine = init_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base.metadata.create_all(bind=engine)
+
+def ensure_schema_migrations():
+    try:
+        with engine.connect() as conn:
+            if str(engine.url).startswith("sqlite"):
+                raw_conn = conn.connection
+                cursor = raw_conn.cursor()
+                cursor.execute("PRAGMA table_info(analysis_jobs)")
+                cols = [r[1] for r in cursor.fetchall()]
+                if "batch_id" not in cols:
+                    cursor.execute("ALTER TABLE analysis_jobs ADD COLUMN batch_id VARCHAR")
+                    raw_conn.commit()
+    except Exception as e:
+        logger.debug(f"Schema check notice: {e}")
+
+ensure_schema_migrations()
 

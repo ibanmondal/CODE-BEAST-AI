@@ -29,59 +29,73 @@ import { InteractiveAgentCard } from "@/components/InteractiveAgentCard";
 
 export default function HomePage() {
   const router = useRouter();
-  const [repoUrl, setRepoUrl] = useState("https://github.com/facebook/react");
+  const [repoUrl, setRepoUrl] = useState("https://github.com/vercel/next.js");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
 
-  // Live Stats from backend if available, with reference image fallback defaults
   const [stats, setStats] = useState({
-    analyzed: 39,
-    avg_score: 90.4,
-    security_findings: 12,
-    active_analysis: 1
+    analyzed: 0,
+    avg_score: 0,
+    security_findings: 0,
+    active_analysis: 0
   });
 
-  const [recentAudits, setRecentAudits] = useState([
-    {
-      repo: "facebook/react",
-      score: 92.4,
-      status: "Completed",
-      lastAnalyzed: "Oct 16, 2026 05:12 PM",
-    },
-    {
-      repo: "fastapi/fastapi",
-      score: 88.1,
-      status: "Completed",
-      lastAnalyzed: "Oct 15, 2026 11:30 AM",
-    },
-    {
-      repo: "vercel/next.js",
-      score: 85.6,
-      status: "Completed",
-      lastAnalyzed: "Oct 14, 2026 09:20 PM",
-    },
-    {
-      repo: "pallets/flask",
-      score: 78.9,
-      status: "Completed",
-      lastAnalyzed: "Oct 13, 2026 03:45 PM",
-    }
+  const [recentAudits, setRecentAudits] = useState<any[]>([]);
+  const [agentPerformanceData, setAgentPerformanceData] = useState([
+    { name: "Security", score: 0 },
+    { name: "Architecture", score: 0 },
+    { name: "Performance", score: 0 },
+    { name: "Testing", score: 0 },
+    { name: "Database", score: 0 },
+    { name: "Originality", score: 0 },
+    { name: "Dev Exp", score: 0 },
+    { name: "Cloud", score: 0 }
   ]);
 
   useEffect(() => {
     const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
     
-    // Attempt to fetch dashboard telemetry
+    // Fetch live dashboard telemetry
     fetch(`http://${host}:8000/api/v1/stats/dashboard`)
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
       .then((data) => {
         if (data?.stats) {
           setStats({
-            analyzed: data.stats.analyzed || 39,
-            avg_score: data.stats.avg_score || 90.4,
-            security_findings: 12,
-            active_analysis: data.stats.running || 1
+            analyzed: data.stats.analyzed ?? 0,
+            avg_score: data.stats.avg_score ?? 0,
+            security_findings: data.stats.failed ?? 0,
+            active_analysis: data.stats.running ?? 0
           });
+        }
+      })
+      .catch(() => {});
+
+    // Fetch real audit history
+    fetch(`http://${host}:8000/api/v1/stats/history`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(res)))
+      .then((data) => {
+        if (data?.history && Array.isArray(data.history) && data.history.length > 0) {
+          setRecentAudits(data.history.slice(0, 4).map((h: any) => ({
+            repo: h.repoId || h.repo,
+            score: h.overall,
+            status: h.status || "Completed",
+            lastAnalyzed: h.evaluated_at || h.submitted || "Recently"
+          })));
+
+          // Calculate real average agent scores across all completed repositories
+          const total = data.history.length;
+          const avg = (fn: (item: any) => number) => Math.round(data.history.reduce((acc: number, item: any) => acc + (fn(item) || 0), 0) / total);
+
+          setAgentPerformanceData([
+            { name: "Security", score: avg((item) => item.sec) },
+            { name: "Architecture", score: avg((item) => item.arch) },
+            { name: "Performance", score: avg((item) => item.perf) },
+            { name: "Testing", score: avg((item) => item.testing_score) },
+            { name: "Database", score: avg((item) => item.db_score) },
+            { name: "Originality", score: avg((item) => item.orig) },
+            { name: "Dev Exp", score: avg((item) => item.overall) },
+            { name: "Cloud", score: avg((item) => item.finops || item.perf) }
+          ]);
         }
       })
       .catch(() => {});
@@ -99,9 +113,9 @@ export default function HomePage() {
   };
 
   const sampleRepos = [
-    "facebook/react",
-    "fastapi/fastapi",
     "vercel/next.js",
+    "fastapi/fastapi",
+    "psf/requests",
     "pallets/flask"
   ];
 
@@ -134,17 +148,6 @@ export default function HomePage() {
       desc: "Combine independent model evaluations for reliable, evidence-driven results.",
       link: "/judges"
     }
-  ];
-
-  const agentPerformanceData = [
-    { name: "Security", score: 82 },
-    { name: "Architecture", score: 68 },
-    { name: "Performance", score: 80 },
-    { name: "Testing", score: 58 },
-    { name: "Database", score: 72 },
-    { name: "Originality", score: 90 },
-    { name: "Dev Exp", score: 94 },
-    { name: "Cloud", score: 85 }
   ];
 
   return (

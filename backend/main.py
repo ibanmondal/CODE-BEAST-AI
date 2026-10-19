@@ -12,6 +12,7 @@ from app.core.config import settings
 async def lifespan(app: FastAPI):
     # Startup: Initialize resources (DB connections, etc.)
     print("CodeBeast API is starting up...")
+    ws.register_main_loop()
     yield
     # Shutdown: Clean up resources
     print("CodeBeast API is shutting down...")
@@ -50,4 +51,4 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, reload_dirs=["app"], reload_excludes=["worker_repos", "*worker_repos*"])

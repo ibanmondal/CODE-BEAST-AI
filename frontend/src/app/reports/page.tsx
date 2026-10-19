@@ -24,24 +24,29 @@ export default function ReportsPage() {
       .then(data => {
         const h = data?.history || (Array.isArray(data) ? data : []);
         const completed = h.filter((job: any) => job.status === 'Completed' || job.overall);
-        const formattedReports = completed.map((job: any) => ({
-          id: 'REP-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
-          repo: job.repo,
-          date: new Date().toISOString().split('T')[0],
-          size: '1.8 MB',
-          type: 'Full 8-Agent Audit',
-          overall_score: job.overall || job.overall_score || 88,
-          sec: job.sec || 82,
-          arch: job.arch || 88,
-          perf: job.perf || 84,
-          testing_score: job.testing_score || 80,
-          db_score: job.db_score || 86,
-          dx_score: job.dx_score || 85,
-          finops_score: job.finops || 85,
-          orig: job.orig || 94,
-          final_report: job.final_report,
-          executive_summary: job.final_report?.executive_summary || "Synthesized 8-agent evaluation completed. Architectural modularity and test assertions verified with production compliance."
-        }));
+        const formattedReports = completed.map((job: any) => {
+          const reportStr = JSON.stringify(job.final_report || {});
+          const sizeKb = Math.max(1.2, Math.round((reportStr.length / 1024) * 10) / 10);
+          return {
+            id: 'REP-' + (job.repo ? job.repo.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() : Math.random().toString(36).substr(2, 4).toUpperCase()),
+            repo: job.repo,
+            repoId: job.repoId || job.repo,
+            date: job.evaluated_at || new Date().toISOString().split('T')[0],
+            size: `${sizeKb} KB`,
+            type: 'Full 8-Agent Audit',
+            overall_score: job.overall ?? job.overall_score ?? 0,
+            sec: job.sec ?? 0,
+            arch: job.arch ?? 0,
+            perf: job.perf ?? 0,
+            testing_score: job.testing_score ?? 0,
+            db_score: job.db_score ?? 0,
+            dx_score: job.dx_score ?? 0,
+            finops_score: job.finops ?? 0,
+            orig: job.orig ?? 0,
+            final_report: job.final_report,
+            executive_summary: job.final_report?.executive_summary || "Synthesized 8-agent evaluation completed. Architectural modularity and test assertions verified with production compliance."
+          };
+        });
         setReports(formattedReports);
       })
       .catch(() => {});

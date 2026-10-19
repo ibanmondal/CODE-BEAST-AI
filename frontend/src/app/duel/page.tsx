@@ -86,8 +86,8 @@ interface DuelResult {
 
 export default function RepoDuelPage() {
   const [historyList, setHistoryList] = useState<any[]>([]);
-  const [repoA, setRepoA] = useState<string>("https://github.com/torvalds/linux");
-  const [repoB, setRepoB] = useState<string>("https://github.com/pallets/flask");
+  const [repoA, setRepoA] = useState<string>("");
+  const [repoB, setRepoB] = useState<string>("");
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [duelResult, setDuelResult] = useState<DuelResult | null>(null);
@@ -137,7 +137,8 @@ export default function RepoDuelPage() {
       });
 
       if (!res.ok) {
-        throw new Error("Duel simulation failed. Please ensure both repositories are accessible.");
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.detail || "Duel simulation failed. Please ensure both repositories are evaluated.");
       }
 
       const data = await res.json();

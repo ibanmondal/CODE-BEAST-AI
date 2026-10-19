@@ -9,11 +9,12 @@ router = APIRouter()
 async def get_history():
     db = SessionLocal()
     
-    # Cleanup stale jobs (older than 10 minutes and still running/queued)
+    # Cleanup orphaned non-batch jobs (running for > 60 minutes)
     import datetime
-    stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(minutes=10)
+    stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(minutes=60)
     db.query(AnalysisJob).filter(
-        AnalysisJob.status.in_(["Running", "Queued"]),
+        AnalysisJob.batch_id.is_(None),
+        AnalysisJob.status == "Running",
         AnalysisJob.created_at < stale_threshold
     ).update({"status": "Failed"}, synchronize_session=False)
     db.commit()
@@ -38,12 +39,17 @@ async def get_history():
         else:
             submitted = "Just now"
 
-        owner = job.repo_url.rstrip("/").split("/")[-2] if "/" in job.repo_url else (job.team_name or "Developer")
+        clean_url = job.repo_url.replace("https://github.com/", "").replace("http://github.com/", "").strip("/")
+        parts = [p for p in clean_url.split("/") if p]
+        owner = parts[0] if len(parts) >= 2 else (parts[0] if len(parts) == 1 else (job.team_name or "Developer"))
+        clean_name = clean_url if clean_url else "Repository"
+        team_title = job.team_name if (job.team_name and job.team_name not in ["Unknown", owner]) else f"{owner.capitalize()} Team"
         history.append({
-            "repo": job.repo_url.split("/")[-1] if "/" in job.repo_url else job.repo_url,
+            "id": job.id,
+            "repo": clean_name,
             "repoId": job.repo_url,
             "submitter_github_username": owner,
-            "team": job.team_name or f"{owner} Team",
+            "team": team_title,
             "lang": job.language,
             "status": job.status,
             "overall": job.overall_score,
@@ -64,11 +70,12 @@ async def get_history():
 async def get_dashboard_stats():
     db = SessionLocal()
     
-    # Cleanup stale jobs
+    # Cleanup orphaned non-batch jobs (running for > 60 minutes)
     import datetime
-    stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(minutes=10)
+    stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(minutes=60)
     db.query(AnalysisJob).filter(
-        AnalysisJob.status.in_(["Running", "Queued"]),
+        AnalysisJob.batch_id.is_(None),
+        AnalysisJob.status == "Running",
         AnalysisJob.created_at < stale_threshold
     ).update({"status": "Failed"}, synchronize_session=False)
     db.commit()
@@ -116,10 +123,15 @@ async def get_leaderboard():
     
     leaderboard = []
     for i, job in enumerate(jobs):
+        clean_url = job.repo_url.replace("https://github.com/", "").replace("http://github.com/", "").strip("/")
+        parts = [p for p in clean_url.split("/") if p]
+        owner = parts[0] if len(parts) >= 2 else (parts[0] if len(parts) == 1 else "Developer")
+        team_title = job.team_name if (job.team_name and job.team_name not in ["Unknown", owner]) else f"{owner.capitalize()} Team"
         leaderboard.append({
             "rank": i + 1,
-            "repo": job.repo_url.split("/")[-1] if "/" in job.repo_url else job.repo_url,
-            "team": job.team_name,
+            "repo": clean_url,
+            "repoId": job.repo_url,
+            "team": team_title,
             "overall": job.overall_score,
             "sec": job.security_score,
             "arch": job.arch_score,
@@ -129,6 +141,68 @@ async def get_leaderboard():
             "orig": job.originality_score
         })
     return {"leaderboard": leaderboard}
+
+@router.get("/batch-leaderboard")
+async def get_batch_leaderboard(batch_id: str = None):
+    """
+    Returns the AI Leaderboard Agent's curated batch cohort standings,
+    including honor badges, awards, differentiated ranks, and comparative insights.
+    """
+    from app.services.batch_orchestrator import get_batch_status, get_latest_batch_report
+    batch_data = None
+    if batch_id:
+        batch_data = get_batch_status(batch_id)
+    else:
+        batch_data = get_latest_batch_report()
+
+    if batch_data and batch_data.get("leaderboard"):
+        return {
+            "batch_id": batch_data.get("batch_id"),
+            "name": batch_data.get("name"),
+            "status": batch_data.get("status"),
+            "total_repos": batch_data.get("total_repos"),
+            "completed_repos": batch_data.get("completed_repos"),
+            "leaderboard": batch_data.get("leaderboard")
+        }
+
+    # Fallback: Synthesize on-the-fly from historical completed jobs if no batch evaluated yet
+    db = SessionLocal()
+    jobs = db.query(AnalysisJob).filter(AnalysisJob.status == "Completed").limit(20).all()
+    db.close()
+
+    job_dicts = []
+    for j in jobs:
+        job_dicts.append({
+            "id": j.id,
+            "task_id": j.id,
+            "repo_url": j.repo_url,
+            "team_name": j.team_name,
+            "overall_score": j.overall_score,
+            "security_score": j.security_score,
+            "arch_score": j.arch_score,
+            "perf_score": j.perf_score,
+            "testing_score": j.testing_score,
+            "db_score": j.db_score,
+            "originality_score": j.originality_score,
+            "final_report": j.final_report
+        })
+
+    from app.agents.leaderboard_agent import BatchLeaderboardAgent
+    agent = BatchLeaderboardAgent()
+    fallback_leaderboard = agent._deterministic_cohort_synthesis(
+        batch_id or "global_cohort", 
+        "Global Repository Benchmark Cohort", 
+        job_dicts
+    )
+
+    return {
+        "batch_id": batch_id or "global_cohort",
+        "name": "Global Repository Benchmark Cohort",
+        "status": "Completed",
+        "total_repos": len(job_dicts),
+        "completed_repos": len(job_dicts),
+        "leaderboard": fallback_leaderboard
+    }
 
 @router.get("/badge")
 async def get_badge(repo: str):

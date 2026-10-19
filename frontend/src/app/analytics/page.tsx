@@ -40,34 +40,30 @@ export default function AnalyticsPage() {
     });
   }, []);
 
-  const stats = data?.stats || { analyzed: 16, avg_score: 87.4, failed: 0, running: 2, submitted: 18, highest: 96.8 };
-
-  const defaultTrendData = [
-    { name: 'next.js', overall: 94, sec: 92 },
-    { name: 'fastapi', overall: 91, sec: 88 },
-    { name: 'ollama', overall: 85, sec: 80 },
-    { name: 'react', overall: 89, sec: 91 },
-    { name: 'rust', overall: 96, sec: 98 }
-  ];
+  const stats = data?.stats || { analyzed: 0, avg_score: 0, failed: 0, running: 0, submitted: 0, highest: 0 };
 
   const scoreTrendData = history.length > 0 
-    ? history.slice(0, 8).reverse().map((h) => ({
-        name: h.repo.length > 12 ? h.repo.substring(0, 10) + '..' : h.repo,
-        overall: h.overall || 88,
-        sec: h.sec || 82,
-        arch: h.arch || 85,
-        perf: h.perf || 84,
-        orig: h.orig || 95,
-      }))
-    : defaultTrendData;
+    ? history.slice(0, 8).reverse().map((h) => {
+        const repoStr = h.repo || "Repo";
+        const shortName = repoStr.includes('/') ? repoStr.split('/')[1] : repoStr;
+        return {
+          name: shortName.length > 12 ? shortName.substring(0, 10) + '..' : shortName,
+          overall: h.overall ?? 0,
+          sec: h.sec ?? 0,
+          arch: h.arch ?? 0,
+          perf: h.perf ?? 0,
+          orig: h.orig ?? 0,
+        };
+      })
+    : [];
 
   const avgSubScores = [
-    { name: 'Security', score: history.length ? Math.round(history.reduce((a, b) => a + (b.sec || 82), 0) / history.length) : 82, fill: '#89CFF0' },
-    { name: 'Architecture', score: history.length ? Math.round(history.reduce((a, b) => a + (b.arch || 88), 0) / history.length) : 88, fill: '#BAE6FD' },
-    { name: 'Performance', score: history.length ? Math.round(history.reduce((a, b) => a + (b.perf || 84), 0) / history.length) : 84, fill: '#89CFF0' },
-    { name: 'Testing', score: history.length ? Math.round(history.reduce((a, b) => a + (b.testing_score || 80), 0) / history.length) : 80, fill: '#BAE6FD' },
-    { name: 'Database', score: history.length ? Math.round(history.reduce((a, b) => a + (b.db_score || 86), 0) / history.length) : 86, fill: '#89CFF0' },
-    { name: 'Originality', score: history.length ? Math.round(history.reduce((a, b) => a + (b.orig || 94), 0) / history.length) : 94, fill: '#BAE6FD' },
+    { name: 'Security', score: history.length ? Math.round(history.reduce((a, b) => a + (b.sec || 0), 0) / history.length) : 0, fill: '#89CFF0' },
+    { name: 'Architecture', score: history.length ? Math.round(history.reduce((a, b) => a + (b.arch || 0), 0) / history.length) : 0, fill: '#BAE6FD' },
+    { name: 'Performance', score: history.length ? Math.round(history.reduce((a, b) => a + (b.perf || 0), 0) / history.length) : 0, fill: '#89CFF0' },
+    { name: 'Testing', score: history.length ? Math.round(history.reduce((a, b) => a + (b.testing_score || 0), 0) / history.length) : 0, fill: '#BAE6FD' },
+    { name: 'Database', score: history.length ? Math.round(history.reduce((a, b) => a + (b.db_score || 0), 0) / history.length) : 0, fill: '#89CFF0' },
+    { name: 'Originality', score: history.length ? Math.round(history.reduce((a, b) => a + (b.orig || 0), 0) / history.length) : 0, fill: '#BAE6FD' },
   ];
 
   return (

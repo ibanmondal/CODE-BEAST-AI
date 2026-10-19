@@ -8,17 +8,29 @@ import {
   Search, 
   ArrowRight,
   Sparkles,
-  Medal
+  Medal,
+  Award,
+  Layers,
+  ShieldCheck,
+  CheckCircle2,
+  AlertTriangle,
+  Lightbulb,
+  ExternalLink
 } from 'lucide-react';
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
 
 export default function LeaderboardPage() {
+  const [viewMode, setViewMode] = useState<'global' | 'batch'>('global');
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [batchData, setBatchData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [batchLoading, setBatchLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    
+    // 1. Fetch Global Standings
     fetch(`http://${host}:8000/api/v1/stats/leaderboard`)
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(data => {
@@ -28,7 +40,32 @@ export default function LeaderboardPage() {
       .catch(() => {
         setLoading(false);
       });
+
+    // 2. Fetch Latest Batch Leaderboard (Curated by BatchLeaderboardAgent)
+    fetch(`http://${host}:8000/api/v1/stats/batch-leaderboard`)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(data => {
+        if (data?.leaderboard) setBatchData(data);
+      })
+      .catch(() => {});
   }, []);
+
+  const handleTabChange = (mode: 'global' | 'batch') => {
+    setViewMode(mode);
+    if (mode === 'batch' && !batchData) {
+      setBatchLoading(true);
+      const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+      fetch(`http://${host}:8000/api/v1/stats/batch-leaderboard`)
+        .then(res => res.ok ? res.json() : Promise.reject(res))
+        .then(data => {
+          if (data?.leaderboard) setBatchData(data);
+          setBatchLoading(false);
+        })
+        .catch(() => {
+          setBatchLoading(false);
+        });
+    }
+  };
 
   const renderBadges = (row: any) => {
     const badges = [];
@@ -65,180 +102,471 @@ export default function LeaderboardPage() {
 
   const top3 = leaderboard.slice(0, 3);
 
+  // Batch specific items
+  const batchReport = batchData?.leaderboard || null;
+  const batchRankings: any[] = batchReport?.rankings || [];
+  const filteredBatchRankings = batchRankings.filter((row: any) =>
+    (row.repo_name && row.repo_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (row.team_name && row.team_name.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   return (
     <div className="space-y-8 pb-12 text-white">
       
-      {/* 1. Header & Search Bar */}
+      {/* 1. Header, Tab Selector & Search Bar */}
       <ScrollReveal direction="down" distance={15}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#08132B] border border-[#89CFF0]/30 text-[#89CFF0] text-[11px] font-semibold tracking-wider uppercase rounded-full shadow-xs mb-2">
-              <Trophy className="w-3.5 h-3.5" />
-              Consensus Verified Standings
+        <div className="space-y-4 pb-6 border-b border-[#89CFF0]/20">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#08132B] border border-[#89CFF0]/30 text-[#89CFF0] text-[11px] font-semibold tracking-wider uppercase rounded-full shadow-xs mb-2">
+                <Trophy className="w-3.5 h-3.5" />
+                Consensus Verified Standings
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                {viewMode === 'global' ? "Global Benchmark Leaderboard" : "AI Batch Cohort Leaderboard"}
+              </h1>
+              <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1">
+                {viewMode === 'global' 
+                  ? "All-time repository rankings verified by ConsJudge multi-pass consensus."
+                  : "Batch cohort analyzed, ranked, and awarded by the autonomous BatchLeaderboardAgent."}
+              </p>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Global Benchmark Leaderboard
-            </h1>
-            <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1">
-              Standings across all evaluated repositories verified by ConsJudge multi-pass consensus.
-            </p>
+
+            <div className="relative w-full md:w-80">
+              <div className="flex items-center gap-2.5 px-4 py-2 bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 rounded-full focus-within:border-[#89CFF0] focus-within:ring-2 focus-within:ring-[#89CFF0]/20 transition-all shadow-inner">
+                <Search className="w-4 h-4 text-[#8EA6C8] shrink-0" />
+                <input 
+                  type="text"
+                  placeholder="Search repository or team..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-transparent border-none text-xs text-white placeholder-[#8EA6C8] focus:outline-none"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="relative w-full md:w-80">
-            <div className="flex items-center gap-2.5 px-4 py-2 bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 rounded-full focus-within:border-[#89CFF0] focus-within:ring-2 focus-within:ring-[#89CFF0]/20 transition-all shadow-inner">
-              <Search className="w-4 h-4 text-[#8EA6C8] shrink-0" />
-              <input 
-                type="text"
-                placeholder="Search repository or team..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-none text-xs text-white placeholder-[#8EA6C8] focus:outline-none"
-              />
-            </div>
+          {/* Mode Switcher Tabs */}
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={() => handleTabChange('global')}
+              className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                viewMode === 'global'
+                  ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] shadow-md font-bold'
+                  : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
+              }`}
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              <span>Global Standings ({leaderboard.length})</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('batch')}
+              className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                viewMode === 'batch'
+                  ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] shadow-md font-bold'
+                  : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>AI Batch Cohort (Agent Curated)</span>
+              {batchReport && (
+                <span className="px-1.5 py-0.2 bg-[#040914]/40 text-[#040914] text-[10px] rounded-full font-bold">
+                  {batchRankings.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </ScrollReveal>
 
-      {/* 2. Top 3 Podium Cards with Liquid Glass */}
-      {top3.length >= 3 && (
-        <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
-          
-          {/* Rank 2 (Left) */}
-          <StaggerItem className="order-2 md:order-1">
-            <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] text-center space-y-3">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-[#08132B] border border-[#89CFF0]/30 text-white flex items-center justify-center font-bold text-base shadow-xs">
-                2
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-[#8EA6C8] uppercase tracking-wider block">Runner Up</span>
-                <h3 className="font-mono font-bold text-base text-white truncate mt-0.5">{top3[1].repo}</h3>
-                <span className="text-xs text-[#89CFF0] font-medium">{top3[1].team || "Team"}</span>
-              </div>
-              <div className="pt-3 border-t border-[#89CFF0]/20">
-                <span className="text-3xl font-bold text-white font-mono">{top3[1].overall}</span>
-                <span className="text-xs text-[#89CFF0]"> / 100</span>
-              </div>
-            </div>
-          </StaggerItem>
+      {/* ========================================================= */}
+      {/* VIEW MODE 1: GLOBAL STANDINGS                             */}
+      {/* ========================================================= */}
+      {viewMode === 'global' && (
+        <>
+          {/* Top 3 Podium Cards with Liquid Glass */}
+          {top3.length >= 3 && (
+            <StaggerContainer staggerDelay={0.1} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
+              
+              {/* Rank 2 (Left) */}
+              <StaggerItem className="order-2 md:order-1">
+                <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] text-center space-y-3">
+                  <div className="w-12 h-12 mx-auto rounded-2xl bg-[#08132B] border border-[#89CFF0]/30 text-white flex items-center justify-center font-bold text-base shadow-xs">
+                    2
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-[#8EA6C8] uppercase tracking-wider block">Runner Up</span>
+                    <h3 className="font-mono font-bold text-base text-white truncate mt-0.5">{top3[1].repo}</h3>
+                    <span className="text-xs text-[#89CFF0] font-medium">{top3[1].team || "Team"}</span>
+                  </div>
+                  <div className="pt-3 border-t border-[#89CFF0]/20">
+                    <span className="text-3xl font-bold text-white font-mono">{top3[1].overall}</span>
+                    <span className="text-xs text-[#89CFF0]"> / 100</span>
+                  </div>
+                </div>
+              </StaggerItem>
 
-          {/* Rank 1 (Center Prominent Liquid Glass Champion) */}
-          <StaggerItem className="order-1 md:order-2">
-            <div className="liquid-glass-card rounded-3xl p-8 border-2 border-[#89CFF0]/40 shadow-[0_20px_50px_rgba(2,6,18,0.9)] text-center space-y-4 relative">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 liquid-btn-primary text-[#040914] text-[11px] font-bold uppercase tracking-wider rounded-full shadow-md">
-                Grand Champion
-              </div>
-              <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] flex items-center justify-center font-bold text-2xl shadow-lg shadow-[rgba(137,207,240,0.35)]">
-                1
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-[#89CFF0] uppercase tracking-wider block">Cohort Leader</span>
-                <h3 className="font-mono font-bold text-lg sm:text-xl text-white truncate mt-0.5">{top3[0].repo}</h3>
-                <span className="text-xs text-[#89CFF0] font-semibold">{top3[0].team || "Team"}</span>
-              </div>
-              <div className="pt-3 border-t border-[#89CFF0]/20">
-                <span className="text-4xl font-bold text-[#89CFF0] font-mono">{top3[0].overall}</span>
-                <span className="text-xs text-[#89CFF0]"> / 100</span>
-              </div>
-            </div>
-          </StaggerItem>
+              {/* Rank 1 (Center Prominent Liquid Glass Champion) */}
+              <StaggerItem className="order-1 md:order-2">
+                <div className="liquid-glass-card rounded-3xl p-8 border-2 border-[#89CFF0]/40 shadow-[0_20px_50px_rgba(2,6,18,0.9)] text-center space-y-4 relative">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 liquid-btn-primary text-[#040914] text-[11px] font-bold uppercase tracking-wider rounded-full shadow-md">
+                    Grand Champion
+                  </div>
+                  <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] flex items-center justify-center font-bold text-2xl shadow-lg shadow-[rgba(137,207,240,0.35)]">
+                    1
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-[#89CFF0] uppercase tracking-wider block">Cohort Leader</span>
+                    <h3 className="font-mono font-bold text-lg sm:text-xl text-white truncate mt-0.5">{top3[0].repo}</h3>
+                    <span className="text-xs text-[#89CFF0] font-semibold">{top3[0].team || "Team"}</span>
+                  </div>
+                  <div className="pt-3 border-t border-[#89CFF0]/20">
+                    <span className="text-4xl font-bold text-[#89CFF0] font-mono">{top3[0].overall}</span>
+                    <span className="text-xs text-[#89CFF0]"> / 100</span>
+                  </div>
+                </div>
+              </StaggerItem>
 
-          {/* Rank 3 (Right) */}
-          <StaggerItem className="order-3">
-            <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] text-center space-y-3">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-[#08132B] border border-[#89CFF0]/30 text-[#8EA6C8] flex items-center justify-center font-bold text-base shadow-xs">
-                3
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-[#8EA6C8] uppercase tracking-wider block">2nd Runner Up</span>
-                <h3 className="font-mono font-bold text-base text-white truncate mt-0.5">{top3[2].repo}</h3>
-                <span className="text-xs text-[#89CFF0] font-medium">{top3[2].team || "Team"}</span>
-              </div>
-              <div className="pt-3 border-t border-[#89CFF0]/20">
-                <span className="text-3xl font-bold text-white font-mono">{top3[2].overall}</span>
-                <span className="text-xs text-[#89CFF0]"> / 100</span>
-              </div>
-            </div>
-          </StaggerItem>
+              {/* Rank 3 (Right) */}
+              <StaggerItem className="order-3">
+                <div className="liquid-glass-interactive rounded-3xl p-6 shadow-[0_12px_36px_rgba(2,6,18,0.7)] text-center space-y-3">
+                  <div className="w-12 h-12 mx-auto rounded-2xl bg-[#08132B] border border-[#89CFF0]/30 text-[#8EA6C8] flex items-center justify-center font-bold text-base shadow-xs">
+                    3
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-[#8EA6C8] uppercase tracking-wider block">2nd Runner Up</span>
+                    <h3 className="font-mono font-bold text-base text-white truncate mt-0.5">{top3[2].repo}</h3>
+                    <span className="text-xs text-[#89CFF0] font-medium">{top3[2].team || "Team"}</span>
+                  </div>
+                  <div className="pt-3 border-t border-[#89CFF0]/20">
+                    <span className="text-3xl font-bold text-white font-mono">{top3[2].overall}</span>
+                    <span className="text-xs text-[#89CFF0]"> / 100</span>
+                  </div>
+                </div>
+              </StaggerItem>
 
-        </StaggerContainer>
+            </StaggerContainer>
+          )}
+
+          {/* Standings Table Liquid Glass Card */}
+          <ScrollReveal direction="up" distance={20} delay={0.15}>
+            <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-[#89CFF0]/20">
+                <h2 className="text-sm font-bold text-white">
+                  Verified Standings Directory
+                </h2>
+                <span className="text-xs font-mono text-[#89CFF0] bg-[#08132B] px-3 py-1 rounded-full border border-[#89CFF0]/30 shadow-xs">
+                  {filteredLeaderboard.length} submissions recorded
+                </span>
+              </div>
+
+              {loading ? (
+                <div className="py-16 text-center text-[#89CFF0] text-xs font-medium">
+                  Loading leaderboard standings...
+                </div>
+              ) : filteredLeaderboard.length === 0 ? (
+                <div className="py-16 text-center text-[#8EA6C8] text-xs">
+                  No repositories found matching search query.
+                </div>
+              ) : (
+                <div className="border border-[#89CFF0]/20 rounded-2xl overflow-hidden shadow-xs">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-[#08132B]/80 border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold">
+                        <tr>
+                          <th className="py-3 px-4 w-16 text-center">Rank</th>
+                          <th className="py-3 px-4">Repository &amp; Team</th>
+                          <th className="py-3 px-4">Score</th>
+                          <th className="py-3 px-4">Special Citations</th>
+                          <th className="py-3 px-4 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#89CFF0]/15">
+                        {filteredLeaderboard.map((row, idx) => (
+                          <tr key={idx} className="hover:bg-white/5 transition-colors">
+                            <td className="py-3.5 px-4 text-center">
+                              <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs ${getRankBadge(idx + 1)}`}>
+                                {idx + 1}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="font-mono font-bold text-white block">
+                                {row.repo}
+                              </span>
+                              <span className="text-[11px] text-[#89CFF0] font-medium">
+                                {row.team || "Engineering"}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="font-bold text-white font-mono text-sm">
+                                {row.overall ?? 0}
+                              </span>
+                              <span className="text-[10px] text-[#89CFF0]">/100</span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              {renderBadges(row)}
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <Link
+                                href={`/analysis?repo=${encodeURIComponent(row.repo)}`}
+                                className="inline-flex items-center gap-1.5 px-4 py-1.5 liquid-btn-primary text-[#040914] font-bold text-xs rounded-full shadow-sm hover:scale-105 transition-transform"
+                              >
+                                <span>Inspect</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollReveal>
+        </>
       )}
 
-      {/* 3. Standings Table Liquid Glass Card */}
-      <ScrollReveal direction="up" distance={20} delay={0.15}>
-        <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-[#89CFF0]/20">
-            <h2 className="text-sm font-bold text-white">
-              Verified Standings Directory
-            </h2>
-            <span className="text-xs font-mono text-[#89CFF0] bg-[#08132B] px-3 py-1 rounded-full border border-[#89CFF0]/30 shadow-xs">
-              {filteredLeaderboard.length} submissions recorded
-            </span>
-          </div>
-
-          {loading ? (
-            <div className="py-16 text-center text-[#89CFF0] text-xs font-medium">
-              Loading leaderboard standings...
+      {/* ========================================================= */}
+      {/* VIEW MODE 2: AI BATCH COHORT (AGENT CURATED)              */}
+      {/* ========================================================= */}
+      {viewMode === 'batch' && (
+        <div className="space-y-8">
+          {batchLoading ? (
+            <div className="liquid-glass-card rounded-3xl p-16 text-center text-[#89CFF0] text-sm space-y-3">
+              <Sparkles className="w-8 h-8 animate-spin mx-auto text-[#89CFF0]" />
+              <p className="font-bold">Loading AI Batch Cohort Leaderboard...</p>
             </div>
-          ) : filteredLeaderboard.length === 0 ? (
-            <div className="py-16 text-center text-[#8EA6C8] text-xs">
-              No repositories found matching search query.
+          ) : !batchReport ? (
+            <div className="liquid-glass-card rounded-3xl p-16 text-center text-[#8EA6C8] text-sm space-y-4">
+              <Trophy className="w-10 h-10 mx-auto text-[#8EA6C8]/60" />
+              <p className="font-semibold text-white">No batch evaluation cohort found yet.</p>
+              <p className="text-xs max-w-md mx-auto">
+                Upload a batch of repositories on the Upload page to run the 5-at-a-time pipeline. 
+                The BatchLeaderboardAgent will automatically generate this comparative report!
+              </p>
+              <Link
+                href="/upload"
+                className="inline-flex items-center gap-2 px-5 py-2.5 liquid-btn-primary text-[#040914] font-bold text-xs rounded-full"
+              >
+                <span>Upload Batch Repositories</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           ) : (
-            <div className="border border-[#89CFF0]/20 rounded-2xl overflow-hidden shadow-xs">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#08132B]/80 border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold">
-                    <tr>
-                      <th className="py-3 px-4 w-16 text-center">Rank</th>
-                      <th className="py-3 px-4">Repository & Team</th>
-                      <th className="py-3 px-4">Score</th>
-                      <th className="py-3 px-4">Special Citations</th>
-                      <th className="py-3 px-4 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#89CFF0]/15">
-                    {filteredLeaderboard.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-white/5 transition-colors">
-                        <td className="py-3.5 px-4 text-center">
-                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs ${getRankBadge(idx + 1)}`}>
-                            {idx + 1}
+            <>
+              {/* Batch Cohort Header & Executive Summary */}
+              <ScrollReveal distance={20}>
+                <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 border-2 border-[#89CFF0]/40 shadow-xl space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#89CFF0]/20">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-gradient-to-tr from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] rounded-2xl shadow-md">
+                        <Sparkles className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-[#89CFF0] font-bold block">
+                          AI Cohort Synthesis &bull; Generated by {batchReport.agent_name || "BatchLeaderboardAgent"}
+                        </span>
+                        <h2 className="text-lg sm:text-xl font-bold text-white">
+                          {batchReport.batch_name || "Bulk Evaluation Cohort"}
+                        </h2>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="px-3.5 py-1.5 bg-[#08132B] border border-[#89CFF0]/30 rounded-2xl text-center">
+                        <span className="text-[10px] text-[#8EA6C8] uppercase font-mono block">Cohort Size</span>
+                        <span className="text-base font-bold font-mono text-[#89CFF0]">{batchReport.total_evaluated} Repos</span>
+                      </div>
+                      <div className="px-3.5 py-1.5 bg-[#08132B] border border-[#89CFF0]/30 rounded-2xl text-center">
+                        <span className="text-[10px] text-[#8EA6C8] uppercase font-mono block">Cohort Average</span>
+                        <span className="text-base font-bold font-mono text-emerald-400">{batchReport.cohort_average_score}/100</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Executive Commentary */}
+                  <div className="p-4 bg-[#08132B]/80 rounded-2xl border border-[#89CFF0]/20 text-xs text-[#D8E6F8] leading-relaxed">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#89CFF0] block mb-1">
+                      Executive Arbiter Verdict:
+                    </span>
+                    {batchReport.executive_summary}
+                  </div>
+
+                  {/* Standout Innovations & Common Flaws */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                    {/* Strengths */}
+                    {batchReport.standout_innovations && batchReport.standout_innovations.length > 0 && (
+                      <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-400/25 space-y-2">
+                        <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Standout Cohort Innovations</span>
+                        </div>
+                        <ul className="space-y-1.5 text-xs text-emerald-200/90">
+                          {batchReport.standout_innovations.map((item: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-emerald-400 shrink-0">&bull;</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Flaws */}
+                    {batchReport.common_systemic_flaws && batchReport.common_systemic_flaws.length > 0 && (
+                      <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-400/25 space-y-2">
+                        <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span>Common Systemic Gaps</span>
+                        </div>
+                        <ul className="space-y-1.5 text-xs text-amber-200/90">
+                          {batchReport.common_systemic_flaws.map((item: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-amber-400 shrink-0">&bull;</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              {/* Special Category Awards Grid */}
+              {batchReport.awards && batchReport.awards.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-300" />
+                    <span>Special Category Citations &amp; Honors</span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {batchReport.awards.map((award: any, idx: number) => (
+                      <div key={idx} className="p-4 bg-[#08132B] rounded-2xl border border-[#89CFF0]/25 shadow-sm space-y-2">
+                        <span className="text-xs font-bold text-[#89CFF0] block truncate">
+                          {award.title}
+                        </span>
+                        <div>
+                          <span className="font-mono font-bold text-sm text-white block truncate">
+                            {award.recipient_repo || award.winner_repo}
                           </span>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="font-mono font-bold text-white block">
-                            {row.repo}
+                          <span className="text-[11px] text-[#8EA6C8] block truncate">
+                            {award.recipient_team || award.winner_team || "Team"}
                           </span>
-                          <span className="text-[11px] text-[#89CFF0] font-medium">
-                            {row.team || "Engineering"}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="font-bold text-white font-mono text-sm">
-                            {row.overall || 88}
-                          </span>
-                          <span className="text-[10px] text-[#89CFF0]">/100</span>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          {renderBadges(row)}
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <Link
-                            href={`/analysis?repo=${encodeURIComponent(row.repo)}`}
-                            className="inline-flex items-center gap-1.5 px-4 py-1.5 liquid-btn-primary text-[#040914] font-bold text-xs rounded-full shadow-sm hover:scale-105 transition-transform"
-                          >
-                            <span>Inspect</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </Link>
-                        </td>
-                      </tr>
+                        </div>
+                        <p className="text-[11px] text-[#8EA6C8] leading-tight pt-1 border-t border-[#89CFF0]/15">
+                          {award.citation}
+                        </p>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Cohort Ranked Table */}
+              <ScrollReveal distance={20}>
+                <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-xl space-y-5">
+                  <div className="flex items-center justify-between pb-4 border-b border-[#89CFF0]/20">
+                    <h3 className="text-sm font-bold text-white">
+                      Cohort Comparative Standings
+                    </h3>
+                    <span className="text-xs font-mono text-[#89CFF0] bg-[#08132B] px-3 py-1 rounded-full border border-[#89CFF0]/30 shadow-xs">
+                      {filteredBatchRankings.length} repositories ranked
+                    </span>
+                  </div>
+
+                  <div className="border border-[#89CFF0]/25 rounded-2xl overflow-hidden shadow-xs">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-[#08132B]/90 border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold">
+                          <tr>
+                            <th className="py-3 px-4 w-14 text-center">Rank</th>
+                            <th className="py-3 px-4">Repository &amp; Team</th>
+                            <th className="py-3 px-4 text-center">Score &amp; Grade</th>
+                            <th className="py-3 px-4">Primary Citation</th>
+                            <th className="py-3 px-4">Key Differentiator</th>
+                            <th className="py-3 px-4 text-right">Inspect</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#89CFF0]/15">
+                          {filteredBatchRankings.map((row: any, idx: number) => {
+                            const rank = row.rank || idx + 1;
+                            const isPodium = rank <= 3;
+                            return (
+                              <tr key={idx} className="hover:bg-white/5 transition-colors">
+                                <td className="py-3.5 px-4 text-center">
+                                  <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
+                                    rank === 1 ? 'bg-gradient-to-tr from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914]' :
+                                    rank === 2 ? 'bg-slate-200 text-[#040914]' :
+                                    rank === 3 ? 'bg-amber-600 text-white' :
+                                    'bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30'
+                                  }`}>
+                                    {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
+                                  </span>
+                                </td>
+
+                                <td className="py-3.5 px-4">
+                                  <span className="font-mono font-bold text-white block">
+                                    {row.repo_name}
+                                  </span>
+                                  <span className="text-[11px] text-[#89CFF0] font-medium">
+                                    {row.team_name}
+                                  </span>
+                                </td>
+
+                                <td className="py-3.5 px-4 text-center">
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <span className="font-bold text-white font-mono text-sm">
+                                      {row.overall_score}
+                                    </span>
+                                    {row.grade && (
+                                      <span className={`px-1.5 py-0.2 rounded-md font-mono text-[10px] font-bold ${
+                                        row.grade.startsWith('A') ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                                        row.grade.startsWith('B') ? 'bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/30' :
+                                        'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                      }`}>
+                                        {row.grade}
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+
+                                <td className="py-3.5 px-4">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-[#89CFF0]/15 text-[#89CFF0] border border-[#89CFF0]/30">
+                                    {row.badge || "Certified"}
+                                  </span>
+                                </td>
+
+                                <td className="py-3.5 px-4 text-[#8EA6C8] text-[11px] max-w-xs">
+                                  <span className="line-clamp-2">
+                                    {row.key_differentiator || row.verdict}
+                                  </span>
+                                </td>
+
+                                <td className="py-3.5 px-4 text-right">
+                                  <Link
+                                    href={`/analysis?repo=${encodeURIComponent(row.repo_name)}`}
+                                    className="inline-flex items-center gap-1 px-3.5 py-1.5 liquid-btn-primary text-[#040914] font-bold text-xs rounded-full shadow-sm hover:scale-105 transition-transform"
+                                  >
+                                    <span>Inspect</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                  </Link>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+            </>
           )}
         </div>
-      </ScrollReveal>
+      )}
 
     </div>
   );

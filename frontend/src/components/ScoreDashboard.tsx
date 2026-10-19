@@ -93,9 +93,37 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
   const [showPdfModal, setShowPdfModal] = useState<boolean>(false);
 
   const repoIdentifier = report.repoUrl || (report.repoName ? `https://github.com/${report.repoName}` : "repository");
-  const extractedUser = repoIdentifier.replace(/^https?:\/\/github\.com\//i, "").split("/")[0] || "Developer";
-  const githubUser = report.submitter_github_username || extractedUser;
-  const teamName = report.team_name || `${githubUser} Team`;
+  const cleanRepo = repoIdentifier.replace(/^https?:\/\/github\.com\//i, "").trim().replace(/\/+$/, "");
+  const parts = cleanRepo.split("/").filter(Boolean);
+  
+  // Extract true owner from the repository path (e.g. "pallets/flask" -> "pallets")
+  let pathOwner: string | null = null;
+  if (parts.length >= 2) {
+    pathOwner = parts[0];
+  } else if (report.repoUrl && report.repoUrl.includes("github.com/")) {
+    const urlParts = report.repoUrl.replace(/^https?:\/\/github\.com\//i, "").trim().split("/").filter(Boolean);
+    if (urlParts.length >= 1) pathOwner = urlParts[0];
+  }
+
+  const formatTeamName = (ownerName: string) => {
+    if (!ownerName || ownerName === "Developer") return "Engineering Team";
+    return `${ownerName.charAt(0).toUpperCase() + ownerName.slice(1)} Team`;
+  };
+
+  // Derive githubUser: Always prioritize the actual repository account owner from the path.
+  // Never let an unrelated username show on third-party repos.
+  const githubUser = pathOwner || report.submitter_github_username || "Developer";
+
+  // Derive teamName:
+  let teamName = formatTeamName(githubUser);
+  if (report.team_name && report.team_name !== "Unknown") {
+    // If repo has a known owner, don't allow a mismatched team name (like "ibanmondal Team" on flask)
+    if (pathOwner && report.team_name.toLowerCase().includes("ibanmondal") && !pathOwner.toLowerCase().includes("ibanmondal")) {
+      teamName = formatTeamName(pathOwner);
+    } else {
+      teamName = report.team_name;
+    }
+  }
   const evalDate = report.evaluated_at || new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 
   const getScoreBadge = (score: number) => {

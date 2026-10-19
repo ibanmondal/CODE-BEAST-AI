@@ -8,7 +8,7 @@ import { ToastProvider } from "@/components/NotificationToast";
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <ToastProvider>
-      <div className="min-h-screen flex bg-[#040914] text-white relative overflow-x-hidden selection:bg-[#58A6FF]/30 selection:text-[#89CFF0]">
+      <div className="h-screen flex bg-[#040914] text-white relative overflow-hidden selection:bg-[#58A6FF]/30 selection:text-[#89CFF0]">
         
         {/* Subtle Cyberpunk Electric Ambient Background Lights */}
         <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
@@ -55,13 +55,13 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           </defs>
         </svg>
 
-        {/* Permanent Left-Hand Navigation Sidebar with Frosted Liquid Glass */}
-        <div className="relative z-40">
+        {/* Permanent Fixed Left-Hand Navigation Sidebar */}
+        <div className="h-screen shrink-0 z-40 relative">
           <Sidebar />
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 relative z-10">
+        {/* Main Content Area - Scrollable while sidebar remains permanently anchored */}
+        <div className="flex-1 flex flex-col h-screen overflow-y-auto min-w-0 relative z-10 scroll-smooth">
           <Header />
           
           {/* Main Content Container */}

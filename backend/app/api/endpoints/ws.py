@@ -20,13 +20,32 @@ class ConnectionManager:
             self.active_connections.remove(websocket)
 
     async def broadcast(self, message: str):
-        for connection in self.active_connections:
+        for connection in list(self.active_connections):
             try:
                 await connection.send_text(message)
-            except:
+            except Exception:
                 pass
 
 manager = ConnectionManager()
+_main_loop = None
+
+def register_main_loop():
+    global _main_loop
+    try:
+        _main_loop = asyncio.get_running_loop()
+    except Exception:
+        pass
+
+def broadcast_ws_message(payload: dict):
+    if not manager.active_connections:
+        return
+    msg = json.dumps(payload)
+    try:
+        loop = asyncio.get_running_loop()
+        loop.create_task(manager.broadcast(msg))
+    except RuntimeError:
+        if _main_loop and _main_loop.is_running():
+            asyncio.run_coroutine_threadsafe(manager.broadcast(msg), _main_loop)
 
 async def redis_listener(pubsub, websocket: WebSocket):
     try:
@@ -51,15 +70,6 @@ async def websocket_endpoint(websocket: WebSocket):
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     try:
         r = redis.from_url(redis_url)
-        last_event = None
-        try:
-            last_event = await r.get("last_eval_task")
-        except Exception:
-            pass
-            
-        if last_event:
-            await websocket.send_text(last_event.decode('utf-8'))
-            
         pubsub = r.pubsub()
         await pubsub.subscribe("job_updates")
         
