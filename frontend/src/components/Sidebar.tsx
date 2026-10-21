@@ -19,7 +19,7 @@ import {
   ChevronRight,
   Home,
   Scale,
-  Flame
+  ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +56,7 @@ export function Sidebar() {
       items: [
         { name: "Leaderboard", path: "/leaderboard", icon: Trophy },
         { name: "Reports", path: "/reports", icon: FileText },
-        { name: "Hackathon Arena", path: "/judges", icon: Flame },
+        { name: "Threat Sandbox", path: "/judges", icon: ShieldAlert },
         { name: "Our Team", path: "/team", icon: UserCheck },
       ],
     },
