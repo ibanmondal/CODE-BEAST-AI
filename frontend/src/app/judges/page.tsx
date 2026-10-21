@@ -37,7 +37,7 @@ import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollReveal } from '@/components/ui/motion-primitives';
 import jsPDF from 'jspdf';
-import { toPng } from 'html-to-image';
+import html2canvas from 'html2canvas';
 
 export interface TrophyHonor {
   id: string;
@@ -228,17 +228,38 @@ export default function TrophyHallPage() {
   const firstRunner = trophies.find(t => t.tier === '1st Runner Up') || trophies[1];
   const secondRunner = trophies.find(t => t.tier === '2nd Runner Up') || trophies[2];
 
-  // Professional PDF Download using jsPDF & html-to-image
+  // Professional PDF Download using jsPDF & html2canvas (No SecurityError on remote CSS)
   const handleDownloadPdf = async () => {
-    if (!certRef.current) return;
+    const certElement = certRef.current;
+    if (!certElement) return;
     setIsGeneratingPdf(true);
     try {
-      // High-resolution 3x scale capture
-      const dataUrl = await toPng(certRef.current, {
-        quality: 1.0,
-        pixelRatio: 3,
-        backgroundColor: '#FCFBF7'
-      });
+      let dataUrl: string | null = null;
+
+      try {
+        const canvas = await html2canvas(certElement, {
+          scale: 2.5,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#FCFBF7',
+          windowWidth: 1000
+        });
+        dataUrl = canvas.toDataURL('image/png', 1.0);
+      } catch (canvasErr) {
+        console.warn('html2canvas capture warning:', canvasErr);
+      }
+
+      if (!dataUrl) {
+        // Fallback to html-to-image with skipFonts: true to prevent SecurityError on external stylesheets
+        const { toPng } = await import('html-to-image');
+        dataUrl = await toPng(certElement, {
+          quality: 1.0,
+          pixelRatio: 2.5,
+          backgroundColor: '#FCFBF7',
+          skipFonts: true
+        });
+      }
 
       // A4 Landscape: 297mm x 210mm
       const pdf = new jsPDF({
@@ -252,6 +273,8 @@ export default function TrophyHallPage() {
       pdf.save(`Certificate_${cleanTeam}_${selectedTrophy.verificationId}.pdf`);
     } catch (err) {
       console.error('Failed to generate PDF:', err);
+      // Failsafe: Open print window if canvas capture fails
+      handlePrintCertificate();
     } finally {
       setIsGeneratingPdf(false);
     }
