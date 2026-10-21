@@ -41,6 +41,7 @@ redis_data/
 # Application Specific
 worker_repos/
 test_repos/
-*.db
 *.sqlite3
-codebeast.db
+!codebeast.db
+!backend/codebeast.db
+
