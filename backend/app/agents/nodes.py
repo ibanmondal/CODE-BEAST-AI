@@ -6,15 +6,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
 from app.agents.state import AgentState
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 try:
