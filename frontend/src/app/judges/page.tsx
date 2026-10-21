@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Award, 
@@ -29,12 +29,15 @@ import {
   Flame, 
   Code2, 
   ChevronRight,
-  X
+  X,
+  Loader2,
+  FileText
 } from 'lucide-react';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollReveal } from '@/components/ui/motion-primitives';
-import { apiUrl } from '@/lib/api';
+import jsPDF from 'jspdf';
+import { toPng } from 'html-to-image';
 
 export interface TrophyHonor {
   id: string;
@@ -42,7 +45,7 @@ export interface TrophyHonor {
   awardTitle: string;
   prizeMoney?: string;
   badgeIcon: 'crown' | 'trophy' | 'medal' | 'star' | 'flame' | 'cpu';
-  accentColor: string; // 'gold' | 'silver' | 'bronze' | 'purple' | 'cyan' | 'emerald'
+  accentColor: string;
   repo: string;
   repoUrl: string;
   team: string;
@@ -66,7 +69,7 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     accentColor: "gold",
     repo: "multi-agent-evaluator",
     repoUrl: "https://github.com/codebeast/multi-agent-evaluator",
-    team: "Nexus AI (Team 01)",
+    team: "Nexus AI",
     members: ["Iban Nadir Mondal", "Umme Misbah Sikandar", "Syed Imaduddin", "Hadi Hameed"],
     track: "Artificial Intelligence & Multi-Agent Systems",
     score: 96.4,
@@ -85,7 +88,7 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     accentColor: "silver",
     repo: "zero-trust-vault",
     repoUrl: "https://github.com/cyber-ops/zero-trust-vault",
-    team: "Cipher Guard (Team 03)",
+    team: "Cipher Guard",
     members: ["Alex Mercer", "Devon Vance", "Priya Nair"],
     track: "Cybersecurity & Infrastructure",
     score: 91.8,
@@ -104,7 +107,7 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     accentColor: "bronze",
     repo: "solana-pay-stream",
     repoUrl: "https://github.com/defi-core/solana-pay-stream",
-    team: "Solana Streams (Team 05)",
+    team: "Solana Streams",
     members: ["Elena Rostova", "Kavya Patel", "Marcus Brody"],
     track: "Web3 & Streaming FinTech",
     score: 88.5,
@@ -122,7 +125,7 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     accentColor: "cyan",
     repo: "quantum-ml-flow",
     repoUrl: "https://github.com/quant-team/quantum-ml-flow",
-    team: "AI Synthetics (Team 07)",
+    team: "AI Synthetics",
     members: ["Rohit Sharma", "Zainab Ali"],
     track: "Machine Learning & Research",
     score: 87.2,
@@ -140,7 +143,7 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     accentColor: "purple",
     repo: "liquid-glass-framework",
     repoUrl: "https://github.com/design-core/liquid-glass-framework",
-    team: "Aesthetic Labs (Team 09)",
+    team: "Aesthetic Labs",
     members: ["Maya Lin", "Chris Tanaka"],
     track: "Frontend & Human-Computer Interaction",
     score: 89.0,
@@ -158,7 +161,7 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     accentColor: "emerald",
     repo: "eco-route-optimizer",
     repoUrl: "https://github.com/green-logistics/eco-route-optimizer",
-    team: "CarbonZero (Team 12)",
+    team: "CarbonZero",
     members: ["Anand Verma", "Sofia Rossi", "Tariq Mansoor"],
     track: "Social Impact & Green Computing",
     score: 86.8,
@@ -178,6 +181,7 @@ export default function TrophyHallPage() {
   // Modals & Feedback
   const [isCertModalOpen, setIsCertModalOpen] = useState<boolean>(false);
   const [isMintModalOpen, setIsMintModalOpen] = useState<boolean>(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [copiedBadge, setCopiedBadge] = useState<boolean>(false);
 
@@ -190,6 +194,8 @@ export default function TrophyHallPage() {
   const [newScore, setNewScore] = useState<number>(90);
   const [newCitation, setNewCitation] = useState<string>('');
   const [newJudge, setNewJudge] = useState<string>('Dr. Tabassum Ara');
+
+  const certRef = useRef<HTMLDivElement>(null);
 
   // Load persisted trophies if available
   useEffect(() => {
@@ -212,17 +218,112 @@ export default function TrophyHallPage() {
     } catch (e) {}
   };
 
-  // Filtered trophies list
   const filteredTrophies = useMemo(() => {
     if (tierFilter === 'All Trophies') return trophies;
     if (tierFilter === 'Grand Champions') return trophies.filter(t => t.tier.includes('Runner Up') || t.tier === 'Grand Prize');
     return trophies.filter(t => t.tier === tierFilter);
   }, [trophies, tierFilter]);
 
-  // Top 3 Podium
   const grandPrize = trophies.find(t => t.tier === 'Grand Prize') || trophies[0];
   const firstRunner = trophies.find(t => t.tier === '1st Runner Up') || trophies[1];
   const secondRunner = trophies.find(t => t.tier === '2nd Runner Up') || trophies[2];
+
+  // Professional PDF Download using jsPDF & html-to-image
+  const handleDownloadPdf = async () => {
+    if (!certRef.current) return;
+    setIsGeneratingPdf(true);
+    try {
+      // High-resolution 3x scale capture
+      const dataUrl = await toPng(certRef.current, {
+        quality: 1.0,
+        pixelRatio: 3,
+        backgroundColor: '#FCFBF7'
+      });
+
+      // A4 Landscape: 297mm x 210mm
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      pdf.addImage(dataUrl, 'PNG', 0, 0, 297, 210);
+      const cleanTeam = selectedTrophy.team.replace(/[^a-zA-Z0-9]/g, '_');
+      pdf.save(`Certificate_${cleanTeam}_${selectedTrophy.verificationId}.pdf`);
+    } catch (err) {
+      console.error('Failed to generate PDF:', err);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  // Dedicated Print Window (A4 Landscape Isolated Print)
+  const handlePrintCertificate = () => {
+    const certElement = certRef.current;
+    if (!certElement) return;
+
+    const printWindow = window.open('', '_blank', 'width=1150,height=800');
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Certificate - ${selectedTrophy.team}</title>
+          <style>
+            @page {
+              size: A4 landscape;
+              margin: 0;
+            }
+            * {
+              box-sizing: border-box;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              background-color: #FAF8F2;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              font-family: Georgia, 'Times New Roman', serif;
+            }
+            .cert-wrapper {
+              width: 297mm;
+              height: 210mm;
+              padding: 10mm;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+          </style>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Inter:wght@400;600;700&display=swap">
+        </head>
+        <body>
+          <div class="cert-wrapper">
+            ${certElement.outerHTML}
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                window.close();
+              }, 400);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
 
   // Handle Minting New Trophy
   const handleMintTrophy = (e: React.FormEvent) => {
@@ -255,7 +356,6 @@ export default function TrophyHallPage() {
     setSelectedTrophy(newHonor);
     setIsMintModalOpen(false);
 
-    // Reset Form
     setNewTeam('');
     setNewRepo('');
     setNewMembers('');
@@ -279,7 +379,47 @@ export default function TrophyHallPage() {
   return (
     <div className="space-y-8 pb-16 text-white max-w-7xl mx-auto">
       
-      {/* 1. Header with Golden Ambient Accent & Mint Action */}
+      {/* 1. Dedicated Print Stylesheet to Ensure ONLY Certificate Prints Cleanly */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 0;
+          }
+          body {
+            background: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          body * {
+            visibility: hidden !important;
+          }
+          #printable-academic-certificate, #printable-academic-certificate * {
+            visibility: visible !important;
+          }
+          #printable-academic-certificate {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 297mm !important;
+            height: 210mm !important;
+            max-width: 297mm !important;
+            max-height: 210mm !important;
+            margin: 0 !important;
+            padding: 8mm !important;
+            box-shadow: none !important;
+            border: none !important;
+            z-index: 99999999 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+          }
+        }
+      `}} />
+
+      {/* 2. Header with Golden Ambient Accent & Mint Action */}
       <ScrollReveal direction="down" distance={15}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
           <div>
@@ -294,7 +434,7 @@ export default function TrophyHallPage() {
               </span>
             </h1>
             <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1 max-w-3xl leading-relaxed">
-              Verifiable honors showcase celebrating top engineering repositories. Inspect award citations, review digital seals, and export printable certificates signed by faculty judges.
+              Verifiable honors showcase celebrating top engineering repositories. Export authentic, high-definition university certificates signed by faculty judges.
             </p>
           </div>
 
@@ -320,7 +460,7 @@ export default function TrophyHallPage() {
         </div>
       </ScrollReveal>
 
-      {/* 2. TOP 3 PODIUM PEDESTALS (Grand Champions) */}
+      {/* 3. TOP 3 PODIUM PEDESTALS (Grand Champions) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -360,7 +500,7 @@ export default function TrophyHallPage() {
                     setSelectedTrophy(firstRunner);
                     setIsCertModalOpen(true);
                   }}
-                  className="px-3 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors"
                 >
                   <FileCheck className="w-3.5 h-3.5" />
                   <span>Inspect Certificate</span>
@@ -374,7 +514,6 @@ export default function TrophyHallPage() {
           {grandPrize && (
             <div className="liquid-glass-card rounded-none p-6 sm:p-7 border-2 border-amber-400/70 bg-gradient-to-b from-[#1E1B0E]/90 via-[#0D1E45] to-[#040914] shadow-[0_0_35px_rgba(251,191,36,0.2)] space-y-5 order-1 md:order-2 md:-translate-y-2 relative overflow-hidden group hover:border-amber-300 transition-all">
               
-              {/* Subtle Golden Crown Aura */}
               <div className="absolute top-0 right-0 w-28 h-28 bg-amber-400/10 blur-2xl pointer-events-none" />
 
               <div className="flex items-center justify-between">
@@ -404,7 +543,7 @@ export default function TrophyHallPage() {
                     setSelectedTrophy(grandPrize);
                     setIsCertModalOpen(true);
                   }}
-                  className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-[#08132B] text-xs font-bold rounded-none flex items-center gap-2 shadow-sm transition-all"
+                  className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#08132B] text-xs font-bold rounded-none flex items-center gap-2 shadow-sm transition-all"
                 >
                   <Award className="w-4 h-4" />
                   <span>View Official Certificate</span>
@@ -440,7 +579,7 @@ export default function TrophyHallPage() {
                     setSelectedTrophy(secondRunner);
                     setIsCertModalOpen(true);
                   }}
-                  className="px-3 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors"
                 >
                   <FileCheck className="w-3.5 h-3.5" />
                   <span>Inspect Certificate</span>
@@ -453,7 +592,7 @@ export default function TrophyHallPage() {
         </div>
       </div>
 
-      {/* 3. CATEGORY HONORS & FACULTY COMMENDATIONS GRID */}
+      {/* 4. CATEGORY HONORS & FACULTY COMMENDATIONS GRID */}
       <div className="space-y-4 pt-4">
         
         {/* Tier Filter Toolbar */}
@@ -554,7 +693,7 @@ export default function TrophyHallPage() {
                     setSelectedTrophy(trophy);
                     setIsCertModalOpen(true);
                   }}
-                  className="px-3 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors"
                 >
                   <Award className="w-3.5 h-3.5" />
                   <span>Inspect Certificate</span>
@@ -571,114 +710,189 @@ export default function TrophyHallPage() {
 
       </div>
 
-      {/* 4. OFFICIAL VERIFIED CERTIFICATE MODAL (PRINT READY) */}
+      {/* 5. ULTRA-PREMIUM PARCHMENT CERTIFICATE MODAL & PDF EXPORT */}
       <AnimatePresence>
         {isCertModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#08132B] border-2 border-amber-400/50 text-white p-6 sm:p-10 max-w-3xl w-full max-h-[92vh] overflow-y-auto space-y-6 shadow-2xl rounded-none font-serif relative"
+              className="bg-[#08132B] border-2 border-amber-400/50 text-white p-4 sm:p-6 max-w-5xl w-full my-auto space-y-4 shadow-2xl rounded-none relative"
             >
               
-              {/* Close Button */}
-              <button
-                onClick={() => setIsCertModalOpen(false)}
-                className="absolute top-4 right-4 text-[#8EA6C8] hover:text-white p-1"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              {/* CERTIFICATE FRAME (Print-Ready) */}
-              <div className="border-4 border-double border-amber-400/60 p-6 sm:p-8 bg-[#040914] text-center space-y-6 relative overflow-hidden shadow-inner">
-                
-                {/* Institutional Header */}
-                <div className="space-y-1">
-                  <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-amber-300 block">
-                    INSTITUTION’S INNOVATION COUNCIL (IIC) & DEPARTMENT OF AI & ML
-                  </span>
-                  <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-wide uppercase font-serif">
-                    HKBK COLLEGE OF ENGINEERING
-                  </h2>
-                  <p className="text-xs font-sans text-[#BAE6FD]">
-                    Bengaluru, Karnataka, India · Affiliated to VTU, Approved by AICTE
-                  </p>
+              {/* Modal Top Bar */}
+              <div className="flex items-center justify-between pb-3 border-b border-[#89CFF0]/20">
+                <div className="flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-400" />
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase font-mono tracking-wider">
+                      Official Verifiable Academic Certificate Preview
+                    </h3>
+                    <span className="text-xs text-[#8EA6C8]">Standard A4 Landscape · 300 DPI Export Ready</span>
+                  </div>
                 </div>
 
-                <div className="h-0.5 w-32 bg-amber-400/60 mx-auto" />
+                <button
+                  onClick={() => setIsCertModalOpen(false)}
+                  className="text-[#8EA6C8] hover:text-white p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-                {/* Certificate Name */}
-                <div className="space-y-1">
-                  <span className="text-xs font-sans font-bold uppercase tracking-widest text-[#89CFF0]">
-                    Official Capstone & Hackathon Distinction
-                  </span>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-amber-300 font-serif">
-                    Certificate of Excellence & Merit
-                  </h3>
-                </div>
-
-                {/* Recipient Text */}
-                <div className="space-y-3 font-sans text-xs sm:text-sm text-[#DCE4FE] max-w-xl mx-auto leading-relaxed">
-                  <p>This is to certify that the engineering team</p>
-                  <p className="text-lg sm:text-xl font-bold text-white font-serif tracking-wider border-b border-amber-400/40 pb-1 max-w-md mx-auto">
-                    {selectedTrophy.team}
-                  </p>
-                  <p className="text-xs text-[#BAE6FD]">
-                    Comprising: <strong>{selectedTrophy.members.join(', ') || "Project Team Leads"}</strong>
-                  </p>
-                  <p>has been officially conferred the title of</p>
-                  <p className="text-base sm:text-lg font-extrabold text-amber-300 uppercase tracking-wide bg-amber-950/40 py-1.5 px-4 border border-amber-500/30">
-                    {selectedTrophy.awardTitle}
-                  </p>
-                  <p>
-                    for outstanding performance and technical rigor in their project <strong>{selectedTrophy.repo}</strong> with an evaluated benchmark score of <strong>{selectedTrophy.score} / 100</strong>.
-                  </p>
-                </div>
-
-                {/* Official Citation */}
-                <div className="p-3 bg-[#08132B]/80 border border-amber-400/30 text-xs font-sans text-[#BAE6FD] italic max-w-lg mx-auto">
-                  &ldquo;{selectedTrophy.citation}&rdquo;
-                </div>
-
-                {/* Security Verification & Signatures */}
-                <div className="grid grid-cols-3 gap-4 pt-6 border-t border-amber-400/30 items-end font-sans text-xs">
+              {/* AUTHENTIC HIGH-DEFINITION PARCHMENT CERTIFICATE FRAME */}
+              <div className="w-full overflow-x-auto flex justify-center py-2 bg-black/40 p-2 border border-[#89CFF0]/20">
+                <div
+                  id="printable-academic-certificate"
+                  ref={certRef}
+                  className="w-[900px] h-[636px] shrink-0 bg-[#FCFBF7] text-[#0A1931] p-8 sm:p-10 relative flex flex-col justify-between shadow-2xl select-none"
+                  style={{
+                    fontFamily: "Georgia, 'Times New Roman', serif"
+                  }}
+                >
                   
-                  {/* Left: Faculty Guide Signature */}
-                  <div className="text-left space-y-1">
-                    <div className="h-8 border-b border-dashed border-[#8EA6C8]/60" />
-                    <strong className="block text-white text-xs">{selectedTrophy.awardedBy}</strong>
-                    <span className="text-[10px] text-[#8EA6C8] block leading-tight">{selectedTrophy.judgeRole}</span>
-                  </div>
+                  {/* Classical Double Gold Foil Border with Corner Scrolls */}
+                  <div className="absolute inset-2 border-[3px] border-[#C59B27] pointer-events-none" />
+                  <div className="absolute inset-3.5 border border-[#D4AF37]/70 pointer-events-none" />
+                  <div className="absolute inset-5 border border-[#B38728]/30 pointer-events-none" />
 
-                  {/* Center: Gold Seal Emblem */}
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-full border-2 border-amber-400/80 bg-gradient-to-br from-amber-500/20 to-amber-900/40 flex flex-col items-center justify-center text-center shadow-lg">
-                      <Crown className="w-6 h-6 text-amber-400" />
-                      <span className="text-[7px] font-bold text-amber-200 uppercase tracking-tighter mt-0.5">VERIFIED SEAL</span>
-                    </div>
-                    <span className="text-[9px] font-mono text-[#8EA6C8] mt-1">{selectedTrophy.issuedDate}</span>
-                  </div>
+                  {/* 4 Baroque Corner Flourishes in Metallic Gold */}
+                  <div className="absolute top-5 left-5 text-[#C59B27] text-lg font-serif select-none pointer-events-none">⚜</div>
+                  <div className="absolute top-5 right-5 text-[#C59B27] text-lg font-serif select-none pointer-events-none">⚜</div>
+                  <div className="absolute bottom-5 left-5 text-[#C59B27] text-lg font-serif select-none pointer-events-none">⚜</div>
+                  <div className="absolute bottom-5 right-5 text-[#C59B27] text-lg font-serif select-none pointer-events-none">⚜</div>
 
-                  {/* Right: Verification QR & Hash */}
-                  <div className="text-right space-y-1">
-                    <div className="h-8 border-b border-dashed border-[#8EA6C8]/60" />
-                    <strong className="block text-white text-xs">Code Beast Consensus Jury</strong>
-                    <span className="text-[10px] text-[#89CFF0] font-mono block truncate" title={selectedTrophy.verificationId}>
-                      ID: {selectedTrophy.verificationId}
+                  {/* Subtle Security Guilloché Background */}
+                  <div 
+                    className="absolute inset-6 opacity-[0.035] pointer-events-none"
+                    style={{
+                      backgroundImage: "radial-gradient(#C59B27 1px, transparent 1px)",
+                      backgroundSize: "14px 14px"
+                    }}
+                  />
+
+                  {/* 1. Institutional Top Header */}
+                  <div className="text-center space-y-1 relative z-10">
+                    <span className="text-[10px] tracking-[0.25em] font-sans font-bold uppercase text-[#8A6516] block">
+                      VISVESVARAYA TECHNOLOGICAL UNIVERSITY AFFILIATED · AICTE APPROVED
                     </span>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0F255C] tracking-wide uppercase font-serif">
+                      HKBK COLLEGE OF ENGINEERING
+                    </h2>
+                    <p className="text-xs font-sans text-[#334155] font-semibold tracking-wider">
+                      DEPARTMENT OF ARTIFICIAL INTELLIGENCE & MACHINE LEARNING
+                    </p>
+                    <span className="text-[10px] font-sans text-[#8A6516] tracking-widest uppercase block mt-0.5">
+                      IN COLLABORATION WITH INSTITUTION’S INNOVATION COUNCIL (IIC) & CODE BEAST AI
+                    </span>
+                    <div className="h-0.5 w-36 bg-gradient-to-r from-transparent via-[#C59B27] to-transparent mx-auto mt-1" />
+                  </div>
+
+                  {/* 2. Certificate Title */}
+                  <div className="text-center relative z-10 space-y-1">
+                    <span className="text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-[#C59B27]">
+                      NATIONAL CAPSTONE HACKATHON & REPOSITORY DEFENSE 2026
+                    </span>
+                    <h3 className="text-2xl sm:text-3xl font-black text-[#0F255C] uppercase tracking-wider font-serif">
+                      Certificate of Excellence & Merit
+                    </h3>
+                  </div>
+
+                  {/* 3. Recipient Citation & Team Name */}
+                  <div className="text-center space-y-2 relative z-10 max-w-2xl mx-auto font-sans text-xs text-[#1E293B] leading-relaxed">
+                    <p className="text-xs text-[#475569] italic">This is proudly conferred upon the engineering laureates of</p>
+                    
+                    <div className="border-b-2 border-[#C59B27]/60 pb-1 max-w-lg mx-auto">
+                      <span className="text-2xl sm:text-3xl font-black text-[#0F255C] font-serif tracking-wider uppercase block">
+                        {selectedTrophy.team}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[#475569]">
+                      Comprising: <strong className="text-[#0F255C] font-semibold">{selectedTrophy.members.join(', ') || "Project Team Members"}</strong>
+                    </p>
+
+                    <p className="text-xs text-[#475569]">
+                      for meritorious distinction and technical excellence achieved in their project
+                    </p>
+
+                    {/* Repository Name & Track Pill */}
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-[#F5F2E9] border border-[#C59B27]/50 rounded-none shadow-2xs font-mono">
+                      <span className="font-bold text-[#0F255C] text-xs">repo://{selectedTrophy.repo}</span>
+                      <span className="text-[#C59B27]">•</span>
+                      <span className="text-xs text-[#8A6516] font-semibold">{selectedTrophy.track}</span>
+                    </div>
+
+                    {/* Award Honor Gold Banner */}
+                    <div className="pt-1">
+                      <div className="inline-block px-6 py-1.5 bg-gradient-to-r from-[#F7EDD2] via-[#EED8A1] to-[#F7EDD2] border-2 border-[#C59B27] shadow-xs">
+                        <span className="text-sm font-black font-serif uppercase tracking-widest text-[#0F255C]">
+                          ★ {selectedTrophy.awardTitle} ★
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Citation Quote */}
+                    <p className="text-[11px] text-[#475569] italic max-w-xl mx-auto pt-1 leading-snug">
+                      &ldquo;{selectedTrophy.citation}&rdquo;
+                    </p>
+                  </div>
+
+                  {/* 4. Official Signatures & 3D Gold Seal */}
+                  <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#C59B27]/40 items-end font-sans text-xs relative z-10">
+                    
+                    {/* Left Signature: Dr. Tabassum Ara */}
+                    <div className="text-left space-y-1">
+                      <div className="h-9 border-b border-dashed border-[#8A6516]/60 flex items-end">
+                        <span className="font-serif italic text-base text-[#0F255C] font-bold">
+                          Tabassum Ara
+                        </span>
+                      </div>
+                      <strong className="block text-[#0F255C] text-xs font-serif font-bold">Dr. Tabassum Ara</strong>
+                      <span className="text-[10px] text-[#475569] block leading-tight font-medium">Professor & Head of Department, AI & ML</span>
+                      <span className="text-[9px] text-[#8A6516] block font-semibold">Dean, Institution’s Innovation Council (IIC)</span>
+                    </div>
+
+                    {/* Center Seal: Gold Embossed Emblem */}
+                    <div className="flex flex-col items-center justify-center -translate-y-1">
+                      <div className="w-18 h-18 rounded-full border-2 border-[#C59B27] bg-gradient-to-br from-[#FFF4D0] via-[#E6C66E] to-[#B38728] shadow-md flex flex-col items-center justify-center text-center p-1 relative">
+                        <div className="w-15 h-15 rounded-full border border-dashed border-[#8A6516] flex flex-col items-center justify-center">
+                          <Crown className="w-5 h-5 text-[#0F255C]" />
+                          <span className="text-[6.5px] font-black text-[#0F255C] tracking-tighter uppercase mt-0.5 font-serif">
+                            VERIFIED SEAL
+                          </span>
+                          <span className="text-[6px] font-bold text-[#0F255C]/80">HKBKCE · 2026</span>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-mono text-[#64748B] mt-1 font-semibold">Conferred: {selectedTrophy.issuedDate}</span>
+                    </div>
+
+                    {/* Right Signature: External Jury & Cryptographic ID */}
+                    <div className="text-right space-y-1">
+                      <div className="h-9 border-b border-dashed border-[#8A6516]/60 flex items-end justify-end">
+                        <span className="font-serif italic text-base text-[#0F255C] font-bold">
+                          David Chen / Jury Chair
+                        </span>
+                      </div>
+                      <strong className="block text-[#0F255C] text-xs font-serif font-bold">Code Beast Consensus Jury</strong>
+                      <span className="text-[10px] text-[#475569] block font-medium">National Hackathon Evaluation Board</span>
+                      <span className="text-[9px] font-mono text-[#0F255C] block font-bold" title={selectedTrophy.verificationId}>
+                        ID: {selectedTrophy.verificationId}
+                      </span>
+                    </div>
+
                   </div>
 
                 </div>
-
               </div>
 
               {/* Action Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 font-sans text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 font-sans text-xs">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleCopyBadge}
-                    className="px-3 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 rounded-none flex items-center gap-1.5 transition-colors"
+                    className="px-3.5 py-2 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 rounded-none flex items-center gap-1.5 transition-colors"
                   >
                     {copiedBadge ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedBadge ? "Markdown Copied!" : "Copy README Badge"}</span>
@@ -686,7 +900,7 @@ export default function TrophyHallPage() {
 
                   <button
                     onClick={handleCopyLinkedIn}
-                    className="px-3 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-white border border-[#89CFF0]/40 rounded-none flex items-center gap-1.5 transition-colors"
+                    className="px-3.5 py-2 bg-[#08132B] hover:bg-[#89CFF0]/20 text-white border border-[#89CFF0]/40 rounded-none flex items-center gap-1.5 transition-colors"
                   >
                     {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
                     <span>{copiedLink ? "Post Copied!" : "Share on LinkedIn"}</span>
@@ -695,17 +909,20 @@ export default function TrophyHallPage() {
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setIsCertModalOpen(false)}
-                    className="px-4 py-2 bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/20 rounded-none"
+                    onClick={handleDownloadPdf}
+                    disabled={isGeneratingPdf}
+                    className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#08132B] font-bold rounded-none flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
                   >
-                    Close
+                    {isGeneratingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    <span>{isGeneratingPdf ? "Rendering High-Res PDF..." : "Download Official PDF"}</span>
                   </button>
+
                   <button
-                    onClick={() => window.print()}
-                    className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#08132B] font-bold rounded-none flex items-center gap-2 shadow-sm transition-all"
+                    onClick={handlePrintCertificate}
+                    className="px-4 py-2 bg-[#08132B] hover:bg-[#0E2248] text-white border border-[#89CFF0]/50 font-bold rounded-none flex items-center gap-2 shadow-sm transition-all cursor-pointer"
                   >
-                    <Printer className="w-4 h-4" />
-                    <span>Print Official Certificate</span>
+                    <Printer className="w-4 h-4 text-[#89CFF0]" />
+                    <span>Print Certificate</span>
                   </button>
                 </div>
               </div>
@@ -715,7 +932,7 @@ export default function TrophyHallPage() {
         )}
       </AnimatePresence>
 
-      {/* 5. MINT / BESTOW NEW TROPHY MODAL */}
+      {/* 6. MINT / BESTOW NEW TROPHY MODAL */}
       <AnimatePresence>
         {isMintModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
