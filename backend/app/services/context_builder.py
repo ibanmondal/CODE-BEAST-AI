@@ -1,30 +1,19 @@
 import os
+import json
+import re
 from pathlib import Path
 from typing import Dict, Any, List
-from langchain_community.document_loaders import TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
-
-_GLOBAL_EMBEDDINGS = None
 
 def get_shared_embeddings():
-    global _GLOBAL_EMBEDDINGS
-    if _GLOBAL_EMBEDDINGS is None:
-        try:
-            _GLOBAL_EMBEDDINGS = HuggingFaceEmbeddings(
-                model_name="all-MiniLM-L6-v2",
-                model_kwargs={'device': 'cuda'}
-            )
-        except Exception:
-            # Fallback to default (CPU) if CUDA fails
-            try:
-                _GLOBAL_EMBEDDINGS = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-            except Exception:
-                _GLOBAL_EMBEDDINGS = None
-    return _GLOBAL_EMBEDDINGS
+    """Lightweight compatibility shim for zero-memory environments."""
+    return None
 
 class ContextBuilder:
+    """
+    Lightweight, Zero-Memory Repository Context Builder.
+    Parses file tree, README, dependencies, and extracts indexed code snippets
+    without loading heavy neural embedding models (e.g. all-MiniLM-L6-v2 / PyTorch).
+    """
     def __init__(self, repo_path: str):
         self.repo_path = Path(repo_path)
         self.ignore_dirs = {
@@ -37,7 +26,6 @@ class ContextBuilder:
             '.woff2', '.ttf', '.eot', '.mp4', '.webm', '.map', '.min.js', '.min.css',
             '.pdf', '.zip', '.tar', '.gz', '.db', '.sqlite', '.exe', '.bin'
         }
-        self.embeddings = get_shared_embeddings()
         
     def _build_tree(self) -> str:
         """Generates a clean text representation of the directory tree."""
@@ -91,9 +79,9 @@ class ContextBuilder:
             deps.append("Rust (Cargo.toml)")
         return deps
 
-    def _build_faiss_index(self) -> str:
-        """Chunks prioritized source files and builds a fast FAISS index, returning the path."""
-        docs = []
+    def _build_code_index(self) -> str:
+        """Chunks prioritized source files into a lightweight in-repo snippet index (< 100KB, 0MB RAM)."""
+        snippets = []
         indexed_count = 0
         max_files_to_index = 25
         
@@ -106,46 +94,43 @@ class ContextBuilder:
                     break
                 file_path = Path(root) / file
                 if file_path.suffix in valid_exts and not any(file.endswith(ext) for ext in self.ignore_exts):
-                    # Skip huge generated files
                     try:
-                        if file_path.stat().st_size > 200_000: # Skip files > 200KB
+                        if file_path.stat().st_size > 200_000:
                             continue
-                        loader = TextLoader(str(file_path), encoding='utf-8', autodetect_encoding=True)
-                        loaded = loader.load()
-                        docs.extend(loaded)
-                        indexed_count += 1
+                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                            content = f.read(1500)
+                        if content.strip():
+                            rel_path = str(file_path.relative_to(self.repo_path))
+                            snippets.append({
+                                "source": rel_path,
+                                "content": content
+                            })
+                            indexed_count += 1
                     except Exception:
                         pass
 
-        if not docs or not self.embeddings:
+        if not snippets:
             return ""
 
         try:
-            text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
-            splits = text_splitter.split_documents(docs)
-            # Limit to top 10 representative splits for instantaneous indexing
-            splits = splits[:10]
-            
-            vectorstore = FAISS.from_documents(documents=splits, embedding=self.embeddings)
-            
-            faiss_path = str(self.repo_path / "faiss_index")
-            vectorstore.save_local(faiss_path)
-            return faiss_path
+            index_path = self.repo_path / "code_snippets.json"
+            with open(index_path, 'w', encoding='utf-8') as f:
+                json.dump(snippets, f)
+            return str(index_path)
         except Exception as e:
-            print(f"FAISS indexing warning: {e}")
             return ""
 
     def build_context(self) -> Dict[str, Any]:
-        """Orchestrates the context building process efficiently."""
+        """Orchestrates the context building process efficiently with minimal memory footprint."""
         tree = self._build_tree()
         readme = self._extract_readme()
         deps = self._find_dependencies()
-        faiss_path = self._build_faiss_index()
+        faiss_path = self._build_code_index()
         
         return {
             "directory_tree": tree,
             "readme_content": readme,
             "dependencies": deps,
-            "faiss_index_path": faiss_path
+            "faiss_index_path": faiss_path,
+            "repo_path": str(self.repo_path)
         }
-

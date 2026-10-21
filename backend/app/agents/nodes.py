@@ -184,18 +184,39 @@ def retrieve_code_snippets(faiss_path: str, query: str) -> str:
     if not faiss_path or not os.path.exists(faiss_path):
         return "Standard architectural files indexed."
     try:
-        if faiss_path not in _LOADED_VECTORSTORES:
-            from app.services.context_builder import get_shared_embeddings
-            shared_emb = get_shared_embeddings()
-            if not shared_emb:
-                return "Standard code context loaded."
-            _LOADED_VECTORSTORES[faiss_path] = FAISS.load_local(faiss_path, shared_emb, allow_dangerous_deserialization=True)
+        # Check if it's our lightweight code_snippets.json
+        if faiss_path.endswith('.json') or os.path.isfile(faiss_path):
+            with open(faiss_path, 'r', encoding='utf-8', errors='ignore') as f:
+                snippets_data = json.load(f)
             
-        vectorstore = _LOADED_VECTORSTORES[faiss_path]
-        docs = vectorstore.similarity_search(query, k=3)
-        snippets = "\n\n".join([f"--- file: {d.metadata.get('source', 'source_file')} ---\n{d.page_content[:600]}" for d in docs])
-        return snippets[:2200]
-    except Exception as e:
+            query_words = set(re.findall(r'\w+', query.lower()))
+            scored = []
+            for item in snippets_data:
+                content_lower = item.get("content", "").lower()
+                matches = sum(1 for w in query_words if w in content_lower)
+                scored.append((matches, item))
+            
+            scored.sort(key=lambda x: x[0], reverse=True)
+            top_items = [item for _, item in scored[:3]]
+            formatted = "\n\n".join([f"--- file: {item.get('source', 'source_file')} ---\n{item.get('content', '')[:600]}" for item in top_items])
+            return formatted[:2200] if formatted else "Standard code context loaded."
+
+        # Legacy FAISS fallback if directory exists and FAISS is installed
+        if os.path.isdir(faiss_path):
+            try:
+                from langchain_community.vectorstores import FAISS
+                from app.services.context_builder import get_shared_embeddings
+                shared_emb = get_shared_embeddings()
+                if shared_emb:
+                    vectorstore = FAISS.load_local(faiss_path, shared_emb, allow_dangerous_deserialization=True)
+                    docs = vectorstore.similarity_search(query, k=3)
+                    snippets = "\n\n".join([f"--- file: {d.metadata.get('source', 'source_file')} ---\n{d.page_content[:600]}" for d in docs])
+                    return snippets[:2200]
+            except Exception:
+                pass
+
+        return "Key codebase modules parsed and loaded."
+    except Exception:
         return "Key codebase modules parsed and loaded."
 
 
