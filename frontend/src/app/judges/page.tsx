@@ -31,20 +31,22 @@ import {
   ChevronRight,
   X,
   Loader2,
-  FileText
+  FileText,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollReveal } from '@/components/ui/motion-primitives';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { apiUrl } from '@/lib/api';
 
 export interface TrophyHonor {
   id: string;
-  tier: 'Grand Prize' | '1st Runner Up' | '2nd Runner Up' | 'Category Award' | 'Faculty Commendation';
+  tier: 'Grand Prize' | '1st Runner Up' | '2nd Runner Up' | 'Category Award' | 'Faculty Commendation' | 'Participation Certificate';
   awardTitle: string;
-  prizeMoney?: string;
-  badgeIcon: 'crown' | 'trophy' | 'medal' | 'star' | 'flame' | 'cpu';
+  badgeIcon: 'crown' | 'trophy' | 'medal' | 'star' | 'flame' | 'cpu' | 'award';
   accentColor: string;
   repo: string;
   repoUrl: string;
@@ -64,7 +66,6 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     id: "trophy-01",
     tier: "Grand Prize",
     awardTitle: "Grand Prize Champion & Best Overall System",
-    prizeMoney: "₹50,000 / $5,000 Grant",
     badgeIcon: "crown",
     accentColor: "gold",
     repo: "multi-agent-evaluator",
@@ -83,7 +84,6 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     id: "trophy-02",
     tier: "1st Runner Up",
     awardTitle: "1st Runner Up & Security Excellence Trophy",
-    prizeMoney: "₹25,000 / $2,500 Grant",
     badgeIcon: "trophy",
     accentColor: "silver",
     repo: "zero-trust-vault",
@@ -93,8 +93,8 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     track: "Cybersecurity & Infrastructure",
     score: 91.8,
     citation: "Exemplary implementation of micro-segmentation proxy with real-time CWE injection blocking and sub-millisecond cryptographic secret rotation.",
-    awardedBy: "David Chen",
-    judgeRole: "Technical Judge & Cloud Security Architect",
+    awardedBy: "Dr. Mohammed Riyaz Ahmed",
+    judgeRole: "Principal, HKBK College of Engineering",
     verificationId: "CERT-HKBK-2026-CB-8820B",
     issuedDate: "October 21, 2026"
   },
@@ -102,7 +102,6 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     id: "trophy-03",
     tier: "2nd Runner Up",
     awardTitle: "2nd Runner Up & FinTech Innovation Medal",
-    prizeMoney: "₹15,000 / $1,500 Grant",
     badgeIcon: "medal",
     accentColor: "bronze",
     repo: "solana-pay-stream",
@@ -170,14 +169,568 @@ const INITIAL_TROPHIES: TrophyHonor[] = [
     judgeRole: "Dean, Institution’s Innovation Council (IIC)",
     verificationId: "CERT-HKBK-2026-CB-4418F",
     issuedDate: "October 21, 2026"
+  },
+  {
+    id: "trophy-07",
+    tier: "Participation Certificate",
+    awardTitle: "Verified Capstone Defense & Technical Participation",
+    badgeIcon: "award",
+    accentColor: "blue",
+    repo: "distributed-consensus-raft",
+    repoUrl: "https://github.com/cloud-team/distributed-consensus-raft",
+    team: "Raft Core Systems",
+    members: ["Kunal Sen", "Deepak Joshi"],
+    track: "Distributed Systems & Cloud Computing",
+    score: 84.6,
+    citation: "Conferred in recognition of active participation, rigorous technical defense, and commendable engineering execution demonstrated during the Code Beast AI autonomous evaluation.",
+    awardedBy: "Dr. Tabassum Ara",
+    judgeRole: "Professor & Head of Department, AI & ML",
+    verificationId: "CERT-HKBK-2026-CB-3312G",
+    issuedDate: "October 21, 2026"
   }
 ];
 
+// Generates an authentic, self-contained A4 Landscape Print Document
+function generateCertificatePrintHtml(trophy: TrophyHonor): string {
+  const isPart = trophy.tier === 'Participation Certificate';
+  const mainHeading = isPart ? 'Certificate of Technical Defense & Participation' : 'Certificate of Excellence & Merit';
+  const preamble = isPart
+    ? 'for active participation, commendable engineering defense, and technical execution demonstrated in their project'
+    : 'for meritorious distinction, algorithmic rigor, and architectural excellence achieved in their project';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Certificate - ${trophy.team} - ${trophy.verificationId}</title>
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #FAF7EE;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Georgia, 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .cert-page {
+      width: 297mm;
+      height: 210mm;
+      max-width: 297mm;
+      max-height: 210mm;
+      padding: 12mm 14mm;
+      background: #FFFDF8;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    }
+    @media print {
+      body {
+        background: transparent !important;
+      }
+      .cert-page {
+        box-shadow: none !important;
+        width: 297mm !important;
+        height: 210mm !important;
+        margin: 0 !important;
+        page-break-after: avoid;
+        page-break-inside: avoid;
+      }
+    }
+    /* Classical Triple Gold Foil Borders */
+    .outer-border {
+      position: absolute;
+      top: 6mm;
+      left: 6mm;
+      right: 6mm;
+      bottom: 6mm;
+      border: 3.5px solid #C59B27;
+      pointer-events: none;
+    }
+    .inner-border-1 {
+      position: absolute;
+      top: 8.5mm;
+      left: 8.5mm;
+      right: 8.5mm;
+      bottom: 8.5mm;
+      border: 1px solid #E6C66E;
+      pointer-events: none;
+    }
+    .inner-border-2 {
+      position: absolute;
+      top: 10.5mm;
+      left: 10.5mm;
+      right: 10.5mm;
+      bottom: 10.5mm;
+      border: 0.5px solid rgba(179, 135, 40, 0.4);
+      pointer-events: none;
+    }
+    .corner-flourish {
+      position: absolute;
+      font-size: 20px;
+      color: #C59B27;
+      line-height: 1;
+      font-family: Georgia, serif;
+    }
+    .top-left { top: 9mm; left: 10mm; }
+    .top-right { top: 9mm; right: 10mm; }
+    .bottom-left { bottom: 9mm; left: 10mm; }
+    .bottom-right { bottom: 9mm; right: 10mm; }
+
+    /* Security pattern */
+    .bg-guilloche {
+      position: absolute;
+      inset: 12mm;
+      opacity: 0.035;
+      background-image: radial-gradient(#C59B27 1px, transparent 1px);
+      background-size: 14px 14px;
+      pointer-events: none;
+    }
+
+    /* Header Block */
+    .header-block {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    .vtu-affiliation {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 8pt;
+      font-weight: 700;
+      color: #8A6516;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .college-name {
+      font-size: 21pt;
+      font-weight: 900;
+      color: #0F255C;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin: 1px 0;
+    }
+    .dept-title {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: #334155;
+      letter-spacing: 0.08em;
+      margin: 1px 0;
+    }
+    .council-title {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: #8A6516;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+    .divider-line {
+      height: 1.5px;
+      width: 140px;
+      background: linear-gradient(90deg, transparent, #C59B27, transparent);
+      margin: 5px auto 3px auto;
+    }
+
+    /* Title Block */
+    .title-block {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      margin: 2px 0;
+    }
+    .competition-sub {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 8pt;
+      font-weight: 800;
+      color: #C59B27;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 1px;
+    }
+    .cert-heading {
+      font-size: 19pt;
+      font-weight: 900;
+      color: #0F255C;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    /* Body Block */
+    .body-block {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      max-width: 230mm;
+      margin: 0 auto;
+    }
+    .conferred-text {
+      font-size: 8.5pt;
+      color: #475569;
+      font-style: italic;
+      margin: 2px 0;
+    }
+    .team-name {
+      font-size: 21pt;
+      font-weight: 900;
+      color: #0F255C;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-bottom: 2px solid rgba(197, 155, 39, 0.7);
+      display: inline-block;
+      padding: 0 16px 2px 16px;
+      margin: 2px 0 3px 0;
+    }
+    .members-line {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 8.5pt;
+      color: #475569;
+      margin: 2px 0;
+    }
+    .members-line strong {
+      color: #0F255C;
+      font-weight: 700;
+    }
+    .citation-preamble {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 8pt;
+      color: #475569;
+      margin: 2px 0;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2.5px 12px;
+      background: #F5F2E9;
+      border: 1px solid rgba(197, 155, 39, 0.5);
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 8pt;
+      color: #0F255C;
+      font-weight: 700;
+      margin: 3px 0;
+    }
+    .award-banner {
+      display: inline-block;
+      padding: 3.5px 18px;
+      background: linear-gradient(90deg, #F9F1D8, #EED8A1, #F9F1D8);
+      border: 1.5px solid #C59B27;
+      color: #0F255C;
+      font-size: 9.5pt;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: 2px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .citation-quote {
+      font-size: 8pt;
+      color: #475569;
+      font-style: italic;
+      line-height: 1.35;
+      max-width: 190mm;
+      margin: 2px auto 0 auto;
+    }
+
+    /* Footer Grid */
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr 130px 1fr;
+      align-items: end;
+      border-top: 1px solid rgba(197, 155, 39, 0.4);
+      padding-top: 6px;
+      position: relative;
+      z-index: 2;
+    }
+    .sig-col {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .sig-col.left { text-align: left; }
+    .sig-col.right { text-align: right; }
+    .sig-line {
+      height: 24px;
+      border-bottom: 1px dashed rgba(138, 101, 22, 0.6);
+      display: flex;
+      align-items: flex-end;
+      margin-bottom: 3px;
+    }
+    .sig-col.right .sig-line {
+      justify-content: flex-end;
+    }
+    .script-sig {
+      font-family: Georgia, cursive, serif;
+      font-style: italic;
+      font-size: 13pt;
+      font-weight: 700;
+      color: #0F255C;
+      letter-spacing: 0.04em;
+    }
+    .sig-name {
+      display: block;
+      font-family: Georgia, serif;
+      font-size: 9pt;
+      font-weight: 800;
+      color: #0F255C;
+      margin-bottom: 1px;
+    }
+    .sig-role {
+      display: block;
+      font-size: 7pt;
+      color: #475569;
+      line-height: 1.25;
+    }
+    .sig-council {
+      display: block;
+      font-size: 6.5pt;
+      color: #8A6516;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .cert-id {
+      display: block;
+      font-family: monospace;
+      font-size: 7pt;
+      font-weight: 700;
+      color: #0F255C;
+      margin-top: 2px;
+    }
+
+    /* 3D Gold Medallion */
+    .seal-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .gold-medal {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid #C59B27;
+      background: radial-gradient(circle at 35% 35%, #FFF6D6, #E6C66E 50%, #B38728 85%, #8A6516);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.18), inset 0 0 8px rgba(255,255,255,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .medal-inner {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px dashed #8A6516;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .medal-crown {
+      font-size: 13px;
+      line-height: 1;
+      color: #0F255C;
+    }
+    .medal-text {
+      font-family: Georgia, serif;
+      font-size: 5pt;
+      font-weight: 900;
+      color: #0F255C;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+    .medal-sub {
+      font-size: 4.5pt;
+      font-weight: 700;
+      color: #0F255C;
+    }
+    .conferred-date {
+      font-family: monospace;
+      font-size: 6.5pt;
+      color: #64748B;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="cert-page" id="printable-cert">
+    <div class="outer-border"></div>
+    <div class="inner-border-1"></div>
+    <div class="inner-border-2"></div>
+    <div class="corner-flourish top-left">⚜</div>
+    <div class="corner-flourish top-right">⚜</div>
+    <div class="corner-flourish bottom-left">⚜</div>
+    <div class="corner-flourish bottom-right">⚜</div>
+    <div class="bg-guilloche"></div>
+
+    <div class="header-block">
+      <div class="vtu-affiliation">Visvesvaraya Technological University Affiliated · AICTE Approved</div>
+      <div class="college-name">HKBK College of Engineering</div>
+      <div class="dept-title">Department of Artificial Intelligence & Machine Learning</div>
+      <div class="council-title">In Collaboration with Institution’s Innovation Council (IIC) & Code Beast AI</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="title-block">
+      <span class="competition-sub">National Capstone Hackathon & Repository Defense 2026</span>
+      <h1 class="cert-heading">${mainHeading}</h1>
+    </div>
+
+    <div class="body-block">
+      <p class="conferred-text">This is proudly conferred upon the engineering laureates of</p>
+      <div class="team-name">${trophy.team}</div>
+      <div class="members-line">Comprising: <strong>${trophy.members.join(', ') || 'Project Engineering Laureates'}</strong></div>
+      <div class="citation-preamble">${preamble}</div>
+      
+      <div class="badge-pill">
+        <span>repo://${trophy.repo}</span>
+        <span style="color:#C59B27">•</span>
+        <span style="color:#8A6516">${trophy.track}</span>
+        <span style="color:#C59B27">•</span>
+        <span>${trophy.score} / 100 PTS</span>
+      </div>
+      <br/>
+      <div class="award-banner">★ ${trophy.awardTitle} ★</div>
+      
+      <div class="citation-quote">“${trophy.citation}”</div>
+    </div>
+
+    <div class="footer-grid">
+      <div class="sig-col left">
+        <div class="sig-line">
+          <span class="script-sig">Tabassum Ara</span>
+        </div>
+        <strong class="sig-name">Dr. Tabassum Ara</strong>
+        <span class="sig-role">Professor & Head of Department, AI & ML</span>
+        <span class="sig-council">Dean, Institution’s Innovation Council (IIC)</span>
+      </div>
+
+      <div class="seal-wrap">
+        <div class="gold-medal">
+          <div class="medal-inner">
+            <span class="medal-crown">👑</span>
+            <span class="medal-text">Verified Seal</span>
+            <span class="medal-sub">HKBKCE · 2026</span>
+          </div>
+        </div>
+        <span class="conferred-date">Conferred: ${trophy.issuedDate}</span>
+      </div>
+
+      <div class="sig-col right">
+        <div class="sig-line">
+          <span class="script-sig">Dr. Mohammed Riyaz Ahmed</span>
+        </div>
+        <strong class="sig-name">Dr. Mohammed Riyaz Ahmed</strong>
+        <span class="sig-role">Principal, HKBK College of Engineering (HKBKCE)</span>
+        <span class="sig-council">Chief Academic Authority &amp; Institutional Patron</span>
+        <span class="cert-id">ID: ${trophy.verificationId}</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+      }, 350);
+    };
+  </script>
+</body>
+</html>`;
+}
+
+// Convert a backend row into a verifiable TrophyHonor
+function rowToTrophy(row: any, rank: number, cohortName: string): TrophyHonor {
+  const repoName = row.repo || row.repo_name || "repository";
+  const teamName = row.team || row.team_name || (repoName.split('/')[0] || "Engineering Team");
+  const score = row.overall ?? row.overall_score ?? 85.0;
+  const randHex = Math.random().toString(36).substring(2, 7).toUpperCase();
+
+  let tier: TrophyHonor['tier'] = 'Participation Certificate';
+  let awardTitle = 'Verified Capstone Defense & Technical Participation';
+  let badgeIcon: TrophyHonor['badgeIcon'] = 'award';
+  let accentColor = 'blue';
+
+  if (rank === 1) {
+    tier = 'Grand Prize';
+    awardTitle = 'Grand Prize Champion & Best Overall System';
+    badgeIcon = 'crown';
+    accentColor = 'gold';
+  } else if (rank === 2) {
+    tier = '1st Runner Up';
+    awardTitle = '1st Runner Up & Security Excellence Trophy';
+    badgeIcon = 'trophy';
+    accentColor = 'silver';
+  } else if (rank === 3) {
+    tier = '2nd Runner Up';
+    awardTitle = '2nd Runner Up & Architectural Innovation Medal';
+    badgeIcon = 'medal';
+    accentColor = 'bronze';
+  }
+
+  const track = row.track || (row.sec >= 85 ? "Cybersecurity & Micro-Segmentation" : row.arch >= 85 ? "Cloud Architecture & Scalability" : "Artificial Intelligence & Software Engineering");
+  const citation = rank === 1
+    ? "Awarded for exceptional architectural execution, high test coverage, deterministic quality scoring, and zero security vulnerabilities."
+    : rank === 2
+    ? "Exemplary implementation of robust software architecture, secure code patterns, and clean component isolation."
+    : rank === 3
+    ? "Flawless demonstration of computational performance, distributed data flows, and sound engineering standards."
+    : "Conferred in recognition of active participation, rigorous technical defense, and commendable engineering execution demonstrated during autonomous evaluation.";
+
+  return {
+    id: `trophy-dynamic-${repoName}-${rank}`,
+    tier,
+    awardTitle,
+    badgeIcon,
+    accentColor,
+    repo: repoName,
+    repoUrl: `https://github.com/${repoName}`,
+    team: teamName,
+    members: ["Lead Submitter", "Project Contributor", "Engineering Member"],
+    track,
+    score: Number(score),
+    citation,
+    awardedBy: "Dr. Tabassum Ara",
+    judgeRole: "Professor & Head of Department, AI & ML | Dean, IIC",
+    verificationId: `CERT-HKBK-2026-CB-${randHex}`,
+    issuedDate: "October 21, 2026"
+  };
+}
+
 export default function TrophyHallPage() {
+  const [cohortMode, setCohortMode] = useState<'recent' | 'batch' | 'global' | 'minted'>('recent');
   const [trophies, setTrophies] = useState<TrophyHonor[]>(INITIAL_TROPHIES);
   const [selectedTrophy, setSelectedTrophy] = useState<TrophyHonor>(INITIAL_TROPHIES[0]);
-  const [tierFilter, setTierFilter] = useState<string>('All Trophies');
-  
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [tierFilter, setTierFilter] = useState<string>('All Certificates');
+
+  // Backend Data
+  const [recentLeaderboard, setRecentLeaderboard] = useState<any[]>([]);
+  const [recentCohortName, setRecentCohortName] = useState<string>('Recent Evaluation Session');
+  const [globalLeaderboard, setGlobalLeaderboard] = useState<any[]>([]);
+  const [batchData, setBatchData] = useState<any | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
   // Modals & Feedback
   const [isCertModalOpen, setIsCertModalOpen] = useState<boolean>(false);
   const [isMintModalOpen, setIsMintModalOpen] = useState<boolean>(false);
@@ -197,38 +750,84 @@ export default function TrophyHallPage() {
 
   const certRef = useRef<HTMLDivElement>(null);
 
-  // Load persisted trophies if available
+  // Fetch all cohorts data on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('codebeast_trophy_hall');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setTrophies(parsed);
-          setSelectedTrophy(parsed[0]);
-        }
+    Promise.all([
+      fetch(apiUrl('/api/v1/stats/recent-leaderboard')).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(apiUrl('/api/v1/stats/leaderboard')).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(apiUrl('/api/v1/stats/batch-leaderboard')).then(r => r.ok ? r.json() : null).catch(() => null)
+    ]).then(([recent, global, batch]) => {
+      if (recent?.leaderboard) {
+        setRecentLeaderboard(recent.leaderboard);
+        if (recent.cohort_name) setRecentCohortName(recent.cohort_name);
       }
-    } catch (e) {}
+      if (global?.leaderboard) {
+        setGlobalLeaderboard(global.leaderboard);
+      }
+      if (batch?.leaderboard) {
+        setBatchData(batch);
+      }
+      setLoading(false);
+    });
   }, []);
 
-  const saveTrophies = (updated: TrophyHonor[]) => {
-    setTrophies(updated);
-    try {
-      localStorage.setItem('codebeast_trophy_hall', JSON.stringify(updated));
-    } catch (e) {}
-  };
+  // Check URL query param ?repo=... to auto-open certificate from Leaderboard
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetRepo = urlParams.get('repo');
+      if (targetRepo) {
+        const decoded = decodeURIComponent(targetRepo).toLowerCase();
+        // Check in initial or create on the fly
+        const found = trophies.find(t => t.repo.toLowerCase() === decoded)
+          || (recentLeaderboard.length > 0 && rowToTrophy(recentLeaderboard.find(r => (r.repo || '').toLowerCase() === decoded) || { repo: targetRepo }, 4, 'Direct Lookup'))
+          || rowToTrophy({ repo: targetRepo }, 4, 'Direct Lookup');
 
+        if (found) {
+          setSelectedTrophy(found);
+          setIsCertModalOpen(true);
+        }
+      }
+    }
+  }, [trophies, recentLeaderboard]);
+
+  // Compute active list of trophies based on selected cohort mode
+  const currentCohortTrophies = useMemo<TrophyHonor[]>(() => {
+    if (cohortMode === 'minted') {
+      return trophies;
+    }
+    if (cohortMode === 'recent' && recentLeaderboard.length > 0) {
+      return recentLeaderboard.map((r, i) => rowToTrophy(r, i + 1, recentCohortName));
+    }
+    if (cohortMode === 'batch' && batchData?.leaderboard?.rankings) {
+      return batchData.leaderboard.rankings.map((r: any, i: number) => rowToTrophy(r, i + 1, batchData.leaderboard.batch_name || 'AI Batch Cohort'));
+    }
+    if (cohortMode === 'global' && globalLeaderboard.length > 0) {
+      return globalLeaderboard.map((r, i) => rowToTrophy(r, i + 1, 'Global Standings'));
+    }
+    return trophies;
+  }, [cohortMode, trophies, recentLeaderboard, recentCohortName, batchData, globalLeaderboard]);
+
+  // Filtered by tier and search query
   const filteredTrophies = useMemo(() => {
-    if (tierFilter === 'All Trophies') return trophies;
-    if (tierFilter === 'Grand Champions') return trophies.filter(t => t.tier.includes('Runner Up') || t.tier === 'Grand Prize');
-    return trophies.filter(t => t.tier === tierFilter);
-  }, [trophies, tierFilter]);
+    return currentCohortTrophies.filter(t => {
+      const matchesSearch = t.repo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.team.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.awardTitle.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      if (!matchesSearch) return false;
+      if (tierFilter === 'All Certificates') return true;
+      if (tierFilter === 'Grand Champions') return t.tier.includes('Runner Up') || t.tier === 'Grand Prize';
+      if (tierFilter === 'Participation') return t.tier === 'Participation Certificate';
+      return t.tier === tierFilter;
+    });
+  }, [currentCohortTrophies, searchQuery, tierFilter]);
 
-  const grandPrize = trophies.find(t => t.tier === 'Grand Prize') || trophies[0];
-  const firstRunner = trophies.find(t => t.tier === '1st Runner Up') || trophies[1];
-  const secondRunner = trophies.find(t => t.tier === '2nd Runner Up') || trophies[2];
+  const grandPrize = currentCohortTrophies.find(t => t.tier === 'Grand Prize') || currentCohortTrophies[0];
+  const firstRunner = currentCohortTrophies.find(t => t.tier === '1st Runner Up') || currentCohortTrophies[1];
+  const secondRunner = currentCohortTrophies.find(t => t.tier === '2nd Runner Up') || currentCohortTrophies[2];
 
-  // Professional PDF Download using jsPDF & html2canvas (No SecurityError on remote CSS)
+  // Professional PDF Download using jsPDF & html2canvas
   const handleDownloadPdf = async () => {
     const certElement = certRef.current;
     if (!certElement) return;
@@ -242,7 +841,7 @@ export default function TrophyHallPage() {
           useCORS: true,
           allowTaint: true,
           logging: false,
-          backgroundColor: '#FCFBF7',
+          backgroundColor: '#FFFDF8',
           windowWidth: 1000
         });
         dataUrl = canvas.toDataURL('image/png', 1.0);
@@ -251,12 +850,12 @@ export default function TrophyHallPage() {
       }
 
       if (!dataUrl) {
-        // Fallback to html-to-image with skipFonts: true to prevent SecurityError on external stylesheets
+        // Fallback to html-to-image with skipFonts: true
         const { toPng } = await import('html-to-image');
         dataUrl = await toPng(certElement, {
           quality: 1.0,
           pixelRatio: 2.5,
-          backgroundColor: '#FCFBF7',
+          backgroundColor: '#FFFDF8',
           skipFonts: true
         });
       }
@@ -272,77 +871,22 @@ export default function TrophyHallPage() {
       const cleanTeam = selectedTrophy.team.replace(/[^a-zA-Z0-9]/g, '_');
       pdf.save(`Certificate_${cleanTeam}_${selectedTrophy.verificationId}.pdf`);
     } catch (err) {
-      console.error('Failed to generate PDF:', err);
-      // Failsafe: Open print window if canvas capture fails
+      console.error('Failed to generate PDF, falling back to print dialog:', err);
       handlePrintCertificate();
     } finally {
       setIsGeneratingPdf(false);
     }
   };
 
-  // Dedicated Print Window (A4 Landscape Isolated Print)
+  // Dedicated Print Engine (A4 Landscape Isolated Print with Complete Embedded CSS)
   const handlePrintCertificate = () => {
-    const certElement = certRef.current;
-    if (!certElement) return;
-
     const printWindow = window.open('', '_blank', 'width=1150,height=800');
     if (!printWindow) {
       window.print();
       return;
     }
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Certificate - ${selectedTrophy.team}</title>
-          <style>
-            @page {
-              size: A4 landscape;
-              margin: 0;
-            }
-            * {
-              box-sizing: border-box;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            body {
-              margin: 0;
-              padding: 0;
-              background-color: #FAF8F2;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              min-height: 100vh;
-              font-family: Georgia, 'Times New Roman', serif;
-            }
-            .cert-wrapper {
-              width: 297mm;
-              height: 210mm;
-              padding: 10mm;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-          </style>
-          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Inter:wght@400;600;700&display=swap">
-        </head>
-        <body>
-          <div class="cert-wrapper">
-            ${certElement.outerHTML}
-          </div>
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-                window.close();
-              }, 400);
-            };
-          </script>
-        </body>
-      </html>
-    `;
-
+    const htmlContent = generateCertificatePrintHtml(selectedTrophy);
     printWindow.document.open();
     printWindow.document.write(htmlContent);
     printWindow.document.close();
@@ -358,7 +902,6 @@ export default function TrophyHallPage() {
       id: `trophy-${Date.now()}`,
       tier: newTier,
       awardTitle: newAward,
-      prizeMoney: newTier === 'Grand Prize' ? '₹50,000 Grant' : newTier === '1st Runner Up' ? '₹25,000 Grant' : undefined,
       badgeIcon: newTier === 'Grand Prize' ? 'crown' : newTier.includes('Runner Up') ? 'trophy' : 'medal',
       accentColor: newTier === 'Grand Prize' ? 'gold' : newTier === '1st Runner Up' ? 'silver' : newTier === '2nd Runner Up' ? 'bronze' : 'cyan',
       repo: newRepo.trim(),
@@ -375,7 +918,7 @@ export default function TrophyHallPage() {
     };
 
     const updated = [newHonor, ...trophies];
-    saveTrophies(updated);
+    setTrophies(updated);
     setSelectedTrophy(newHonor);
     setIsMintModalOpen(false);
 
@@ -393,109 +936,135 @@ export default function TrophyHallPage() {
   };
 
   const handleCopyLinkedIn = () => {
-    const text = `🏆 Proud to announce that our project "${selectedTrophy.repo}" has been awarded the "${selectedTrophy.awardTitle}" at the Code Beast AI Capstone Hackathon, evaluated under Dr. Tabassum Ara at HKBK College of Engineering!\n\nVerified Certificate ID: ${selectedTrophy.verificationId}\n\n#CodeBeastAI #HackathonWinner #AIML #HKBKCE`;
+    const text = `🏆 Proud to announce that our project "${selectedTrophy.repo}" has been awarded the "${selectedTrophy.awardTitle}" at the Code Beast AI Capstone Hackathon, evaluated under Dr. Tabassum Ara (HOD, AIML) and approved by Dr. Mohammed Riyaz Ahmed (Principal, HKBKCE) at HKBK College of Engineering!\n\nVerified Certificate ID: ${selectedTrophy.verificationId}\n\n#CodeBeastAI #HackathonWinner #AIML #HKBKCE #VTU`;
     navigator.clipboard.writeText(text);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
   return (
-    <div className="space-y-8 pb-16 text-white max-w-7xl mx-auto">
+    <div className="space-y-8 pb-16 text-white max-w-7xl mx-auto px-4 sm:px-6">
       
-      {/* 1. Dedicated Print Stylesheet to Ensure ONLY Certificate Prints Cleanly */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          @page {
-            size: A4 landscape;
-            margin: 0;
-          }
-          body {
-            background: #ffffff !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          body * {
-            visibility: hidden !important;
-          }
-          #printable-academic-certificate, #printable-academic-certificate * {
-            visibility: visible !important;
-          }
-          #printable-academic-certificate {
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 297mm !important;
-            height: 210mm !important;
-            max-width: 297mm !important;
-            max-height: 210mm !important;
-            margin: 0 !important;
-            padding: 8mm !important;
-            box-shadow: none !important;
-            border: none !important;
-            z-index: 99999999 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
-          }
-        }
-      `}} />
-
-      {/* 2. Header with Golden Ambient Accent & Mint Action */}
+      {/* 1. TOP HEADER & COHORT SELECTOR */}
       <ScrollReveal direction="down" distance={15}>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#08132B] border border-amber-400/40 text-amber-300 text-[11px] font-bold tracking-wider uppercase rounded-none shadow-xs mb-2">
-              <Crown className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-              National Hackathon & Capstone Honors
+        <div className="space-y-4 pb-6 border-b border-[#89CFF0]/20">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-950/40 text-amber-300 border border-amber-500/40 text-[10px] font-mono font-bold uppercase tracking-widest shadow-xs">
+                  <Award className="w-3.5 h-3.5" />
+                  Official Academic Credentials
+                </span>
+                <span className="text-xs text-[#8EA6C8] font-mono">Affiliated: VTU · AICTE Approved</span>
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Digital Trophy Hall &amp; Verified Certificates
+              </h1>
+              <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1 max-w-2xl">
+                Verifiable academic honors celebrating top engineering laureates. Every participating repository receives an official, university-grade certificate signed by Dr. Tabassum Ara and consensus faculty judges.
+              </p>
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              <span>Digital Trophy Hall & Verified Certificates</span>
-              <span className="text-xs font-mono font-bold px-2.5 py-1 bg-amber-950/80 text-amber-300 border border-amber-500/40 uppercase">
-                Hall of Fame
-              </span>
-            </h1>
-            <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1 max-w-3xl leading-relaxed">
-              Verifiable honors showcase celebrating top engineering repositories. Export authentic, high-definition university certificates signed by faculty judges.
-            </p>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                onClick={() => setIsMintModalOpen(true)}
+                className="px-4 py-2 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-bold rounded-none flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Bestow Custom Honor</span>
+              </button>
+
+              <Link
+                href="/leaderboard"
+                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-400 text-[#040914] text-xs font-bold rounded-none flex items-center gap-2 shadow-sm transition-all hover:scale-105"
+              >
+                <Trophy className="w-4 h-4" />
+                <span>Global Leaderboard</span>
+              </Link>
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              onClick={() => setIsMintModalOpen(true)}
-              className="px-4 py-2 text-xs font-extrabold bg-[#89CFF0] text-[#08132B] hover:bg-[#BAE6FD] transition-colors rounded-none flex items-center gap-2 shadow-md"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Bestow New Award</span>
-            </button>
+          {/* Cohort Tabs (Matching Leaderboard structure) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setCohortMode('recent')}
+                className={`px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                  cohortMode === 'recent'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-[#040914] font-bold shadow-md'
+                    : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Recent Standings ({recentLeaderboard.length})</span>
+                <span className={`w-2 h-2 rounded-full ${cohortMode === 'recent' ? 'bg-[#040914] animate-pulse' : 'bg-emerald-400'}`} />
+              </button>
 
-            <Link
-              href="/leaderboard"
-              className="px-3.5 py-2 text-xs font-semibold bg-[#08132B] hover:bg-[#89CFF0]/10 text-[#89CFF0] border border-[#89CFF0]/40 rounded-none transition-all flex items-center gap-2 shadow-xs"
-            >
-              <Trophy className="w-3.5 h-3.5" />
-              <span>Global Leaderboard</span>
-              <ChevronRight className="w-3 h-3 opacity-70" />
-            </Link>
+              <button
+                onClick={() => setCohortMode('batch')}
+                className={`px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                  cohortMode === 'batch'
+                    ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] font-bold shadow-md'
+                    : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>AI Batch Cohort ({batchData?.leaderboard?.rankings?.length || 0})</span>
+              </button>
+
+              <button
+                onClick={() => setCohortMode('global')}
+                className={`px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                  cohortMode === 'global'
+                    ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] font-bold shadow-md'
+                    : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
+                }`}
+              >
+                <Trophy className="w-3.5 h-3.5" />
+                <span>Global All-Time ({globalLeaderboard.length})</span>
+              </button>
+
+              <button
+                onClick={() => setCohortMode('minted')}
+                className={`px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                  cohortMode === 'minted'
+                    ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-[#040914] font-bold shadow-md'
+                    : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
+                }`}
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span>Special Category Honors</span>
+              </button>
+            </div>
+
+            {/* Search filter within cohort */}
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 text-[#8EA6C8] absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search repository or team..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#08132B] border border-[#89CFF0]/30 pl-9 pr-3 py-1.5 text-xs text-white placeholder-[#8EA6C8] focus:outline-none focus:border-[#89CFF0]"
+              />
+            </div>
           </div>
         </div>
       </ScrollReveal>
 
-      {/* 3. TOP 3 PODIUM PEDESTALS (Grand Champions) */}
+      {/* 2. THREE PODIUM CARDS (Top 3 Laureates - NO GRANTS) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold text-white uppercase tracking-wider font-mono">
-              Grand Champions Podium (Top 3 Laureates)
-            </span>
-          </div>
-          <span className="text-xs text-[#8EA6C8] font-mono">Evaluated by Consensus Jury</span>
+          <span className="text-xs font-mono uppercase tracking-wider text-amber-300 font-bold flex items-center gap-2">
+            <Trophy className="w-4 h-4" />
+            <span>Grand Champions Podium (Top 3 Laureates)</span>
+          </span>
+          <span className="text-xs font-mono text-[#8EA6C8]">
+            {cohortMode === 'recent' ? recentCohortName : cohortMode === 'batch' ? (batchData?.leaderboard?.batch_name || 'AI Cohort') : cohortMode === 'global' ? 'Global Benchmark' : 'Mentored Honors'}
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
           
           {/* SILVER PEDESTAL (1st Runner Up) */}
           {firstRunner && (
@@ -509,9 +1078,6 @@ export default function TrophyHallPage() {
               </div>
 
               <div>
-                <span className="text-[10px] font-mono font-bold text-[#89CFF0] uppercase block">
-                  {firstRunner.prizeMoney || "Honorary Grant"}
-                </span>
                 <h3 className="text-lg font-bold text-white tracking-tight mt-0.5">{firstRunner.awardTitle}</h3>
                 <p className="text-xs text-[#BAE6FD] mt-1 font-mono font-semibold">{firstRunner.team}</p>
                 <span className="text-[11px] text-[#8EA6C8] block truncate">{firstRunner.repo}</span>
@@ -523,7 +1089,7 @@ export default function TrophyHallPage() {
                     setSelectedTrophy(firstRunner);
                     setIsCertModalOpen(true);
                   }}
-                  className="px-3.5 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <FileCheck className="w-3.5 h-3.5" />
                   <span>Inspect Certificate</span>
@@ -535,8 +1101,7 @@ export default function TrophyHallPage() {
 
           {/* GOLD PEDESTAL (Grand Prize Champion - Elevated) */}
           {grandPrize && (
-            <div className="liquid-glass-card rounded-none p-6 sm:p-7 border-2 border-amber-400/70 bg-gradient-to-b from-[#1E1B0E]/90 via-[#0D1E45] to-[#040914] shadow-[0_0_35px_rgba(251,191,36,0.2)] space-y-5 order-1 md:order-2 md:-translate-y-2 relative overflow-hidden group hover:border-amber-300 transition-all">
-              
+            <div className="liquid-glass-card rounded-none p-6 sm:p-7 border-2 border-amber-400/70 bg-gradient-to-b from-[#1E1B0E]/90 via-[#0D1E45] to-[#040914] shadow-[0_0_35px_rgba(251,191,36,0.2)] space-y-4 order-1 md:order-2 md:-translate-y-2 relative overflow-hidden group hover:border-amber-300 transition-all">
               <div className="absolute top-0 right-0 w-28 h-28 bg-amber-400/10 blur-2xl pointer-events-none" />
 
               <div className="flex items-center justify-between">
@@ -548,10 +1113,7 @@ export default function TrophyHallPage() {
               </div>
 
               <div>
-                <span className="text-xs font-mono font-bold px-2 py-0.5 bg-amber-950/80 text-amber-300 border border-amber-500/40 uppercase">
-                  {grandPrize.prizeMoney}
-                </span>
-                <h3 className="text-xl font-extrabold text-white tracking-tight mt-2">{grandPrize.awardTitle}</h3>
+                <h3 className="text-xl font-extrabold text-white tracking-tight mt-1">{grandPrize.awardTitle}</h3>
                 <p className="text-sm text-[#BAE6FD] mt-1 font-mono font-bold">{grandPrize.team}</p>
                 <span className="text-xs text-[#8EA6C8] block truncate">{grandPrize.repo}</span>
               </div>
@@ -566,7 +1128,7 @@ export default function TrophyHallPage() {
                     setSelectedTrophy(grandPrize);
                     setIsCertModalOpen(true);
                   }}
-                  className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#08132B] text-xs font-bold rounded-none flex items-center gap-2 shadow-sm transition-all"
+                  className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#08132B] text-xs font-bold rounded-none flex items-center gap-2 shadow-sm transition-all cursor-pointer"
                 >
                   <Award className="w-4 h-4" />
                   <span>View Official Certificate</span>
@@ -588,9 +1150,6 @@ export default function TrophyHallPage() {
               </div>
 
               <div>
-                <span className="text-[10px] font-mono font-bold text-amber-400 uppercase block">
-                  {secondRunner.prizeMoney || "Honorary Grant"}
-                </span>
                 <h3 className="text-lg font-bold text-white tracking-tight mt-0.5">{secondRunner.awardTitle}</h3>
                 <p className="text-xs text-[#BAE6FD] mt-1 font-mono font-semibold">{secondRunner.team}</p>
                 <span className="text-[11px] text-[#8EA6C8] block truncate">{secondRunner.repo}</span>
@@ -602,7 +1161,7 @@ export default function TrophyHallPage() {
                     setSelectedTrophy(secondRunner);
                     setIsCertModalOpen(true);
                   }}
-                  className="px-3.5 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <FileCheck className="w-3.5 h-3.5" />
                   <span>Inspect Certificate</span>
@@ -615,7 +1174,7 @@ export default function TrophyHallPage() {
         </div>
       </div>
 
-      {/* 4. CATEGORY HONORS & FACULTY COMMENDATIONS GRID */}
+      {/* 3. COHORT PARTICIPATION CERTIFICATES & HONORS DIRECTORY */}
       <div className="space-y-4 pt-4">
         
         {/* Tier Filter Toolbar */}
@@ -623,19 +1182,19 @@ export default function TrophyHallPage() {
           <div>
             <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#89CFF0]" />
-              <span>Special Category Awards & Institutional Honors</span>
+              <span>Verifiable Honors &amp; Participation Credentials</span>
             </h2>
             <p className="text-xs text-[#8EA6C8] mt-0.5">
-              Distinguished awards minted for multi-agent innovation, architectural audacity, and UI/UX craftsmanship.
+              Every evaluated repository receives an official, university-grade certificate for participation and merit.
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs font-mono">
-            {['All Trophies', 'Grand Champions', 'Category Award', 'Faculty Commendation'].map((t) => (
+          <div className="flex items-center gap-1.5 text-xs font-mono flex-wrap">
+            {['All Certificates', 'Grand Champions', 'Participation', 'Category Award'].map((t) => (
               <button
                 key={t}
                 onClick={() => setTierFilter(t)}
-                className={`px-3 py-1 border transition-colors ${
+                className={`px-3 py-1 border transition-colors cursor-pointer ${
                   tierFilter === t
                     ? 'bg-[#89CFF0]/20 text-[#89CFF0] border-[#89CFF0]'
                     : 'bg-[#08132B] text-[#8EA6C8] border-[#89CFF0]/20 hover:text-white'
@@ -647,7 +1206,7 @@ export default function TrophyHallPage() {
           </div>
         </div>
 
-        {/* Trophies Grid */}
+        {/* Repositories / Certificates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTrophies.map((trophy) => (
             <div
@@ -660,12 +1219,15 @@ export default function TrophyHallPage() {
                 <div className="flex items-center justify-between pb-2 border-b border-[#89CFF0]/15">
                   <div className="flex items-center gap-2">
                     <div className="p-2 bg-[#08132B] border border-[#89CFF0]/40 text-[#89CFF0]">
-                      {trophy.badgeIcon === 'crown' && <Crown className="w-4 h-4 text-amber-400" />}
-                      {trophy.badgeIcon === 'trophy' && <Trophy className="w-4 h-4 text-[#89CFF0]" />}
-                      {trophy.badgeIcon === 'medal' && <Medal className="w-4 h-4 text-amber-500" />}
-                      {trophy.badgeIcon === 'cpu' && <Cpu className="w-4 h-4 text-cyan-400" />}
-                      {trophy.badgeIcon === 'star' && <Star className="w-4 h-4 text-purple-400" />}
-                      {trophy.badgeIcon === 'flame' && <Flame className="w-4 h-4 text-emerald-400" />}
+                      {trophy.tier === 'Participation Certificate' ? (
+                        <Award className="w-4 h-4 text-emerald-400" />
+                      ) : trophy.badgeIcon === 'crown' ? (
+                        <Crown className="w-4 h-4 text-amber-400" />
+                      ) : trophy.badgeIcon === 'trophy' ? (
+                        <Trophy className="w-4 h-4 text-[#89CFF0]" />
+                      ) : (
+                        <Medal className="w-4 h-4 text-amber-500" />
+                      )}
                     </div>
                     <span className="text-[10px] font-mono font-bold text-[#89CFF0] uppercase tracking-wider">
                       {trophy.tier}
@@ -697,7 +1259,7 @@ export default function TrophyHallPage() {
 
                 {/* Team Members List */}
                 <div className="space-y-1 text-[11px]">
-                  <span className="text-[#8EA6C8] block font-mono">Awarded Laureates:</span>
+                  <span className="text-[#8EA6C8] block font-mono">Recognized Laureates:</span>
                   <div className="flex flex-wrap gap-1">
                     {trophy.members.map((m, mIdx) => (
                       <span key={mIdx} className="px-1.5 py-0.5 bg-[#08132B] border border-[#89CFF0]/20 text-[10px] font-mono text-white">
@@ -716,7 +1278,7 @@ export default function TrophyHallPage() {
                     setSelectedTrophy(trophy);
                     setIsCertModalOpen(true);
                   }}
-                  className="px-3.5 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-1.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Award className="w-3.5 h-3.5" />
                   <span>Inspect Certificate</span>
@@ -733,7 +1295,7 @@ export default function TrophyHallPage() {
 
       </div>
 
-      {/* 5. ULTRA-PREMIUM PARCHMENT CERTIFICATE MODAL & PDF EXPORT */}
+      {/* 4. ULTRA-PREMIUM PARCHMENT CERTIFICATE MODAL & PDF EXPORT */}
       <AnimatePresence>
         {isCertModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto">
@@ -752,13 +1314,13 @@ export default function TrophyHallPage() {
                     <h3 className="text-sm font-bold text-white uppercase font-mono tracking-wider">
                       Official Verifiable Academic Certificate Preview
                     </h3>
-                    <span className="text-xs text-[#8EA6C8]">Standard A4 Landscape · 300 DPI Export Ready</span>
+                    <span className="text-xs text-[#8EA6C8]">Standard A4 Landscape · Full High-Definition 300 DPI Export</span>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsCertModalOpen(false)}
-                  className="text-[#8EA6C8] hover:text-white p-1"
+                  className="text-[#8EA6C8] hover:text-white p-1 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -769,16 +1331,16 @@ export default function TrophyHallPage() {
                 <div
                   id="printable-academic-certificate"
                   ref={certRef}
-                  className="w-[900px] h-[636px] shrink-0 bg-[#FCFBF7] text-[#0A1931] p-8 sm:p-10 relative flex flex-col justify-between shadow-2xl select-none"
+                  className="w-[900px] h-[636px] shrink-0 bg-[#FFFDF8] text-[#0A1931] p-8 sm:p-10 relative flex flex-col justify-between shadow-2xl select-none"
                   style={{
                     fontFamily: "Georgia, 'Times New Roman', serif"
                   }}
                 >
                   
                   {/* Classical Double Gold Foil Border with Corner Scrolls */}
-                  <div className="absolute inset-2 border-[3px] border-[#C59B27] pointer-events-none" />
-                  <div className="absolute inset-3.5 border border-[#D4AF37]/70 pointer-events-none" />
-                  <div className="absolute inset-5 border border-[#B38728]/30 pointer-events-none" />
+                  <div className="absolute inset-2 border-[3.5px] border-[#C59B27] pointer-events-none" />
+                  <div className="absolute inset-3.5 border border-[#E6C66E] pointer-events-none" />
+                  <div className="absolute inset-5 border border-[rgba(179,135,40,0.4)] pointer-events-none" />
 
                   {/* 4 Baroque Corner Flourishes in Metallic Gold */}
                   <div className="absolute top-5 left-5 text-[#C59B27] text-lg font-serif select-none pointer-events-none">⚜</div>
@@ -804,10 +1366,10 @@ export default function TrophyHallPage() {
                       HKBK COLLEGE OF ENGINEERING
                     </h2>
                     <p className="text-xs font-sans text-[#334155] font-semibold tracking-wider">
-                      DEPARTMENT OF ARTIFICIAL INTELLIGENCE & MACHINE LEARNING
+                      DEPARTMENT OF ARTIFICIAL INTELLIGENCE &amp; MACHINE LEARNING
                     </p>
                     <span className="text-[10px] font-sans text-[#8A6516] tracking-widest uppercase block mt-0.5">
-                      IN COLLABORATION WITH INSTITUTION’S INNOVATION COUNCIL (IIC) & CODE BEAST AI
+                      IN COLLABORATION WITH INSTITUTION’S INNOVATION COUNCIL (IIC) &amp; CODE BEAST AI
                     </span>
                     <div className="h-0.5 w-36 bg-gradient-to-r from-transparent via-[#C59B27] to-transparent mx-auto mt-1" />
                   </div>
@@ -815,10 +1377,10 @@ export default function TrophyHallPage() {
                   {/* 2. Certificate Title */}
                   <div className="text-center relative z-10 space-y-1">
                     <span className="text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-[#C59B27]">
-                      NATIONAL CAPSTONE HACKATHON & REPOSITORY DEFENSE 2026
+                      NATIONAL CAPSTONE HACKATHON &amp; REPOSITORY DEFENSE 2026
                     </span>
                     <h3 className="text-2xl sm:text-3xl font-black text-[#0F255C] uppercase tracking-wider font-serif">
-                      Certificate of Excellence & Merit
+                      {selectedTrophy.tier === 'Participation Certificate' ? 'Certificate of Technical Defense & Participation' : 'Certificate of Excellence & Merit'}
                     </h3>
                   </div>
 
@@ -833,11 +1395,13 @@ export default function TrophyHallPage() {
                     </div>
 
                     <p className="text-xs text-[#475569]">
-                      Comprising: <strong className="text-[#0F255C] font-semibold">{selectedTrophy.members.join(', ') || "Project Team Members"}</strong>
+                      Comprising: <strong className="text-[#0F255C] font-semibold">{selectedTrophy.members.join(', ') || "Project Engineering Laureates"}</strong>
                     </p>
 
                     <p className="text-xs text-[#475569]">
-                      for meritorious distinction and technical excellence achieved in their project
+                      {selectedTrophy.tier === 'Participation Certificate'
+                        ? 'for active participation and successful capstone repository defense of their project'
+                        : 'for meritorious distinction and technical excellence achieved in their project'}
                     </p>
 
                     {/* Repository Name & Track Pill */}
@@ -845,6 +1409,8 @@ export default function TrophyHallPage() {
                       <span className="font-bold text-[#0F255C] text-xs">repo://{selectedTrophy.repo}</span>
                       <span className="text-[#C59B27]">•</span>
                       <span className="text-xs text-[#8A6516] font-semibold">{selectedTrophy.track}</span>
+                      <span className="text-[#C59B27]">•</span>
+                      <span className="text-xs text-[#0F255C] font-bold">{selectedTrophy.score} / 100 PTS</span>
                     </div>
 
                     {/* Award Honor Gold Banner */}
@@ -873,7 +1439,7 @@ export default function TrophyHallPage() {
                         </span>
                       </div>
                       <strong className="block text-[#0F255C] text-xs font-serif font-bold">Dr. Tabassum Ara</strong>
-                      <span className="text-[10px] text-[#475569] block leading-tight font-medium">Professor & Head of Department, AI & ML</span>
+                      <span className="text-[10px] text-[#475569] block leading-tight font-medium">Professor &amp; Head of Department, AI &amp; ML</span>
                       <span className="text-[9px] text-[#8A6516] block font-semibold">Dean, Institution’s Innovation Council (IIC)</span>
                     </div>
 
@@ -891,15 +1457,16 @@ export default function TrophyHallPage() {
                       <span className="text-[9px] font-mono text-[#64748B] mt-1 font-semibold">Conferred: {selectedTrophy.issuedDate}</span>
                     </div>
 
-                    {/* Right Signature: External Jury & Cryptographic ID */}
+                    {/* Right Signature: Dr. Mohammed Riyaz Ahmed, Principal HKBKCE */}
                     <div className="text-right space-y-1">
                       <div className="h-9 border-b border-dashed border-[#8A6516]/60 flex items-end justify-end">
                         <span className="font-serif italic text-base text-[#0F255C] font-bold">
-                          David Chen / Jury Chair
+                          Dr. Mohammed Riyaz Ahmed
                         </span>
                       </div>
-                      <strong className="block text-[#0F255C] text-xs font-serif font-bold">Code Beast Consensus Jury</strong>
-                      <span className="text-[10px] text-[#475569] block font-medium">National Hackathon Evaluation Board</span>
+                      <strong className="block text-[#0F255C] text-xs font-serif font-bold">Dr. Mohammed Riyaz Ahmed</strong>
+                      <span className="text-[10px] text-[#475569] block font-medium leading-tight">Principal, HKBK College of Engineering</span>
+                      <span className="text-[9px] text-[#8A6516] block font-semibold">Chief Academic Authority &amp; Institutional Patron</span>
                       <span className="text-[9px] font-mono text-[#0F255C] block font-bold" title={selectedTrophy.verificationId}>
                         ID: {selectedTrophy.verificationId}
                       </span>
@@ -915,7 +1482,7 @@ export default function TrophyHallPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleCopyBadge}
-                    className="px-3.5 py-2 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 rounded-none flex items-center gap-1.5 transition-colors"
+                    className="px-3.5 py-2 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 rounded-none flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     {copiedBadge ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedBadge ? "Markdown Copied!" : "Copy README Badge"}</span>
@@ -923,7 +1490,7 @@ export default function TrophyHallPage() {
 
                   <button
                     onClick={handleCopyLinkedIn}
-                    className="px-3.5 py-2 bg-[#08132B] hover:bg-[#89CFF0]/20 text-white border border-[#89CFF0]/40 rounded-none flex items-center gap-1.5 transition-colors"
+                    className="px-3.5 py-2 bg-[#08132B] hover:bg-[#89CFF0]/20 text-white border border-[#89CFF0]/40 rounded-none flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
                     <span>{copiedLink ? "Post Copied!" : "Share on LinkedIn"}</span>
@@ -955,142 +1522,132 @@ export default function TrophyHallPage() {
         )}
       </AnimatePresence>
 
-      {/* 6. MINT / BESTOW NEW TROPHY MODAL */}
+      {/* 5. BESTOW NEW TROPHY / COMMENDATION MODAL (NO GRANTS) */}
       <AnimatePresence>
         {isMintModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#08132B] border-2 border-[#89CFF0]/50 text-white p-6 sm:p-7 max-w-md w-full space-y-4 shadow-xl rounded-none font-sans"
+              className="bg-[#08132B] border border-[#89CFF0]/30 text-white p-6 max-w-lg w-full my-auto space-y-4 shadow-xl rounded-none"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-[#89CFF0]/20">
+              <div className="flex items-center justify-between pb-3 border-b border-[#89CFF0]/20">
                 <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-amber-400" />
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                    Bestow Hackathon Trophy & Mint Credential
+                  <Award className="w-5 h-5 text-[#89CFF0]" />
+                  <h3 className="text-base font-bold text-white uppercase font-mono">
+                    Bestow Institutional Award
                   </h3>
                 </div>
-                <button onClick={() => setIsMintModalOpen(false)} className="text-[#8EA6C8] hover:text-white">
-                  <X className="w-4 h-4" />
+                <button
+                  onClick={() => setIsMintModalOpen(false)}
+                  className="text-[#8EA6C8] hover:text-white"
+                >
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleMintTrophy} className="space-y-3 text-xs">
+              <form onSubmit={handleMintTrophy} className="space-y-3 font-sans text-xs">
                 <div>
-                  <label className="text-[#8EA6C8] font-mono block mb-1">Winning Team Name:</label>
+                  <label className="block text-[#8EA6C8] mb-1 font-mono uppercase text-[10px]">Recipient Team Name</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Nexus AI"
                     value={newTeam}
                     onChange={(e) => setNewTeam(e.target.value)}
-                    className="w-full bg-[#0C1E45] border border-[#89CFF0]/30 p-2 text-white rounded-none focus:outline-none focus:border-[#89CFF0]"
+                    className="w-full bg-[#040914] border border-[#89CFF0]/30 p-2 text-white focus:outline-none focus:border-[#89CFF0]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[#8EA6C8] font-mono block mb-1">Repository Name:</label>
+                  <label className="block text-[#8EA6C8] mb-1 font-mono uppercase text-[10px]">Repository Identifier</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. multi-agent-evaluator"
                     value={newRepo}
                     onChange={(e) => setNewRepo(e.target.value)}
-                    className="w-full bg-[#0C1E45] border border-[#89CFF0]/30 p-2 text-white rounded-none focus:outline-none focus:border-[#89CFF0]"
+                    className="w-full bg-[#040914] border border-[#89CFF0]/30 p-2 text-white focus:outline-none focus:border-[#89CFF0]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[#8EA6C8] font-mono block mb-1">Team Laureates (comma-separated):</label>
+                  <label className="block text-[#8EA6C8] mb-1 font-mono uppercase text-[10px]">Team Members (comma separated)</label>
                   <input
                     type="text"
-                    placeholder="e.g. Iban Nadir Mondal, Umme Misbah, Syed Imaduddin, Hadi"
+                    placeholder="e.g. Iban Nadir, Umme Misbah, Syed Imaduddin, Hadi Hameed"
                     value={newMembers}
                     onChange={(e) => setNewMembers(e.target.value)}
-                    className="w-full bg-[#0C1E45] border border-[#89CFF0]/30 p-2 text-white rounded-none focus:outline-none focus:border-[#89CFF0]"
+                    className="w-full bg-[#040914] border border-[#89CFF0]/30 p-2 text-white focus:outline-none focus:border-[#89CFF0]"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[#8EA6C8] font-mono block mb-1">Award Tier:</label>
+                    <label className="block text-[#8EA6C8] mb-1 font-mono uppercase text-[10px]">Award Tier</label>
                     <select
                       value={newTier}
-                      onChange={(e: any) => setNewTier(e.target.value)}
-                      className="w-full bg-[#0C1E45] border border-[#89CFF0]/30 p-2 text-white rounded-none focus:outline-none focus:border-[#89CFF0]"
+                      onChange={(e) => setNewTier(e.target.value as TrophyHonor['tier'])}
+                      className="w-full bg-[#040914] border border-[#89CFF0]/30 p-2 text-white focus:outline-none focus:border-[#89CFF0]"
                     >
                       <option value="Grand Prize">Grand Prize Champion</option>
                       <option value="1st Runner Up">1st Runner Up</option>
                       <option value="2nd Runner Up">2nd Runner Up</option>
                       <option value="Category Award">Category Award</option>
                       <option value="Faculty Commendation">Faculty Commendation</option>
+                      <option value="Participation Certificate">Participation Certificate</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-[#8EA6C8] font-mono block mb-1">Final Score (0-100):</label>
+                    <label className="block text-[#8EA6C8] mb-1 font-mono uppercase text-[10px]">Evaluation Score (0-100)</label>
                     <input
                       type="number"
-                      min={50}
+                      min={60}
                       max={100}
                       value={newScore}
                       onChange={(e) => setNewScore(Number(e.target.value))}
-                      className="w-full bg-[#0C1E45] border border-[#89CFF0]/30 p-2 text-white rounded-none focus:outline-none focus:border-[#89CFF0]"
+                      className="w-full bg-[#040914] border border-[#89CFF0]/30 p-2 text-white focus:outline-none focus:border-[#89CFF0]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[#8EA6C8] font-mono block mb-1">Official Award Title:</label>
+                  <label className="block text-[#8EA6C8] mb-1 font-mono uppercase text-[10px]">Official Award Title</label>
                   <input
                     type="text"
                     required
                     value={newAward}
                     onChange={(e) => setNewAward(e.target.value)}
-                    className="w-full bg-[#0C1E45] border border-[#89CFF0]/30 p-2 text-white rounded-none focus:outline-none focus:border-[#89CFF0]"
+                    className="w-full bg-[#040914] border border-[#89CFF0]/30 p-2 text-white focus:outline-none focus:border-[#89CFF0]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[#8EA6C8] font-mono block mb-1">Bestowed By (Judge / Faculty):</label>
-                  <select
-                    value={newJudge}
-                    onChange={(e) => setNewJudge(e.target.value)}
-                    className="w-full bg-[#0C1E45] border border-[#89CFF0]/30 p-2 text-white rounded-none focus:outline-none focus:border-[#89CFF0]"
-                  >
-                    <option value="Dr. Tabassum Ara">Dr. Tabassum Ara (Professor & HOD, AI & ML | Dean, IIC)</option>
-                    <option value="Dr. Priya Sharma">Dr. Priya Sharma (Head Judge)</option>
-                    <option value="David Chen">David Chen (Technical Judge)</option>
-                    <option value="Consensus Committee Jury">Consensus Committee Jury</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[#8EA6C8] font-mono block mb-1">Official Jury Citation:</label>
+                  <label className="block text-[#8EA6C8] mb-1 font-mono uppercase text-[10px]">Faculty Citation &amp; Evaluation Statement</label>
                   <textarea
-                    rows={2}
+                    rows={3}
+                    placeholder="Describe why this project is receiving this commendation..."
                     value={newCitation}
                     onChange={(e) => setNewCitation(e.target.value)}
-                    placeholder="Enter formal citation honoring the team's architectural achievements..."
-                    className="w-full bg-[#0C1E45] border border-[#89CFF0]/30 p-2 text-white rounded-none focus:outline-none focus:border-[#89CFF0]"
+                    className="w-full bg-[#040914] border border-[#89CFF0]/30 p-2 text-white focus:outline-none focus:border-[#89CFF0]"
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#89CFF0]/20">
+                <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#89CFF0]/20">
                   <button
                     type="button"
                     onClick={() => setIsMintModalOpen(false)}
-                    className="px-3 py-1.5 bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/20 rounded-none"
+                    className="px-4 py-2 bg-[#040914] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/20"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#08132B] font-bold rounded-none"
+                    className="px-4 py-2 bg-[#89CFF0] hover:bg-[#70C0E8] text-[#040914] font-bold"
                   >
-                    Mint & Award Trophy
+                    Mint &amp; Sign Honor
                   </button>
                 </div>
               </form>

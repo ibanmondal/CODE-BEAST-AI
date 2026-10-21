@@ -377,13 +377,23 @@ export default function LeaderboardPage() {
                               {renderBadges(row)}
                             </td>
                             <td className="py-3.5 px-4 text-right">
-                              <Link
-                                href={`/analysis?repo=${encodeURIComponent(row.repo)}`}
-                                className="inline-flex items-center gap-1.5 px-4 py-1.5 liquid-btn-primary text-[#040914] font-bold text-xs rounded-full shadow-sm hover:scale-105 transition-transform"
-                              >
-                                <span>Inspect</span>
-                                <ArrowRight className="w-3.5 h-3.5" />
-                              </Link>
+                              <div className="flex items-center justify-end gap-2">
+                                <Link
+                                  href={`/judges?repo=${encodeURIComponent(row.repo)}`}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#08132B] hover:bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-semibold rounded-full shadow-xs transition-colors"
+                                  title="Inspect Official Academic Certificate"
+                                >
+                                  <Award className="w-3.5 h-3.5 text-amber-400" />
+                                  <span>Certificate</span>
+                                </Link>
+                                <Link
+                                  href={`/analysis?repo=${encodeURIComponent(row.repo)}`}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 liquid-btn-primary text-[#040914] font-bold text-xs rounded-full shadow-sm hover:scale-105 transition-transform"
+                                >
+                                  <span>Inspect</span>
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -761,13 +771,23 @@ export default function LeaderboardPage() {
                                 </td>
 
                                 <td className="py-3.5 px-4 text-right">
-                                  <Link
-                                    href={`/analysis?repo=${encodeURIComponent(row.repo_name)}`}
-                                    className="inline-flex items-center gap-1 px-3.5 py-1.5 liquid-btn-primary text-[#040914] font-bold text-xs rounded-full shadow-sm hover:scale-105 transition-transform"
-                                  >
-                                    <span>Inspect</span>
-                                    <ArrowRight className="w-3.5 h-3.5" />
-                                  </Link>
+                                  <div className="flex items-center justify-end gap-2">
+                                    <Link
+                                      href={`/judges?repo=${encodeURIComponent(row.repo_name)}`}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#08132B] hover:bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-semibold rounded-full shadow-xs transition-colors"
+                                      title="Inspect Official Academic Certificate"
+                                    >
+                                      <Award className="w-3.5 h-3.5 text-amber-400" />
+                                      <span>Certificate</span>
+                                    </Link>
+                                    <Link
+                                      href={`/analysis?repo=${encodeURIComponent(row.repo_name)}`}
+                                      className="inline-flex items-center gap-1 px-3.5 py-1.5 liquid-btn-primary text-[#040914] font-bold text-xs rounded-full shadow-sm hover:scale-105 transition-transform"
+                                    >
+                                      <span>Inspect</span>
+                                      <ArrowRight className="w-3.5 h-3.5" />
+                                    </Link>
+                                  </div>
                                 </td>
                               </tr>
                             );
