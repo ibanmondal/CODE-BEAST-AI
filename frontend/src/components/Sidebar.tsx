@@ -17,7 +17,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Home
+  Home,
+  Scale
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ export function Sidebar() {
       items: [
         { name: "Repo Duel", path: "/duel", icon: Swords },
         { name: "Bulk Analysis", path: "/upload", icon: UploadCloud },
+        { name: "Human + AI Hybrid", path: "/human-ai", icon: Scale },
       ],
     },
     {
