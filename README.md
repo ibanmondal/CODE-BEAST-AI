@@ -195,11 +195,23 @@ Services will be online at:
 
 ---
 
-### Option B: Docker Compose
+### Option B: Docker Compose (Production & Cloud)
+
+Run the full multi-container production stack (PostgreSQL 15, Redis 7, FastAPI Backend, Celery Distributed Worker, and Next.js 16 Edge UI):
 
 ```bash
-docker-compose up -d
+docker compose -f docker-compose.prod.yml up -d --build
 ```
+
+#### ⚡ 1-Click AWS EC2 / Lightsail Deployment
+On any Ubuntu 22.04 / 24.04 server (including AWS 12-month Free Tier `t2.micro` / `t3.micro`):
+```bash
+curl -fsSL https://raw.githubusercontent.com/ibanmondal/CODE-BEAST-AI/main/deploy_aws.sh | bash
+```
+
+#### ☁️ 1-Click Serverless Cloud (Render + Vercel)
+- **Backend, Celery & DB:** Connect repo to [Render.com](https://render.com) $\rightarrow$ New Blueprint $\rightarrow$ select [`render.yaml`](./render.yaml).
+- **Frontend:** Connect repo to [Vercel](https://vercel.com) $\rightarrow$ Root Directory: `frontend`, set `NEXT_PUBLIC_API_URL`.
 
 ---
 
@@ -231,7 +243,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --reload-dir app --reload-exclude worker_repos --port 8000
 
 # Start Celery Worker (in a separate terminal)
-celery -A app.worker.celery_app worker --loglevel=info -P threads -c 4
+celery -A app.worker worker --loglevel=info -P threads -c 4
 ```
 
 #### 3. Start Frontend
