@@ -26,11 +26,26 @@ import {
   Check,
   Cpu,
   User,
-  HelpCircle
+  HelpCircle,
+  Layers,
+  History,
+  Filter,
+  Clock
 } from 'lucide-react';
 import { CodeBeastLiquidButton } from '@/components/ui/codebeast-liquid-button';
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/motion-primitives';
 import { apiUrl } from '@/lib/api';
+
+interface CohortItem {
+  cohort_id: string;
+  name: string;
+  type: 'batch' | 'session';
+  batch_id?: string | null;
+  repo_count: number;
+  is_recent: boolean;
+  created_at?: string;
+  sample_repos?: string[];
+}
 
 interface RepoEvaluationItem {
   id: string;
@@ -139,85 +154,143 @@ export default function HumanAiEvaluationPage() {
   const [repos, setRepos] = useState<RepoEvaluationItem[]>(DEFAULT_SAMPLE_REPOS);
   const [loading, setLoading] = useState<boolean>(true);
   const [savedToast, setSavedToast] = useState<boolean>(false);
+  const [syncToast, setSyncToast] = useState<boolean>(false);
   const [showExplanation, setShowExplanation] = useState<boolean>(true);
   const [editingRepoId, setEditingRepoId] = useState<string | null>(null);
+
+  // Cohort & Recency Filtering State
+  const [cohortScope, setCohortScope] = useState<'recent' | 'all' | string>('recent');
+  const [availableCohorts, setAvailableCohorts] = useState<CohortItem[]>([]);
+  const [activeCohortName, setActiveCohortName] = useState<string>('Recent Evaluation Session');
+  const [totalHiddenOlder, setTotalHiddenOlder] = useState<number>(0);
 
   // Derived human weight
   const humanWeight = 100 - aiWeight;
 
-  // 1. Fetch real audited repos from backend or load saved human grades from localStorage
-  useEffect(() => {
-    const loadData = async () => {
+  // 1. Fetch Cohort Data from Backend (scoped to recent evaluation by default)
+  const fetchCohortData = async (scope: string = 'recent', forceFresh: boolean = false) => {
+    setLoading(true);
+    try {
+      // 1. Fetch available cohorts list
+      let cohortsList: CohortItem[] = [];
       try {
-        // Load saved state from localStorage if exists
-        const savedState = localStorage.getItem('codebeast_human_ai_state');
-        let initialRepos = DEFAULT_SAMPLE_REPOS;
-        let initialWeight = 60;
-
-        if (savedState) {
-          try {
-            const parsed = JSON.parse(savedState);
-            if (typeof parsed.aiWeight === 'number') initialWeight = parsed.aiWeight;
-            if (Array.isArray(parsed.repos) && parsed.repos.length > 0) {
-              initialRepos = parsed.repos;
-            }
-          } catch (e) {}
+        const cRes = await fetch(apiUrl('/api/v1/stats/cohorts'));
+        if (cRes.ok) {
+          const cData = await cRes.json();
+          cohortsList = cData.cohorts || [];
+          setAvailableCohorts(cohortsList);
         }
+      } catch (e) {}
 
-        // Try syncing real evaluated jobs from backend
-        const res = await fetch(apiUrl('/api/v1/stats/history'));
-        if (res.ok) {
-          const data = await res.json();
-          const historyList: any[] = data.history || (Array.isArray(data) ? data : []);
-          const completed = historyList.filter(h => h.status === 'Completed' || h.overall);
-
-          if (completed.length > 0) {
-            // Map real repos and merge with any existing human grades
-            const merged = completed.slice(0, 20).map((job, idx) => {
-              const cleanRepo = job.repo || `Repository-${idx + 1}`;
-              const existing = initialRepos.find(r => r.repo === cleanRepo || r.id === (job.id || job.repoId));
-
-              const overallScore = job.overall || job.final_report?.overall_score || 75;
-              const subscores = job.final_report || {};
-
-              return {
-                id: job.id || job.repoId || `job-${idx}`,
-                repo: cleanRepo,
-                repoUrl: job.repoId?.startsWith('http') ? job.repoId : `https://github.com/${job.team || 'developer'}/${cleanRepo}`,
-                team: job.team || job.final_report?.team_name || `${cleanRepo.split('/')[0] || 'Team'} Engineering`,
-                aiScore: overallScore,
-                aiSubscores: {
-                  security: subscores.security_score || 75,
-                  arch: subscores.arch_score || 75,
-                  perf: subscores.perf_score || 75,
-                  testing: subscores.testing_score || 70,
-                  originality: subscores.originality_score || 85
-                },
-                humanScore: existing ? existing.humanScore : Math.min(100, Math.max(50, overallScore + Math.floor(Math.random() * 11) - 5)),
-                vivaScore: existing ? existing.vivaScore : Math.min(100, Math.max(50, overallScore)),
-                innovationScore: existing ? existing.innovationScore : Math.min(100, Math.max(50, overallScore)),
-                evaluatorNotes: existing ? existing.evaluatorNotes : "Evaluation committee viva review pending.",
-                evaluatorName: existing ? existing.evaluatorName : "Faculty Panel Evaluator"
-              };
-            });
-            setRepos(merged);
-            setAiWeight(initialWeight);
-            setLoading(false);
-            return;
-          }
+      // 2. Load saved human scores map (keyed by repo URL / ID)
+      let savedGradesMap: Record<string, any> = {};
+      try {
+        const savedMap = localStorage.getItem('codebeast_human_grades_map');
+        if (savedMap && !forceFresh) {
+          savedGradesMap = JSON.parse(savedMap);
+        } else if (forceFresh) {
+          // If explicitly syncing or refreshing fresh, purge older state
+          localStorage.removeItem('codebeast_human_ai_state');
+          localStorage.removeItem('codebeast_human_grades_map');
         }
+      } catch (e) {}
 
-        setRepos(initialRepos);
-        setAiWeight(initialWeight);
-      } catch (e) {
-        setRepos(DEFAULT_SAMPLE_REPOS);
-      } finally {
-        setLoading(false);
+      // 3. Build target endpoint URL
+      let url = '/api/v1/stats/history';
+      if (scope === 'recent') {
+        url = '/api/v1/stats/history?recent_only=true';
+      } else if (scope !== 'all') {
+        url = `/api/v1/stats/history?cohort_id=${encodeURIComponent(scope)}`;
       }
-    };
 
-    loadData();
+      const res = await fetch(apiUrl(url));
+      if (res.ok) {
+        const data = await res.json();
+        const historyList: any[] = data.history || [];
+        const completed = historyList.filter(h => h.status === 'Completed' || h.overall);
+
+        if (data.active_cohort_name) {
+          setActiveCohortName(data.active_cohort_name);
+        }
+
+        // Calculate count of older audits hidden when in recent mode
+        if (scope === 'recent' && cohortsList.length > 1) {
+          const totalAll = cohortsList.reduce((acc, c) => acc + (c.repo_count || 0), 0);
+          setTotalHiddenOlder(Math.max(0, totalAll - completed.length));
+        } else {
+          setTotalHiddenOlder(0);
+        }
+
+        if (completed.length > 0) {
+          const mapped = completed.map((job, idx) => {
+            const cleanRepo = job.repo || `Repository-${idx + 1}`;
+            const key = job.id || job.repoId || cleanRepo;
+            const existing = savedGradesMap[key] || savedGradesMap[cleanRepo];
+
+            const overallScore = job.overall || job.final_report?.overall_score || 75;
+            const subscores = job.final_report || {};
+
+            return {
+              id: job.id || job.repoId || `job-${idx}`,
+              repo: cleanRepo,
+              repoUrl: job.repoId?.startsWith('http') ? job.repoId : `https://github.com/${job.team || 'developer'}/${cleanRepo}`,
+              team: job.team || job.final_report?.team_name || `${cleanRepo.split('/')[0] || 'Team'} Engineering`,
+              aiScore: overallScore,
+              aiSubscores: {
+                security: job.sec || subscores.security_score || 75,
+                arch: job.arch || subscores.arch_score || 75,
+                perf: job.perf || subscores.perf_score || 75,
+                testing: job.testing_score || subscores.testing_score || 70,
+                originality: job.orig || subscores.originality_score || 85
+              },
+              humanScore: existing ? existing.humanScore : Math.min(100, Math.max(50, overallScore + (idx % 2 === 0 ? 3 : -2))),
+              vivaScore: existing ? existing.vivaScore : Math.min(100, Math.max(50, overallScore)),
+              innovationScore: existing ? existing.innovationScore : Math.min(100, Math.max(50, overallScore)),
+              evaluatorNotes: existing ? existing.evaluatorNotes : "Live committee viva presentation evaluated.",
+              evaluatorName: existing ? existing.evaluatorName : "Faculty Panel Evaluator"
+            };
+          });
+
+          setRepos(mapped);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setRepos(DEFAULT_SAMPLE_REPOS);
+    } catch (e) {
+      setRepos(DEFAULT_SAMPLE_REPOS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Check if saved state has custom weight
+    const savedState = localStorage.getItem('codebeast_human_ai_state');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        if (typeof parsed.aiWeight === 'number') setAiWeight(parsed.aiWeight);
+        if (parsed.cohortScope) setCohortScope(parsed.cohortScope);
+      } catch (e) {}
+    }
+
+    fetchCohortData('recent');
   }, []);
+
+  const handleScopeChange = (newScope: string) => {
+    setCohortScope(newScope);
+    fetchCohortData(newScope);
+  };
+
+  const handleSyncRecent = async () => {
+    setSyncToast(true);
+    setCohortScope('recent');
+    localStorage.removeItem('codebeast_human_ai_state');
+    await fetchCohortData('recent', true);
+    setTimeout(() => setSyncToast(false), 2400);
+  };
 
   // 2. Compute Hybrid Scores and Sort Leaderboard dynamically
   const leaderboard = useMemo(() => {
@@ -284,8 +357,24 @@ export default function HumanAiEvaluationPage() {
     try {
       localStorage.setItem('codebeast_human_ai_state', JSON.stringify({
         aiWeight,
+        cohortScope,
         repos
       }));
+
+      // Also persist human marks map keyed by repository
+      const gradesMap: Record<string, any> = {};
+      repos.forEach(r => {
+        gradesMap[r.id] = {
+          humanScore: r.humanScore,
+          vivaScore: r.vivaScore,
+          innovationScore: r.innovationScore,
+          evaluatorNotes: r.evaluatorNotes,
+          evaluatorName: r.evaluatorName
+        };
+        gradesMap[r.repo] = gradesMap[r.id];
+      });
+      localStorage.setItem('codebeast_human_grades_map', JSON.stringify(gradesMap));
+
       setSavedToast(true);
       setTimeout(() => setSavedToast(false), 2400);
     } catch (e) {}
@@ -527,38 +616,18 @@ export default function HumanAiEvaluationPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* 2nd Place - Silver */}
-            {top3[1] && (
-              <div className="podium-card-silver rounded-3xl p-6 flex flex-col justify-between space-y-4 md:order-1">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="podium-badge-silver">
-                      <Medal className="w-3.5 h-3.5 text-slate-300" />
-                      <span>2ND PLACE</span>
-                    </span>
-                    <span className="text-xs text-[#8EA6C8] font-mono">Rank #2</span>
-                  </div>
-                  <h4 className="text-lg font-bold text-white mt-3 truncate">{top3[1].repo}</h4>
-                  <p className="text-xs text-[#8EA6C8]">{top3[1].team}</p>
-                </div>
-
-                <div className="bg-[#040914]/70 rounded-2xl p-4 border border-slate-400/20 space-y-2">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs text-[#8EA6C8]">Hybrid Final:</span>
-                    <span className="text-2xl font-black text-slate-200">{top3[1].hybridFinal}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-400/20">
-                    <div>AI: <span className="text-white font-bold">{top3[1].aiScore}</span></div>
-                    <div>Human: <span className="text-white font-bold">{top3[1].humanScore}</span></div>
-                  </div>
-                </div>
-              </div>
-            )}
-
+          <div className={`grid ${
+            top3.length === 1 
+              ? 'grid-cols-1 max-w-md mx-auto' 
+              : top3.length === 2 
+              ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' 
+              : 'grid-cols-1 md:grid-cols-3'
+          } gap-6`}>
             {/* 1st Place - Gold (Grand Champion) */}
             {top3[0] && (
-              <div className="podium-card-gold rounded-3xl p-6 sm:p-7 flex flex-col justify-between space-y-4 md:order-2 md:-translate-y-2">
+              <div className={`podium-card-gold rounded-3xl p-6 sm:p-7 flex flex-col justify-between space-y-4 ${
+                top3.length === 3 ? 'md:order-2 md:-translate-y-2' : 'md:order-1'
+              }`}>
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="podium-badge-gold">
@@ -579,6 +648,36 @@ export default function HumanAiEvaluationPage() {
                   <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-amber-400/20 font-medium">
                     <div className="text-[#89CFF0]">AI Code: <span className="font-bold">{top3[0].aiScore}</span></div>
                     <div className="text-violet-300">Human Viva: <span className="font-bold">{top3[0].humanScore}</span></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 2nd Place - Silver */}
+            {top3[1] && (
+              <div className={`podium-card-silver rounded-3xl p-6 flex flex-col justify-between space-y-4 ${
+                top3.length === 3 ? 'md:order-1' : 'md:order-2'
+              }`}>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="podium-badge-silver">
+                      <Medal className="w-3.5 h-3.5 text-slate-300" />
+                      <span>2ND PLACE</span>
+                    </span>
+                    <span className="text-xs text-[#8EA6C8] font-mono">Rank #2</span>
+                  </div>
+                  <h4 className="text-lg font-bold text-white mt-3 truncate">{top3[1].repo}</h4>
+                  <p className="text-xs text-[#8EA6C8]">{top3[1].team}</p>
+                </div>
+
+                <div className="bg-[#040914]/70 rounded-2xl p-4 border border-slate-400/20 space-y-2">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-[#8EA6C8]">Hybrid Final:</span>
+                    <span className="text-2xl font-black text-slate-200">{top3[1].hybridFinal}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-400/20">
+                    <div>AI: <span className="text-white font-bold">{top3[1].aiScore}</span></div>
+                    <div>Human: <span className="text-white font-bold">{top3[1].humanScore}</span></div>
                   </div>
                 </div>
               </div>
@@ -618,6 +717,82 @@ export default function HumanAiEvaluationPage() {
       {/* 5. Complete Interactive Hybrid Leaderboard Table */}
       <ScrollReveal direction="up" distance={20} delay={0.2}>
         <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] border border-[#89CFF0]/25 space-y-6">
+          
+          {/* Cohort & Recency Filtering Control Bar */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-2xl bg-[#08132B]/90 border border-[#89CFF0]/25 shadow-inner">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-[#8EA6C8] uppercase tracking-wider flex items-center gap-1.5 mr-1">
+                <Layers className="w-3.5 h-3.5 text-[#89CFF0]" />
+                Cohort Scope:
+              </span>
+
+              {/* Button: Recent Evaluation Only (Default) */}
+              <button
+                onClick={() => handleScopeChange('recent')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                  cohortScope === 'recent'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-[#040914] shadow-md font-bold'
+                    : 'bg-[#040914] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Recent Leaderboard Only (Default)</span>
+                <span className={`w-2 h-2 rounded-full ${cohortScope === 'recent' ? 'bg-[#040914] animate-pulse' : 'bg-emerald-400'}`} />
+              </button>
+
+              {/* Cohort Selector Dropdown */}
+              {availableCohorts.length > 1 && (
+                <div className="relative">
+                  <select
+                    value={cohortScope}
+                    onChange={(e) => handleScopeChange(e.target.value)}
+                    className="px-3 py-1.5 bg-[#040914] border border-[#89CFF0]/30 rounded-xl text-xs text-white focus:outline-none focus:border-[#89CFF0] cursor-pointer"
+                  >
+                    <option value="recent">⚡ Most Recent Cohort ({availableCohorts[0]?.repo_count || repos.length} repos)</option>
+                    {availableCohorts.map((c) => (
+                      <option key={c.cohort_id} value={c.cohort_id}>
+                        {c.is_recent ? `⚡ Recent: ${c.name}` : `📁 ${c.name}`}
+                      </option>
+                    ))}
+                    <option value="all">🌐 All Historical Audits ({availableCohorts.reduce((a, c) => a + c.repo_count, 0)} total)</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Button: All Audits */}
+              <button
+                onClick={() => handleScopeChange('all')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  cohortScope === 'all'
+                    ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] shadow-md font-bold'
+                    : 'bg-[#040914] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
+                }`}
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>All History</span>
+              </button>
+            </div>
+
+            {/* Right Side: Active Cohort Status & Sync Button */}
+            <div className="flex items-center gap-3">
+              {cohortScope === 'recent' && totalHiddenOlder > 0 && (
+                <span className="text-[11px] text-amber-300/90 bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-400/25 hidden sm:inline-flex items-center gap-1 font-medium">
+                  <ShieldCheck className="w-3 h-3 text-amber-300" />
+                  <span>{totalHiddenOlder} older audits excluded</span>
+                </span>
+              )}
+
+              <button
+                onClick={handleSyncRecent}
+                className="px-3 py-1.5 text-xs font-semibold bg-[#040914] hover:bg-[#89CFF0]/15 text-[#89CFF0] border border-[#89CFF0]/30 rounded-xl transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Purge stale local cache and sync to the most recent evaluation cohort only"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${syncToast ? 'animate-spin text-emerald-400' : ''}`} />
+                <span>{syncToast ? "Synced!" : "Sync Recent Only"}</span>
+              </button>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#89CFF0]/20">
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -625,12 +800,14 @@ export default function HumanAiEvaluationPage() {
                 <span>Full Hybrid Cohort Grade Sheet & Live Evaluation Table</span>
               </h3>
               <p className="text-xs text-[#8EA6C8] mt-0.5">
-                Faculty evaluators can edit human marks and notes directly in the table below to see immediate leaderboard updates.
+                {cohortScope === 'recent' 
+                  ? `Active Cohort: ${activeCohortName} (${repos.length} recent repositories). Older historical audits are excluded.`
+                  : `Active Cohort: ${activeCohortName} (${repos.length} repositories).`}
               </p>
             </div>
 
             <div className="flex items-center gap-2 text-xs text-[#8EA6C8]">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>Live Recalculation Active</span>
             </div>
           </div>

@@ -21,24 +21,35 @@ import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ui/mot
 import { apiUrl } from '@/lib/api';
 
 export default function LeaderboardPage() {
-  const [viewMode, setViewMode] = useState<'global' | 'batch'>('global');
+  const [viewMode, setViewMode] = useState<'recent' | 'batch' | 'global'>('recent');
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [recentLeaderboard, setRecentLeaderboard] = useState<any[]>([]);
+  const [recentCohortName, setRecentCohortName] = useState<string>('Recent Evaluation Session');
   const [batchData, setBatchData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [batchLoading, setBatchLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    // 1. Fetch Global Standings
-    fetch(apiUrl('/api/v1/stats/leaderboard'))
+    // 0. Fetch Recent Standings (Default active view)
+    fetch(apiUrl('/api/v1/stats/recent-leaderboard'))
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(data => {
-        if (data?.leaderboard) setLeaderboard(data.leaderboard);
+        if (data?.leaderboard) setRecentLeaderboard(data.leaderboard);
+        if (data?.cohort_name) setRecentCohortName(data.cohort_name);
         setLoading(false);
       })
       .catch(() => {
         setLoading(false);
       });
+
+    // 1. Fetch Global Standings
+    fetch(apiUrl('/api/v1/stats/leaderboard'))
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(data => {
+        if (data?.leaderboard) setLeaderboard(data.leaderboard);
+      })
+      .catch(() => {});
 
     // 2. Fetch Latest Batch Leaderboard (Curated by BatchLeaderboardAgent)
     fetch(apiUrl('/api/v1/stats/batch-leaderboard'))
@@ -49,7 +60,7 @@ export default function LeaderboardPage() {
       .catch(() => {});
   }, []);
 
-  const handleTabChange = (mode: 'global' | 'batch') => {
+  const handleTabChange = (mode: 'recent' | 'global' | 'batch') => {
     setViewMode(mode);
     if (mode === 'batch' && !batchData) {
       setBatchLoading(true);
@@ -93,12 +104,13 @@ export default function LeaderboardPage() {
     return 'bg-[#08132B] text-[#89CFF0] font-bold border border-[#89CFF0]/30 shadow-xs';
   };
 
-  const filteredLeaderboard = leaderboard.filter((row) => 
+  const activeLeaderboardList = viewMode === 'recent' ? recentLeaderboard : leaderboard;
+  const filteredLeaderboard = activeLeaderboardList.filter((row) => 
     (row.repo && row.repo.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (row.team && row.team.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const top3 = leaderboard.slice(0, 3);
+  const top3 = activeLeaderboardList.slice(0, 3);
 
   // Batch specific items
   const batchReport = batchData?.leaderboard || null;
@@ -122,10 +134,16 @@ export default function LeaderboardPage() {
                 Consensus Verified Standings
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                {viewMode === 'global' ? "Global Benchmark Leaderboard" : "AI Batch Cohort Leaderboard"}
+                {viewMode === 'recent'
+                  ? `Recent Evaluation Standings • ${recentCohortName}`
+                  : viewMode === 'global' 
+                  ? "Global Benchmark Leaderboard" 
+                  : "AI Batch Cohort Leaderboard"}
               </h1>
               <p className="text-xs sm:text-sm text-[#8EA6C8] mt-1">
-                {viewMode === 'global' 
+                {viewMode === 'recent'
+                  ? `Filtered strictly to the latest evaluation session (${recentLeaderboard.length} repositories). Older historical audits are excluded.`
+                  : viewMode === 'global' 
                   ? "All-time repository rankings verified by ConsJudge multi-pass consensus."
                   : "Batch cohort analyzed, ranked, and awarded by the autonomous BatchLeaderboardAgent."}
               </p>
@@ -146,17 +164,18 @@ export default function LeaderboardPage() {
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex items-center gap-3 pt-2 flex-wrap">
             <button
-              onClick={() => handleTabChange('global')}
+              onClick={() => handleTabChange('recent')}
               className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-                viewMode === 'global'
-                  ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] shadow-md font-bold'
+                viewMode === 'recent'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-[#040914] shadow-md font-bold'
                   : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
               }`}
             >
-              <Trophy className="w-3.5 h-3.5" />
-              <span>Global Standings ({leaderboard.length})</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Recent Standings ({recentLeaderboard.length})</span>
+              <span className={`w-2 h-2 rounded-full ${viewMode === 'recent' ? 'bg-[#040914] animate-pulse' : 'bg-emerald-400'}`} />
             </button>
 
             <button
@@ -175,14 +194,26 @@ export default function LeaderboardPage() {
                 </span>
               )}
             </button>
+
+            <button
+              onClick={() => handleTabChange('global')}
+              className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                viewMode === 'global'
+                  ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] shadow-md font-bold'
+                  : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
+              }`}
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              <span>Global All-Time ({leaderboard.length})</span>
+            </button>
           </div>
         </div>
       </ScrollReveal>
 
       {/* ========================================================= */}
-      {/* VIEW MODE 1: GLOBAL STANDINGS                             */}
+      {/* VIEW MODE 1: RECENT OR GLOBAL STANDINGS                   */}
       {/* ========================================================= */}
-      {viewMode === 'global' && (
+      {(viewMode === 'recent' || viewMode === 'global') && (
         <>
           {/* Top 3 Podium Cards with Gold, Silver, Bronze Luxury Glass */}
           {top3.length >= 3 && (
