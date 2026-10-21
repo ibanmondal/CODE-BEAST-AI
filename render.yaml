@@ -1,94 +1,20 @@
 services:
   # ==========================================
-  # 1. FastAPI Backend API Web Service
+  # FastAPI Backend API Web Service (100% Free Tier, No Credit Card Required)
   # ==========================================
   - type: web
     name: codebeast-api
     runtime: python
     rootDir: backend
-    plan: starter
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     autoDeploy: true
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: codebeast-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: codebeast-redis
-          property: connectionString
       - key: GROQ_API_KEY
         sync: false
       - key: GITHUB_TOKEN
         sync: false
-      - key: NARAROUTER_API_KEY
-        sync: false
-
-  # ==========================================
-  # 2. Celery Multi-Agent Distributed Worker
-  # ==========================================
-  - type: worker
-    name: codebeast-worker
-    runtime: python
-    rootDir: backend
-    plan: starter
-    buildCommand: pip install -r requirements.txt
-    startCommand: celery -A app.worker worker --loglevel=info
-    autoDeploy: true
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: codebeast-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: codebeast-redis
-          property: connectionString
-      - key: GROQ_API_KEY
-        sync: false
-      - key: GITHUB_TOKEN
-        sync: false
-      - key: NARAROUTER_API_KEY
-        sync: false
-
-  # ==========================================
-  # 3. Next.js 16 Production Frontend Dashboard
-  # ==========================================
-  - type: web
-    name: codebeast-frontend
-    runtime: node
-    rootDir: frontend
-    plan: starter
-    buildCommand: npm install && npm run build
-    startCommand: npm run start
-    autoDeploy: true
-    envVars:
-      - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: codebeast-api
-          property: host
-      - key: NODE_ENV
-        value: production
-
-  # ==========================================
-  # 4. Redis In-Memory Message Broker & Queue
-  # ==========================================
-  - type: redis
-    name: codebeast-redis
-    plan: free
-    ipAllowList: []
-
-# ==========================================
-# 5. Managed PostgreSQL Production Database
-# ==========================================
-databases:
-  - name: codebeast-db
-    databaseName: codebeast
-    user: codebeast
-    plan: free
+      - key: PYTHON_VERSION
+        value: 3.11.9

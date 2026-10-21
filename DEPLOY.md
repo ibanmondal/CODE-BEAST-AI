@@ -1,8 +1,8 @@
-# 🚀 Code Beast AI — Deployment Guide: Vercel + Render / Railway
+# 🚀 Code Beast AI — 100% Free Production Deployment Guide ($0 / No Credit Card)
 
-This guide walks you through deploying **Code Beast AI** with the optimal production stack:
-- **Frontend Dashboard**: Hosted on **Vercel** (Global Edge CDN, instantaneous page transitions, custom domain support).
-- **Backend API & Multi-Agent Worker**: Hosted on **Render** (or **Railway**) with managed Redis & PostgreSQL.
+This guide shows you how to deploy the entire Code Beast AI platform for **100% FREE** with **zero payment information or credit card required**:
+- **Frontend**: Hosted on **Vercel** (Free forever, global edge CDN).
+- **Backend API**: Hosted on **Render.com** (Free Web Service tier).
 
 ---
 
@@ -10,78 +10,58 @@ This guide walks you through deploying **Code Beast AI** with the optimal produc
 
 ```mermaid
 graph TD
-    User([Web User / Browser]) -->|HTTPS / Next.js 16| Vercel[Vercel Global Edge CDN\nfrontend/]
-    Vercel -->|REST API Requests| Backend[Render / Railway Web Service\nFastAPI backend/main.py]
-    User -.->|WSS WebSockets| Backend
-    Backend <-->|SQL Queries| DB[(PostgreSQL Database)]
-    Backend <-->|Pub/Sub & Task Queue| Redis[(Redis Broker)]
-    Worker[Celery Multi-Agent Worker\nCode Analysis Pipeline] <--> Redis
-    Worker <--> DB
+    User([Browser / Evaluators]) -->|HTTPS| Vercel[Vercel Free Tier\nNext.js 16 Frontend\nfrontend/]
+    Vercel -->|REST API Calls| Render[Render Free Web Service\nFastAPI backend/main.py]
+    User -.->|WebSockets| Render
+    Render <--> DB[(SQLite In-Memory / File\ncodebeast.db)]
 ```
 
 ---
 
-## ⚡ Quick 2-Part Deployment Walkthrough
+## ⚡ Step-by-Step 100% Free Deployment
 
 ---
 
-### PART 1: Deploy the Backend (FastAPI + Redis + Celery + DB)
+### PART 1: Deploy Backend on Render (100% Free · No Card Needed)
 
-You can choose either **Render** or **Railway**.
-
-#### Option A: Using Render.com (Recommended 1-Click)
-1. Go to [dashboard.render.com](https://dashboard.render.com/) and sign in with GitHub.
-2. Click **New +** → **Blueprint**.
-3. Select your repository: **`ibanmondal/CODE-BEAST-AI`**.
-4. Render will read the root `render.yaml` and automatically configure:
-   - `codebeast-api` (FastAPI Web Service)
-   - `codebeast-worker` (Celery background evaluation worker)
-   - `codebeast-redis` (In-memory broker)
-   - `codebeast-db` (PostgreSQL)
-5. Fill in the required environment variables:
-   - `GROQ_API_KEY`: Your key from [console.groq.com](https://console.groq.com)
-   - `GITHUB_TOKEN`: Your GitHub Personal Access Token (PAT)
-6. Click **Apply**.
-7. Once deployed, note your FastAPI backend URL (e.g., `https://codebeast-api.onrender.com`).
-
-#### Option B: Using Railway.app
-1. Go to [railway.app](https://railway.app/) and sign in with GitHub.
-2. Click **New Project** → **Deploy from GitHub repo** → select `ibanmondal/CODE-BEAST-AI`.
-3. Add a **Redis** service (`+ New` → `Database` → `Redis`).
-4. Add a **PostgreSQL** service (`+ New` → `Database` → `PostgreSQL`).
-5. In the backend service settings:
-   - **Root Directory**: `backend`
+#### Method 1: Via Web Service (Recommended)
+1. Go to [dashboard.render.com](https://dashboard.render.com/) and click **New +** → **Web Service** *(do NOT select Blueprint to avoid card prompts)*.
+2. Select your repository: **`ibanmondal/CODE-BEAST-AI`**.
+3. Configure the fields:
+   - **Name**: `codebeast-api`
+   - **Region**: Any close region (e.g., Singapore, Frankfurt, Oregon)
+   - **Branch**: `main`
+   - **Root Directory**: `backend` 👈
+   - **Runtime**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-   - Set variables: `GROQ_API_KEY`, `GITHUB_TOKEN`, `DATABASE_URL`, `REDIS_URL`.
-6. Generate a public domain under **Networking** (e.g., `https://codebeast-backend.up.railway.app`).
-
----
-
-### PART 2: Deploy the Frontend on Vercel
-
-1. Go to [vercel.com/new](https://vercel.com/new).
-2. Click **Import** next to your GitHub repository: **`ibanmondal/CODE-BEAST-AI`**.
-3. In the project configuration page:
-   - **Project Name**: `codebeast-ai` (or your preferred name)
-   - **Framework Preset**: `Next.js` (auto-detected)
-   - **Root Directory**: Click **Edit** and select **`frontend`** 👈 *(Crucial Step!)*
+   - **Instance Type**: Select **Free** ($0 / month) 👈
 4. Under **Environment Variables**, add:
-   | Key | Value | Notes |
-   | :--- | :--- | :--- |
-   | `NEXT_PUBLIC_API_URL` | `https://your-backend-url.onrender.com` | Your deployed FastAPI URL (no trailing slash) |
-   | `NEXT_PUBLIC_WS_URL` | `wss://your-backend-url.onrender.com` | WebSocket secure protocol `wss://` |
-5. Click **Deploy**.
-6. In about 60 seconds, your site will be live at `https://codebeast-ai.vercel.app`! 🎉
+   - `GROQ_API_KEY`: *(Your key from console.groq.com)*
+   - `GITHUB_TOKEN`: *(Your GitHub PAT)*
+   - `PYTHON_VERSION`: `3.11.9`
+5. Click **Deploy Web Service**.
+6. Once deployed, copy your free backend URL (e.g. `https://codebeast-api.onrender.com`).
 
 ---
 
-## 🔍 Post-Deployment Verification Checklist
+### PART 2: Deploy Frontend on Vercel (100% Free)
 
-Once both services are deployed:
-1. **API Health**: Visit `https://your-backend-url/health` → Should return `{"status": "ok"}`.
-2. **API Interactive Docs**: Visit `https://your-backend-url/docs` → Swagger UI should load.
-3. **Frontend Dashboard**: Visit your Vercel URL → Metrics, graphs, and leaderboard load automatically.
-4. **Certificate Test**: Navigate to `/judges`, click **View Official Certificate**, and test:
-   - **Download Official PDF**: Downloads clean 300 DPI A4 Landscape PDF.
-   - **Print Certificate**: Opens isolated print preview with full gold borders and signatures.
-5. **Real-time Evaluation**: Try running an evaluation on `/analysis` or `/upload` to verify Celery agent execution and live streaming.
+1. Go to [vercel.com/new](https://vercel.com/new) and log in with GitHub.
+2. Click **Import** next to **`ibanmondal/CODE-BEAST-AI`**.
+3. In the configuration window:
+   - **Framework Preset**: `Next.js` (auto-detected)
+   - **Root Directory**: Click **Edit** and choose **`frontend`** 👈 *(Crucial!)*
+4. Under **Environment Variables**, add:
+   - `NEXT_PUBLIC_API_URL` = `https://codebeast-api.onrender.com` *(Your Render backend URL from Part 1, without a trailing slash)*
+   - `NEXT_PUBLIC_WS_URL` = `wss://codebeast-api.onrender.com`
+5. Click **Deploy**.
+6. In ~60 seconds, your frontend will be live on Vercel at `https://code-beast-ai.vercel.app`!
+
+---
+
+## 🔍 Verification
+
+1. Backend Health: `https://your-render-url.onrender.com/health` returns `{"status": "ok"}`
+2. Frontend Dashboard: Open your Vercel URL and check that repository rankings, Trophy Hall (`/judges`), and Leaderboard load.
+3. Certificate Generator: Open any certificate on `/judges` and click **Download Official PDF** or **Print Certificate**.
