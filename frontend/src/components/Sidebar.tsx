@@ -18,7 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Home,
-  Scale
+  Scale,
+  Flame
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +56,7 @@ export function Sidebar() {
       items: [
         { name: "Leaderboard", path: "/leaderboard", icon: Trophy },
         { name: "Reports", path: "/reports", icon: FileText },
-        { name: "Judges", path: "/judges", icon: Users },
+        { name: "Hackathon Arena", path: "/judges", icon: Flame },
         { name: "Our Team", path: "/team", icon: UserCheck },
       ],
     },

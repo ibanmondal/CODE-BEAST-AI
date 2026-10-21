@@ -31,7 +31,7 @@ export function Header({ onReplayIntro }: HeaderProps) {
     if (pathname.startsWith("/leaderboard")) return "Global Leaderboard";
     if (pathname.startsWith("/rankings")) return "Standings & Rankings";
     if (pathname.startsWith("/reports")) return "Executive Reports Archive";
-    if (pathname.startsWith("/judges")) return "Judges Directory";
+    if (pathname.startsWith("/judges")) return "Hackathon Evaluation Arena";
     if (pathname.startsWith("/team")) return "System & Engineering Architecture";
     if (pathname.startsWith("/settings")) return "Platform Settings";
     if (pathname.startsWith("/help")) return "Documentation & Help";
