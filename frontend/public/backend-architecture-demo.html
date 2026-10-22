@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Beast AI - Backend Architecture & Execution Flow (2-Min Demo)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070B12;
+      --card-bg: rgba(13, 20, 36, 0.75);
+      --card-border: rgba(0, 242, 254, 0.2);
+      --cyan: #00F2FE;
+      --cyan-glow: rgba(0, 242, 254, 0.4);
+      --blue: #4FACFE;
+      --purple: #8A2387;
+      --purple-neon: #9d4edd;
+      --green: #10B981;
+      --amber: #F59E0B;
+      --gold: #F5A623;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --font-main: 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(0, 242, 254, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(157, 78, 221, 0.08) 0%, transparent 40%),
+        linear-gradient(to bottom, #070B12, #0A111E);
+    }
+
+    /* Ambient animated grid */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 32px 48px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--cyan), var(--purple-neon));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 24px var(--cyan-glow);
+    }
+
+    .brand-title h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #FFFFFF, var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .telemetry-badges {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .badge-live {
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34D399;
+    }
+
+    .badge-live::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+      animation: pulse 1.5s infinite;
+    }
+
+    .badge-ram {
+      border-color: rgba(0, 242, 254, 0.3);
+      color: var(--cyan);
+    }
+
+    /* Player controls */
+    .playback-bar {
+      background: rgba(13, 20, 36, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .playback-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-play {
+      background: linear-gradient(135deg, var(--cyan), #0072ff);
+      color: #030712;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(0, 242, 254, 0.3);
+    }
+
+    .btn-play:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 242, 254, 0.5);
+    }
+
+    .timeline-steps {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+      margin: 0 24px;
+    }
+
+    .step-pill {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.2s;
+    }
+
+    .step-pill.active {
+      background: rgba(0, 242, 254, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+    }
+
+    .step-pill.completed {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--green);
+      color: #34D399;
+    }
+
+    .time-display {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-muted);
+      min-width: 90px;
+      text-align: right;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--cyan), var(--purple-neon));
+      border-radius: 3px;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    /* Main Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+    }
+
+    /* Architecture Visualizer Card */
+    .arch-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .card-header h2 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Visual Architecture Nodes */
+    .pipeline-canvas {
+      position: relative;
+      flex: 1;
+      min-height: 480px;
+      background: rgba(5, 8, 16, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    svg.connections {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .pipe-line {
+      stroke: rgba(255, 255, 255, 0.12);
+      stroke-width: 2;
+      stroke-dasharray: 6 6;
+      fill: none;
+      transition: stroke 0.3s;
+    }
+
+    .pipe-line.active {
+      stroke: var(--cyan);
+      stroke-width: 3;
+      stroke-dasharray: 8 4;
+      animation: dashMove 1s linear infinite;
+      filter: drop-shadow(0 0 6px var(--cyan));
+    }
+
+    @keyframes dashMove {
+      from { stroke-dashoffset: 24; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    .nodes-container {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .node {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .node.active {
+      border-color: var(--cyan);
+      background: rgba(14, 165, 233, 0.15);
+      box-shadow: 0 0 24px rgba(0, 242, 254, 0.35);
+      transform: scale(1.03);
+    }
+
+    .node.completed {
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+
+    .node-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .node-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .node-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .node-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .node-status {
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--cyan);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Right column panels */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Terminal panel */
+    .terminal-card {
+      background: #050811;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+      height: 280px;
+    }
+
+    .terminal-bar {
+      background: #0B1120;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #EF4444; }
+    .dot-yellow { background: #F59E0B; }
+    .dot-green { background: #10B981; }
+
+    .terminal-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .terminal-body {
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.6;
+      color: #E2E8F0;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .terminal-body::-webkit-scrollbar {
+      width: 4px;
+    }
+    .terminal-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+    }
+
+    .log-line {
+      display: flex;
+      gap: 8px;
+    }
+
+    .log-time {
+      color: #64748B;
+      user-select: none;
+    }
+
+    .log-info { color: #38BDF8; }
+    .log-success { color: #34D399; }
+    .log-agent { color: #C084FC; font-weight: 600; }
+    .log-score { color: #FBBF24; font-weight: 600; }
+
+    /* Results and Radar Card */
+    .output-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .radar-wrapper {
+      width: 190px;
+      height: 190px;
+      position: relative;
+    }
+
+    canvas#radarCanvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .metrics-summary {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .score-badge-large {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .big-score {
+      font-size: 38px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #FFFFFF, var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+
+    .score-tier {
+      font-size: 13px;
+      font-weight: 700;
+      color: #34D399;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-rows {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .metric-chip {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metric-chip span:first-child {
+      color: var(--text-muted);
+    }
+    .metric-chip span:last-child {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    /* Certificate Preview Modal */
+    .cert-mini {
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(245, 166, 35, 0.1), rgba(245, 166, 35, 0.03));
+      border: 1px solid rgba(245, 166, 35, 0.3);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .cert-signatures {
+      font-size: 10px;
+      color: #FCD34D;
+      line-height: 1.3;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-logo">⚡</div>
+        <div class="brand-title">
+          <h1>CODE BEAST AI — BACKEND EXECUTION PIPELINE</h1>
+          <p>Real-Time Multi-Agent Architecture & AST Structural Evaluation Flow</p>
+        </div>
+      </div>
+
+      <div class="telemetry-badges">
+        <div class="badge badge-live">Render 24/7 Cloud Engine</div>
+        <div class="badge badge-ram">RAM: 64.2 MB / 512MB (Free Tier)</div>
+      </div>
+    </header>
+
+    <!-- Playback / Timeline Bar -->
+    <div class="playback-bar">
+      <div class="playback-controls">
+        <button id="playBtn" class="btn-play">
+          <span id="playIcon">▶</span>
+          <span id="playText">Start 2-Min Demo</span>
+        </button>
+
+        <div class="timeline-steps">
+          <div class="step-pill active" data-step="0">1. Client Request</div>
+          <div class="step-pill" data-step="1">2. Git Shallow Clone</div>
+          <div class="step-pill" data-step="2">3. Tree-Sitter AST</div>
+          <div class="step-pill" data-step="3">4. LangGraph 4 Agents</div>
+          <div class="step-pill" data-step="4">5. Radar Synthesis</div>
+          <div class="step-pill" data-step="5">6. DB & Certificate</div>
+        </div>
+
+        <div class="time-display" id="timeDisplay">0:00 / 2:00</div>
+      </div>
+
+      <div class="progress-track" id="progressTrack">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- Main Visual Grid -->
+    <div class="main-grid">
+      <!-- Left: Architecture Flowchart with Glowing Lines -->
+      <div class="arch-card">
+        <div class="card-header">
+          <h2>🌐 Live Architecture & Agent Flow Graph</h2>
+          <span style="font-size: 12px; color: var(--text-muted);" id="stageLabel">Step 1: Client Request Ingestion</span>
+        </div>
+
+        <div class="pipeline-canvas" id="canvasContainer">
+          <svg class="connections" id="svgConnections">
+            <!-- Dynamic SVG animated lines connecting nodes -->
+            <path id="line01" class="pipe-line" d="M 120 70 L 280 70" />
+            <path id="line12" class="pipe-line" d="M 330 110 L 330 190" />
+            <path id="line23" class="pipe-line" d="M 280 230 L 140 230" />
+            <path id="line34" class="pipe-line" d="M 90 270 L 90 350" />
+            <path id="line45" class="pipe-line" d="M 140 390 L 280 390" />
+          </svg>
+
+          <div class="nodes-container">
+            <!-- Node 1: Client / Vercel -->
+            <div class="node active" id="node-0" style="grid-column: 1; grid-row: 1;">
+              <div class="node-header">
+                <div class="node-icon">💻</div>
+                <div class="node-title">Vercel Edge UI</div>
+              </div>
+              <div class="node-desc">Client submits repo URL. Initiates POST /api/v1/evaluate.</div>
+              <div class="node-status" id="status-0">● ACTIVE (HTTP 200)</div>
+            </div>
+
+            <!-- Node 2: FastAPI Gateway -->
+            <div class="node" id="node-1" style="grid-column: 2; grid-row: 1;">
+              <div class="node-header">
+                <div class="node-icon">⚡</div>
+                <div class="node-title">FastAPI Gateway</div>
+              </div>
+              <div class="node-desc">Normalizes URL, assigns task_id UUID, dispatches async worker.</div>
+              <div class="node-status" id="status-1">○ STANDBY</div>
+            </div>
+
+            <!-- Node 3: Shallow Git Cloner -->
+            <div class="node" id="node-2" style="grid-column: 3; grid-row: 1;">
+              <div class="node-header">
+                <div class="node-icon">📦</div>
+                <div class="node-title">Git Cloner</div>
+              </div>
+              <div class="node-desc">Executes shallow git clone --depth 1 into ephemeral sandbox.</div>
+              <div class="node-status" id="status-2">○ STANDBY</div>
+            </div>
+
+            <!-- Node 4: Tree-Sitter AST Engine -->
+            <div class="node" id="node-3" style="grid-column: 3; grid-row: 2;">
+              <div class="node-header">
+                <div class="node-icon">🌲</div>
+                <div class="node-title">Tree-Sitter AST</div>
+              </div>
+              <div class="node-desc">C-speed grammar parsing, function extraction, 0-memory Jaccard.</div>
+              <div class="node-status" id="status-3">○ STANDBY</div>
+            </div>
+
+            <!-- Node 5: LangGraph AI Agents -->
+            <div class="node" id="node-4" style="grid-column: 2; grid-row: 2;">
+              <div class="node-header">
+                <div class="node-icon">🧠</div>
+                <div class="node-title">LangGraph Multi-Agent</div>
+              </div>
+              <div class="node-desc">4 Specialized Groq LLaMA 3.3 Agents (Security, Arch, Perf, Quality).</div>
+              <div class="node-status" id="status-4">○ STANDBY</div>
+            </div>
+
+            <!-- Node 6: Scoring Engine -->
+            <div class="node" id="node-5" style="grid-column: 1; grid-row: 2;">
+              <div class="node-header">
+                <div class="node-icon">🎯</div>
+                <div class="node-title">Scoring Engine</div>
+              </div>
+              <div class="node-desc">Normalizes 6-axis radar scores, weighs penalties, computes grade.</div>
+              <div class="node-status" id="status-5">○ STANDBY</div>
+            </div>
+
+            <!-- Node 7: SQLite DB & Trophy Hall -->
+            <div class="node" id="node-6" style="grid-column: 2; grid-row: 3;">
+              <div class="node-header">
+                <div class="node-icon">🏆</div>
+                <div class="node-title">Trophy Hall & DB</div>
+              </div>
+              <div class="node-desc">Persists to codebeast.db & certifies with Principal & Dean signatures.</div>
+              <div class="node-status" id="status-6">○ STANDBY</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Terminal Logs & Live Output -->
+      <div class="right-col">
+        <!-- Live Terminal Card -->
+        <div class="terminal-card">
+          <div class="terminal-bar">
+            <div class="terminal-dots">
+              <div class="dot dot-red"></div>
+              <div class="dot dot-yellow"></div>
+              <div class="dot dot-green"></div>
+            </div>
+            <div class="terminal-title">render-backend-worker.log</div>
+            <div style="font-size: 10px; color: #10B981;">STREAMING</div>
+          </div>
+
+          <div class="terminal-body" id="terminalBody">
+            <div class="log-line">
+              <span class="log-time">[00:00.12]</span>
+              <span class="log-info">INFO: CodeBeast FastAPI worker ready on port 10000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Radar & Output Card -->
+        <div class="output-card">
+          <div class="radar-wrapper">
+            <canvas id="radarCanvas" width="190" height="190"></canvas>
+          </div>
+
+          <div class="metrics-summary">
+            <div class="score-badge-large">
+              <div class="big-score" id="bigScore">00</div>
+              <div class="score-tier" id="scoreTier">Evaluating...</div>
+            </div>
+
+            <div class="metric-rows">
+              <div class="metric-chip"><span>Security</span><span id="mSecurity">0%</span></div>
+              <div class="metric-chip"><span>Architecture</span><span id="mArch">0%</span></div>
+              <div class="metric-chip"><span>Performance</span><span id="mPerf">0%</span></div>
+              <div class="metric-chip"><span>Originality</span><span id="mOrig">0%</span></div>
+            </div>
+
+            <div class="cert-mini">
+              <div style="font-size: 18px;">📜</div>
+              <div class="cert-signatures">
+                <div><strong>Dr. Mohammed Riyaz Ahmed</strong> (Principal, HKBKCE)</div>
+                <div><strong>Dr. Tabassum Ara</strong> (HOD AIML & Dean IIC)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Pipeline Steps Data (Total: 120 Seconds)
+    const PIPELINE_STAGES = [
+      {
+        step: 0,
+        time: 0,
+        duration: 18,
+        label: "Step 1: Client Request & Ingestion",
+        activeNode: 0,
+        nextNode: 1,
+        activeLine: "line01",
+        logs: [
+          "[00:01.04] POST /api/v1/evaluate received from Vercel Edge client",
+          "[00:03.20] Request body: {\"repo_url\": \"https://github.com/ibanmondal/CODE-BEAST-AI\"}",
+          "[00:05.80] Generated task_id: 86fe9d79-d99e-4c11-86e2-c3dce84b61af",
+          "[00:09.10] WebSocket broadcast: PENDING (active_agent: ingestion)",
+          "[00:14.30] Dispatching async worker thread via FastAPI BackgroundTasks"
+        ],
+        metrics: { overall: 15, sec: 10, arch: 10, perf: 10, orig: 10 },
+        tier: "Queued"
+      },
+      {
+        step: 1,
+        time: 18,
+        duration: 20,
+        label: "Step 2: Ephemeral Git Shallow Clone",
+        activeNode: 2,
+        nextNode: 3,
+        activeLine: "line12",
+        logs: [
+          "[00:19.45] Executing git clone --depth 1 into worker_repos/86fe9d79/...",
+          "[00:23.10] Shallow clone completed: 32 files (4.2 MB compressed) in 1.65s",
+          "[00:28.00] GitHub Metadata API: fetched stars, commits, contributor signatures",
+          "[00:34.20] Ingestion sandbox verified: 0 binary artifacts, UTF-8 clean"
+        ],
+        metrics: { overall: 35, sec: 30, arch: 25, perf: 30, orig: 40 },
+        tier: "Cloning"
+      },
+      {
+        step: 2,
+        time: 38,
+        duration: 22,
+        label: "Step 3: Tree-Sitter AST & Structural Grammar Parsing",
+        activeNode: 3,
+        nextNode: 4,
+        activeLine: "line23",
+        logs: [
+          "[00:39.80] Initializing Tree-Sitter Python & TypeScript C grammar bindings",
+          "[00:43.10] Parsed 182 function definitions, 24 classes, 48 decorators",
+          "[00:48.50] Zero-Memory Jaccard Similarity Engine: comparing token hashes",
+          "[00:53.00] Template Boilerplate Match: 3.8% (Originality Score: 96.2%)",
+          "[00:58.20] Memory overhead recorded: 4.8MB RAM (Zero neural bloat)"
+        ],
+        metrics: { overall: 55, sec: 50, arch: 55, perf: 60, orig: 96 },
+        tier: "Parsing AST"
+      },
+      {
+        step: 3,
+        time: 60,
+        duration: 26,
+        label: "Step 4: LangGraph 4-Agent Autonomous Evaluation",
+        activeNode: 4,
+        nextNode: 5,
+        activeLine: "line34",
+        logs: [
+          "[01:01.20] Spawning LangGraph StateGraph orchestrator with Groq LLaMA 3.3",
+          "[01:05.40] [Agent 1: Security] Scanning OWASP, AST SQL injection, token leaks -> Clean (94%)",
+          "[01:10.90] [Agent 2: Architecture] Microservice separation, SOLID compliance -> Grade A (92%)",
+          "[01:16.30] [Agent 3: Performance] Time complexity O(N log N), Redis async fallback -> (88%)",
+          "[01:21.80] [Agent 4: Code Quality] Type hints, docstrings, pytest assertions verified -> (85%)"
+        ],
+        metrics: { overall: 78, sec: 94, arch: 92, perf: 88, orig: 96 },
+        tier: "Agents Active"
+      },
+      {
+        step: 4,
+        time: 86,
+        duration: 18,
+        label: "Step 5: Scoring Engine & Normalized Radar Synthesis",
+        activeNode: 5,
+        nextNode: 6,
+        activeLine: "line45",
+        logs: [
+          "[01:27.10] Synthesizing 6-axis evaluation matrix with domain weightings",
+          "[01:31.40] Penalties applied: 0 critical vulnerabilities, 0 license infringements",
+          "[01:36.00] Overall Defense Composite Score: 88.5 / 100",
+          "[01:42.20] Formulating executive thesis and committee defense notes"
+        ],
+        metrics: { overall: 89, sec: 94, arch: 92, perf: 88, orig: 96 },
+        tier: "Outstanding"
+      },
+      {
+        step: 5,
+        time: 104,
+        duration: 16,
+        label: "Step 6: Database Persistence & Official Certificate",
+        activeNode: 6,
+        nextNode: null,
+        activeLine: null,
+        logs: [
+          "[01:45.00] Writing AnalysisJob record to production SQLite (codebeast.db)",
+          "[01:49.20] WebSocket broadcast: SUCCESS (Status: Completed)",
+          "[01:52.50] Generating Certificate of Technical Defense (A4 Landscape, 300 DPI)",
+          "[01:56.10] Signatures sealed: Dr. Mohammed Riyaz Ahmed & Dr. Tabassum Ara",
+          "[01:59.80] Pipeline complete in 118 seconds. Standing updated on Leaderboard!"
+        ],
+        metrics: { overall: 89, sec: 94, arch: 92, perf: 88, orig: 96 },
+        tier: "Certified"
+      }
+    ];
+
+    // State
+    let isPlaying = false;
+    let currentTime = 0;
+    const totalDuration = 120; // 2 minutes
+    let playbackInterval = null;
+
+    // Elements
+    const playBtn = document.getElementById("playBtn");
+    const playIcon = document.getElementById("playIcon");
+    const playText = document.getElementById("playText");
+    const timeDisplay = document.getElementById("timeDisplay");
+    const progressFill = document.getElementById("progressFill");
+    const progressTrack = document.getElementById("progressTrack");
+    const terminalBody = document.getElementById("terminalBody");
+    const stageLabel = document.getElementById("stageLabel");
+    const bigScore = document.getElementById("bigScore");
+    const scoreTier = document.getElementById("scoreTier");
+    const mSecurity = document.getElementById("mSecurity");
+    const mArch = document.getElementById("mArch");
+    const mPerf = document.getElementById("mPerf");
+    const mOrig = document.getElementById("mOrig");
+    const stepPills = document.querySelectorAll(".step-pill");
+
+    // Canvas Radar Chart
+    const canvas = document.getElementById("radarCanvas");
+    const ctx = canvas.getContext("2d");
+
+    function drawRadar(metrics) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      const radius = 70;
+      const axes = ["Security", "Architecture", "Performance", "Originality", "Quality", "FinOps"];
+      const values = [
+        metrics.sec / 100,
+        metrics.arch / 100,
+        metrics.perf / 100,
+        metrics.orig / 100,
+        (metrics.sec * 0.9) / 100,
+        (metrics.perf * 0.95) / 100
+      ];
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Draw background webs
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.lineWidth = 1;
+      for (let level = 1; level <= 4; level++) {
+        ctx.beginPath();
+        const r = (radius / 4) * level;
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+          const x = cx + Math.cos(angle) * r;
+          const y = cy + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      // Draw radial spokes
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+        ctx.stroke();
+      }
+
+      // Draw data polygon
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+        const val = Math.max(0.1, values[i]);
+        const x = cx + Math.cos(angle) * (radius * val);
+        const y = cy + Math.sin(angle) * (radius * val);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = "rgba(0, 242, 254, 0.25)";
+      ctx.fill();
+      ctx.strokeStyle = "#00F2FE";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw data vertices
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+        const val = Math.max(0.1, values[i]);
+        const x = cx + Math.cos(angle) * (radius * val);
+        const y = cy + Math.sin(angle) * (radius * val);
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fill();
+      }
+    }
+
+    // Format time display MM:SS
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    // Determine current stage index from currentTime
+    function getCurrentStageIndex() {
+      for (let i = PIPELINE_STAGES.length - 1; i >= 0; i--) {
+        if (currentTime >= PIPELINE_STAGES[i].time) {
+          return i;
+        }
+      }
+      return 0;
+    }
+
+    // Update UI for a given stage
+    let lastRenderedStage = -1;
+    function updateUI() {
+      // Time & Progress
+      timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(totalDuration)}`;
+      const pct = (currentTime / totalDuration) * 100;
+      progressFill.style.width = `${pct}%`;
+
+      const stageIdx = getCurrentStageIndex();
+      const stage = PIPELINE_STAGES[stageIdx];
+
+      // Update pills
+      stepPills.forEach((pill, idx) => {
+        pill.classList.remove("active", "completed");
+        if (idx === stageIdx) pill.classList.add("active");
+        else if (idx < stageIdx) pill.classList.add("completed");
+      });
+
+      // Update nodes
+      document.querySelectorAll(".node").forEach((node, idx) => {
+        node.classList.remove("active", "completed");
+        const statusEl = document.getElementById(`status-${idx}`);
+        if (idx === stage.activeNode) {
+          node.classList.add("active");
+          if (statusEl) statusEl.textContent = "● ACTIVE PROCESSING";
+        } else if (idx < stage.activeNode) {
+          node.classList.add("completed");
+          if (statusEl) statusEl.textContent = "✔ COMPLETED";
+        } else {
+          if (statusEl) statusEl.textContent = "○ STANDBY";
+        }
+      });
+
+      // Update animated pipe line
+      document.querySelectorAll(".pipe-line").forEach(line => line.classList.remove("active"));
+      if (stage.activeLine) {
+        const lineEl = document.getElementById(stage.activeLine);
+        if (lineEl) lineEl.classList.add("active");
+      }
+
+      stageLabel.textContent = stage.label;
+
+      // Update metrics smoothly
+      bigScore.textContent = stage.metrics.overall < 10 ? `0${stage.metrics.overall}` : stage.metrics.overall;
+      scoreTier.textContent = stage.tier;
+      mSecurity.textContent = `${stage.metrics.sec}%`;
+      mArch.textContent = `${stage.metrics.arch}%`;
+      mPerf.textContent = `${stage.metrics.perf}%`;
+      mOrig.textContent = `${stage.metrics.orig}%`;
+
+      drawRadar(stage.metrics);
+
+      // Append terminal logs if changed
+      if (stageIdx !== lastRenderedStage) {
+        lastRenderedStage = stageIdx;
+        stage.logs.forEach(log => {
+          const div = document.createElement("div");
+          div.className = "log-line";
+          div.innerHTML = `<span class="log-time">[${formatTime(currentTime)}]</span> <span class="log-info">${log}</span>`;
+          terminalBody.appendChild(div);
+        });
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+      }
+    }
+
+    // Playback loop
+    function togglePlay() {
+      if (isPlaying) {
+        clearInterval(playbackInterval);
+        isPlaying = false;
+        playIcon.textContent = "▶";
+        playText.textContent = "Resume Demo";
+      } else {
+        if (currentTime >= totalDuration) {
+          currentTime = 0;
+          lastRenderedStage = -1;
+          terminalBody.innerHTML = "";
+        }
+        isPlaying = true;
+        playIcon.textContent = "⏸";
+        playText.textContent = "Pause Demo";
+        playbackInterval = setInterval(() => {
+          currentTime += 1;
+          if (currentTime >= totalDuration) {
+            currentTime = totalDuration;
+            togglePlay();
+          }
+          updateUI();
+        }, 1000);
+      }
+    }
+
+    playBtn.addEventListener("click", togglePlay);
+
+    // Scrubber click
+    progressTrack.addEventListener("click", (e) => {
+      const rect = progressTrack.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const pct = clickX / rect.width;
+      currentTime = Math.floor(pct * totalDuration);
+      lastRenderedStage = -1;
+      updateUI();
+    });
+
+    // Step pill click
+    stepPills.forEach(pill => {
+      pill.addEventListener("click", () => {
+        const stepNum = parseInt(pill.getAttribute("data-step"));
+        currentTime = PIPELINE_STAGES[stepNum].time;
+        lastRenderedStage = -1;
+        updateUI();
+      });
+    });
+
+    // Initial render
+    drawRadar(PIPELINE_STAGES[0].metrics);
+    updateUI();
+  </script>
+</body>
+</html>
