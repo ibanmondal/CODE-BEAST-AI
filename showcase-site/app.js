@@ -472,3 +472,4 @@ document.addEventListener("DOMContentLoaded", () => {
   updateLaunchLinks();
   runSimulation("flask");
 });
+

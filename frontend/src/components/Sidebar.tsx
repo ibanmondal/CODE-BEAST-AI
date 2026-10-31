@@ -19,8 +19,7 @@ import {
   ChevronRight,
   Home,
   Scale,
-  Award,
-  Sparkles
+  Award
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +32,6 @@ export function Sidebar() {
       title: "PLATFORM",
       items: [
         { name: "Overview", path: "/", icon: Home },
-        { name: "Product Showcase", path: "/showcase", icon: Sparkles },
         { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
         { name: "Repository Analysis", path: "/analysis", icon: Search },
       ],

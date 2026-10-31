@@ -21,8 +21,7 @@ import {
   Database,
   Fingerprint,
   Code2,
-  Cpu,
-  Sparkles
+  Cpu
 } from "lucide-react";
 import { CodeBeastLiquidButton } from "@/components/ui/codebeast-liquid-button";
 import { AgentInspectorModal } from "@/components/AgentInspectorModal";
@@ -163,14 +162,6 @@ export default function HomePage() {
           <div className="lg:col-span-7 space-y-4">
             <span className="text-[11px] font-mono font-bold tracking-[0.2em] text-[#8EA6C8] uppercase block">
               AI-POWERED REPOSITORY INTELLIGENCE
-            <Link
-              href="/showcase"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-semibold hover:bg-cyan-500/20 hover:border-cyan-400 transition-all shadow-sm shadow-cyan-500/20 ml-2"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              Product Showcase Website ➔
-            </Link>
-
             </span>
 
             <h1 className="text-4xl sm:text-5xl xl:text-6xl font-heading font-bold text-white tracking-tight uppercase leading-[0.95]">
