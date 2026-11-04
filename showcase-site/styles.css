@@ -1201,6 +1201,324 @@ footer {
   color: var(--text-muted);
 }
 
+/* ==========================================================================
+   TECHKUBIK 2026 TECH EXPO SHOWCASE MODULE
+   ========================================================================== */
+
+.techkubik-announcement-bar {
+  background: linear-gradient(90deg, rgba(13, 21, 39, 0.95), rgba(6, 182, 212, 0.12), rgba(99, 102, 241, 0.12), rgba(13, 21, 39, 0.95));
+  border-bottom: 1px solid rgba(6, 182, 212, 0.35);
+  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.15);
+}
+
+.expo-pill {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(99, 102, 241, 0.25));
+  border: 1px solid var(--accent-cyan);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 12px var(--accent-cyan-glow);
+}
+
+.expo-text {
+  color: var(--text-primary);
+  font-size: 12.5px;
+}
+
+.expo-text strong {
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+.nav-link.nav-highlight {
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  padding: 4px 12px;
+  border-radius: var(--radius-xs);
+  font-weight: 600;
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.2);
+  transition: all var(--transition-fast);
+}
+
+.nav-link.nav-highlight:hover {
+  background: rgba(6, 182, 212, 0.2);
+  border-color: var(--accent-cyan);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Expo Section Layout */
+.techkubik-expo-section {
+  padding: 10px 0 60px;
+}
+
+.techkubik-expo-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(13, 21, 39, 0.92) 0%, rgba(8, 13, 26, 0.97) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 36px 36px 32px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.75), 0 0 50px rgba(6, 182, 212, 0.12);
+  overflow: hidden;
+}
+
+.techkubik-glow-fx {
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 350px;
+  background: radial-gradient(ellipse at center, rgba(6, 182, 212, 0.22) 0%, rgba(99, 102, 241, 0.15) 45%, transparent 70%);
+  filter: blur(50px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.techkubik-header-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.techkubik-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 1px;
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.2);
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-emerald);
+  box-shadow: 0 0 10px var(--accent-emerald);
+  animation: livePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 10px var(--accent-emerald);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+    box-shadow: 0 0 2px var(--accent-emerald);
+  }
+}
+
+.techkubik-meta-tags {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+}
+
+/* Banner Frame */
+.techkubik-banner-wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  margin: 12px 0 32px;
+}
+
+.techkubik-banner-frame {
+  position: relative;
+  width: 100%;
+  max-width: 980px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid rgba(6, 182, 212, 0.45);
+  background: #030712;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 36px rgba(6, 182, 212, 0.22);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.techkubik-banner-frame:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 50px rgba(6, 182, 212, 0.35);
+  transform: translateY(-2px);
+}
+
+.techkubik-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  background: #000;
+  max-height: 250px;
+}
+
+/* HUD Tech Corners */
+.techkubik-frame-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--accent-cyan);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.corner-tl { top: 6px; left: 6px; border-width: 2px 0 0 2px; }
+.corner-tr { top: 6px; right: 6px; border-width: 2px 2px 0 0; }
+.corner-bl { bottom: 6px; left: 6px; border-width: 0 0 2px 2px; }
+.corner-br { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; }
+
+/* Info Grid */
+.techkubik-info-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.techkubik-info-box {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  backdrop-filter: blur(8px);
+  transition: border-color var(--transition-fast);
+}
+
+.techkubik-info-box:hover {
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.info-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.info-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+
+.info-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.expo-highlights-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.expo-highlights-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.45;
+}
+
+.expo-highlights-list li strong {
+  color: var(--text-primary);
+}
+
+.text-cyan {
+  color: var(--accent-cyan);
+}
+
+/* Actions */
+.techkubik-expo-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Institutional Certificate Banner Ribbon */
+.cert-expo-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(3, 7, 18, 0.85);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  margin-bottom: 24px;
+}
+
+.cert-expo-banner-img {
+  height: 48px;
+  width: auto;
+  max-width: 280px;
+  object-fit: contain;
+  border-radius: var(--radius-xs);
+  display: block;
+}
+
+.cert-expo-seal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+}
+
 /* Responsive Breakpoints */
 @media (max-width: 1024px) {
   .hero-headline { font-size: 44px; }
@@ -1209,6 +1527,8 @@ footer {
   .agents-grid { grid-template-columns: repeat(2, 1fr); }
   .consjudge-grid { grid-template-columns: 1fr; gap: 16px; }
   .footer-columns { grid-template-columns: 1fr 1fr; }
+  .techkubik-info-grid { grid-template-columns: 1fr; gap: 14px; }
+  .cert-expo-ribbon { flex-direction: column; align-items: flex-start; gap: 12px; }
 }
 
 @media (max-width: 640px) {
@@ -1220,4 +1540,10 @@ footer {
   .signatory-columns { grid-template-columns: 1fr; gap: 20px; }
   .nav-menu { display: none; }
   .footer-columns { grid-template-columns: 1fr; }
+  .techkubik-expo-card { padding: 20px 16px; }
+  .techkubik-header-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .techkubik-banner-img { max-height: 140px; }
+  .techkubik-expo-actions { flex-direction: column; width: 100%; }
+  .techkubik-expo-actions .btn { width: 100%; }
+  .cert-expo-banner-img { max-width: 100%; height: auto; }
 }
