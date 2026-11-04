@@ -47,6 +47,7 @@
         <ul class="nav-menu">
           <li><a href="#cockpit" class="nav-link">Live Cockpit</a></li>
           <li><a href="#agents" class="nav-link">6-Agent Core</a></li>
+          <li><a href="#architecture" class="nav-link">Architecture</a></li>
           <li><a href="#consjudge" class="nav-link">ConsJudge™</a></li>
           <li><a href="#batch" class="nav-link">Batch Pipeline</a></li>
           <li><a href="#comparison" class="nav-link">Benchmarks</a></li>
@@ -55,6 +56,11 @@
         </ul>
 
         <div class="nav-cta-group">
+          <button class="nav-search-btn" id="openCommandBtn" title="Quick navigation (Ctrl + K)">
+            <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span class="search-placeholder">Quick Jump</span>
+            <kbd class="kbd-shortcut">Ctrl K</kbd>
+          </button>
           <button class="btn btn-secondary" id="openConfigBtn" title="Set target application URL">
             <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             Target URL
@@ -131,13 +137,31 @@
               <span class="dot-btn dot-yellow"></span>
               <span class="dot-btn dot-green"></span>
             </div>
-            <div class="cockpit-tab-title">
-              <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-              <span>codebeast_telemetry_stream.py</span>
+            <div class="cockpit-tabs-group">
+              <button class="cockpit-tab-btn active" data-tab="telemetry">
+                <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <span>Live Telemetry</span>
+              </button>
+              <button class="cockpit-tab-btn" data-tab="ast">
+                <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polygon points="6 2 18 2 22 8 12 22 2 8 6 2"/></svg>
+                <span>Tree-Sitter AST</span>
+              </button>
+              <button class="cockpit-tab-btn" data-tab="diff">
+                <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>AutoReview Diff</span>
+              </button>
             </div>
-            <span style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-emerald); font-weight: 700;">
-              WEBSOCKET ACTIVE
-            </span>
+            <div class="cockpit-status-indicator">
+              <span class="live-pulse-dot"></span>
+              <span style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-emerald); font-weight: 700;">
+                AST WORKER READY
+              </span>
+            </div>
+          </div>
+
+          <!-- Simulation Live Progress Bar -->
+          <div class="cockpit-progress-track">
+            <div class="cockpit-progress-fill" id="cockpitProgressFill"></div>
           </div>
 
           <div class="cockpit-grid">
@@ -153,10 +177,37 @@
                 <button class="chip-btn active" data-preset="flask">pallets/flask</button>
                 <button class="chip-btn" data-preset="express">expressjs/express</button>
                 <button class="chip-btn" data-preset="hackathon">student-ai-mvp</button>
+                <button class="chip-btn" data-preset="fastapi">tiangolo/fastapi</button>
               </div>
 
-              <div class="terminal-viewport" id="cockpitTerminal">
+              <!-- Terminal Toolbar -->
+              <div class="terminal-action-bar">
+                <div class="term-badge" id="termActiveViewLabel">STREAM: telemetry_ws_v2</div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="term-btn" id="copyLogsBtn" title="Copy output to clipboard">
+                    <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span>Copy</span>
+                  </button>
+                  <button class="term-btn" id="clearLogsBtn" title="Clear console">
+                    <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <span>Clear</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- View 1: Telemetry Stream -->
+              <div class="terminal-viewport active" id="cockpitTerminal">
                 <!-- Terminal stream -->
+              </div>
+
+              <!-- View 2: AST Syntax Tree View -->
+              <div class="terminal-viewport" id="cockpitAstView" style="display: none;">
+                <!-- AST View populated by app.js -->
+              </div>
+
+              <!-- View 3: AutoReview Git Diff View -->
+              <div class="terminal-viewport" id="cockpitDiffView" style="display: none;">
+                <!-- Diff View populated by app.js -->
               </div>
             </div>
 
@@ -166,16 +217,50 @@
                 <canvas id="cockpitRadarCanvas" width="280" height="280"></canvas>
               </div>
 
+              <!-- Live 6-Dimension Score Chips -->
+              <div class="radar-chips-strip">
+                <div class="radar-chip">
+                  <span class="chip-label">SEC</span>
+                  <span class="chip-val" id="chipSec">96</span>
+                </div>
+                <div class="radar-chip">
+                  <span class="chip-label">ARCH</span>
+                  <span class="chip-val" id="chipArch">94</span>
+                </div>
+                <div class="radar-chip">
+                  <span class="chip-label">PERF</span>
+                  <span class="chip-val" id="chipPerf">92</span>
+                </div>
+                <div class="radar-chip">
+                  <span class="chip-label">ORIG</span>
+                  <span class="chip-val" id="chipOrig">95</span>
+                </div>
+                <div class="radar-chip">
+                  <span class="chip-label">QA</span>
+                  <span class="chip-val" id="chipQa">88</span>
+                </div>
+                <div class="radar-chip">
+                  <span class="chip-label">DB</span>
+                  <span class="chip-val" id="chipDb">90</span>
+                </div>
+              </div>
+
               <div class="scorecard-footer">
                 <div class="score-cell">
                   <span class="score-val" id="cockpitScoreVal">93</span>
                   <span style="font-family: var(--font-mono); font-size: 13px; color: var(--text-muted);">/ 100</span>
                 </div>
                 <div class="score-badge" id="cockpitTierBadge">Grand Champion Tier</div>
-                <a href="https://code-beast-99if6grx2-ibanmondals-projects.vercel.app/judges" target="_blank" class="btn btn-secondary btn-sm launch-app-link">
-                  Inspect Credentials
-                  <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </a>
+                <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
+                  <a href="https://code-beast-99if6grx2-ibanmondals-projects.vercel.app/judges" target="_blank" class="btn btn-secondary btn-sm launch-app-link" style="flex: 1;">
+                    Inspect Trophy
+                    <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </a>
+                  <button class="btn btn-secondary btn-sm" id="exportAuditJsonBtn" title="Copy full audit JSON payload">
+                    <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>JSON</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -212,6 +297,10 @@
               <span class="agent-tag">Git Diff Repair</span>
               <span class="agent-tag">OWASP Top 10</span>
             </div>
+            <button class="agent-inspect-btn" data-agent="security">
+              Inspect Node Spec
+              <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
           </div>
 
           <!-- Agent 2 -->
@@ -231,6 +320,10 @@
               <span class="agent-tag">SOLID Compliance</span>
               <span class="agent-tag">Package Hierarchy</span>
             </div>
+            <button class="agent-inspect-btn" data-agent="architecture">
+              Inspect Node Spec
+              <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
           </div>
 
           <!-- Agent 3 -->
@@ -250,6 +343,10 @@
               <span class="agent-tag">Async Event Loop</span>
               <span class="agent-tag">Caching Layers</span>
             </div>
+            <button class="agent-inspect-btn" data-agent="performance">
+              Inspect Node Spec
+              <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
           </div>
 
           <!-- Agent 4 -->
@@ -269,6 +366,10 @@
               <span class="agent-tag">Pytest / Jest</span>
               <span class="agent-tag">Edge Case Safety</span>
             </div>
+            <button class="agent-inspect-btn" data-agent="qa">
+              Inspect Node Spec
+              <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
           </div>
 
           <!-- Agent 5 -->
@@ -288,6 +389,10 @@
               <span class="agent-tag">N+1 Detection</span>
               <span class="agent-tag">Index Boundaries</span>
             </div>
+            <button class="agent-inspect-btn" data-agent="database">
+              Inspect Node Spec
+              <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
           </div>
 
           <!-- Agent 6 -->
@@ -307,7 +412,114 @@
               <span class="agent-tag">Zero Neural Bloat</span>
               <span class="agent-tag">Clone Vectorization</span>
             </div>
+            <button class="agent-inspect-btn" data-agent="originality">
+              Inspect Node Spec
+              <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- System Architecture Blueprint Section -->
+    <section class="section" id="architecture">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-label">End-to-End Technical Blueprint</span>
+          <h2 class="section-title">Modular Distributed Architecture</h2>
+          <p class="section-desc">
+            Engineered to bridge zero-cost cloud limits with enterprise multi-agent cognitive rigor. Audited across 337+ production repositories.
+          </p>
+        </div>
+
+        <div class="architecture-grid">
+          <!-- Tier 1 -->
+          <div class="arch-tier-card">
+            <div class="arch-tier-header">
+              <span class="arch-tier-tag">TIER 1 &bull; PRESENTATION</span>
+              <span class="arch-tier-status">Vercel Global CDN</span>
+            </div>
+            <h3 class="arch-tier-title">Edge Next.js 16 Workspace</h3>
+            <p class="arch-tier-desc">
+              Built on Next.js Turbopack with App Router, Radix accessible primitives, and live WebSocket telemetry subscribers streaming real-time AST events.
+            </p>
+            <div class="arch-tech-stack">
+              <span class="tech-pill">Next.js 16</span>
+              <span class="tech-pill">React 19</span>
+              <span class="tech-pill">Turbopack</span>
+              <span class="tech-pill">WebSockets</span>
+            </div>
+          </div>
+
+          <!-- Tier 2 -->
+          <div class="arch-tier-card">
+            <div class="arch-tier-header">
+              <span class="arch-tier-tag">TIER 2 &bull; ORCHESTRATION</span>
+              <span class="arch-tier-status">FastAPI Python 3.11</span>
+            </div>
+            <h3 class="arch-tier-title">Sliding Window Async Pipeline</h3>
+            <p class="arch-tier-desc">
+              Queue engine chunking batches into 5-repo micro-windows. Enforces shallow git clones, strict 45-second execution budgets, and flat 65MB RAM.
+            </p>
+            <div class="arch-tech-stack">
+              <span class="tech-pill">FastAPI</span>
+              <span class="tech-pill">AsyncIO</span>
+              <span class="tech-pill">Sliding Queue</span>
+              <span class="tech-pill">Zero Cloud Cost</span>
+            </div>
+          </div>
+
+          <!-- Tier 3 -->
+          <div class="arch-tier-card">
+            <div class="arch-tier-header">
+              <span class="arch-tier-tag">TIER 3 &bull; INTELLIGENCE</span>
+              <span class="arch-tier-status">LangGraph + Tree-Sitter</span>
+            </div>
+            <h3 class="arch-tier-title">6-Node Cognitive Graph</h3>
+            <p class="arch-tier-desc">
+              Native C-binding Tree-Sitter structural grammar decomposition piped into 6 specialized LangGraph agents running parallel AST code audits.
+            </p>
+            <div class="arch-tech-stack">
+              <span class="tech-pill">Tree-Sitter C</span>
+              <span class="tech-pill">LangGraph</span>
+              <span class="tech-pill">OWASP Top 10</span>
+              <span class="tech-pill">Jaccard AST</span>
+            </div>
+          </div>
+
+          <!-- Tier 4 -->
+          <div class="arch-tier-card">
+            <div class="arch-tier-header">
+              <span class="arch-tier-tag">TIER 4 &bull; CONSENSUS & TRUST</span>
+              <span class="arch-tier-status">ConsJudge + ReportLab</span>
+            </div>
+            <h3 class="arch-tier-title">ConsJudge™ & 300 DPI Seals</h3>
+            <p class="arch-tier-desc">
+              Dual-pass cross-model variance arbitration (&le;1.4 pts). Generates cryptographic SHA-256 sealed A4 landscape academic defense certificates.
+            </p>
+            <div class="arch-tech-stack">
+              <span class="tech-pill">Groq 70B</span>
+              <span class="tech-pill">Claude/GPT-4o</span>
+              <span class="tech-pill">SHA-256 HMAC</span>
+              <span class="tech-pill">300 DPI PDF</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="arch-blueprint-banner">
+          <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div class="brand-badge" style="width: 40px; height: 40px;">
+              <svg class="icon-svg" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 15px; color: #FFFFFF;">Looking for the Complete Technical System Specification?</div>
+              <div style="font-size: 13px; color: var(--text-secondary);">Read our exhaustive architectural blueprint with sequence diagrams and schema definitions.</div>
+            </div>
+          </div>
+          <a href="https://github.com/ibanmondal/CODE-BEAST-AI/blob/main/archi.md" target="_blank" class="btn btn-secondary btn-sm">
+            <span>Read archi.md</span>
+            <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
         </div>
       </div>
     </section>
@@ -325,24 +537,46 @@
 
         <div class="consjudge-panel">
           <div class="consjudge-grid">
-            <div class="judge-card">
+            <div class="judge-card" id="judgeCardA">
               <div class="judge-title">Judge Pass A</div>
               <div class="judge-model">Groq LLaMA 3.3 70B Versatile</div>
-              <div class="judge-score-box">92.0</div>
+              <div class="judge-score-box" id="judgeScoreA">92.0</div>
               <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Inference Latency: 1.12s</div>
             </div>
 
             <div class="consjudge-center-hub">
-              <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">VARIANCE</div>
-              <div style="font-size: 18px; font-weight: 800; font-family: var(--font-mono); color: #FFFFFF;">&plusmn;1.0 pt</div>
-              <div class="variance-badge">HIGH CONFIDENCE</div>
+              <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">VARIANCE MARGIN</div>
+              <div style="font-size: 22px; font-weight: 800; font-family: var(--font-mono);" id="judgeVarianceVal">&plusmn;1.0 pt</div>
+              <div class="variance-badge" id="judgeConfidenceBadge">HIGH CONFIDENCE</div>
             </div>
 
-            <div class="judge-card">
+            <div class="judge-card" id="judgeCardB">
               <div class="judge-title">Judge Pass B</div>
               <div class="judge-model">NaraRouter Claude / GPT-4o</div>
-              <div class="judge-score-box">91.0</div>
+              <div class="judge-score-box" id="judgeScoreB">91.0</div>
               <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Inference Latency: 2.18s</div>
+            </div>
+          </div>
+
+          <!-- Interactive Variance Simulator Dial -->
+          <div class="variance-interactive-bar">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <span style="font-size: 12.5px; font-weight: 600; color: var(--text-primary);">
+                Interactive ConsJudge™ Variance Simulator:
+              </span>
+              <div class="variance-presets">
+                <button class="v-preset-btn active" data-var="0.8">Flask (±0.8)</button>
+                <button class="v-preset-btn" data-var="1.4">Express (±1.4)</button>
+                <button class="v-preset-btn" data-var="3.2">Contested (±3.2)</button>
+              </div>
+            </div>
+            <div class="slider-track-wrap">
+              <input type="range" id="varianceSlider" min="0.2" max="4.0" step="0.1" value="1.0" class="styled-slider">
+              <div class="slider-ticks">
+                <span style="color: var(--accent-emerald);">&le;1.4pt Verified</span>
+                <span style="color: var(--accent-amber);">1.5 - 2.5pt Caution</span>
+                <span style="color: var(--accent-rose);">&gt;2.5pt Re-Audit</span>
+              </div>
             </div>
           </div>
         </div>
@@ -361,14 +595,26 @@
         </div>
 
         <div class="batch-pipeline-container">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="batch-top-controls">
             <div>
-              <h4 style="font-size: 16px; color: #FFFFFF;">Window 1 of 4: Active Processing Window</h4>
+              <h4 style="font-size: 16px; color: #FFFFFF;" id="batchWindowTitle">Window 1 of 4: Active Processing Window</h4>
               <p style="font-size: 13px; color: var(--text-secondary);">Sequential 1-by-1 evaluation in memory-safe sandbox</p>
             </div>
-            <span class="badge" style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11.5px; padding: 4px 10px; border-radius: 4px;">
-              RAM: 64.2 MB Flat
-            </span>
+            <div class="batch-metrics-group">
+              <div class="memory-gauge-box">
+                <div class="mem-label-row">
+                  <span>RAM FOOTPRINT</span>
+                  <span id="batchMemText">64.2 MB / 512 MB (12.5%)</span>
+                </div>
+                <div class="mem-track">
+                  <div class="mem-fill" id="batchMemFill" style="width: 12.5%;"></div>
+                </div>
+              </div>
+              <button class="btn btn-cyan btn-sm" id="batchAdvanceBtn">
+                <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>Advance Slot</span>
+              </button>
+            </div>
           </div>
 
           <div class="pipeline-slot-row">
@@ -452,6 +698,13 @@
           </p>
         </div>
 
+        <div class="comparison-filter-strip">
+          <button class="comp-filter-btn active" data-filter="all">All 7 Dimensions</button>
+          <button class="comp-filter-btn" data-filter="ast">AST & Security</button>
+          <button class="comp-filter-btn" data-filter="cloud">Cost & Infrastructure</button>
+          <button class="comp-filter-btn" data-filter="trust">Institutional Trust</button>
+        </div>
+
         <div class="comparison-table-card">
           <table class="comp-table">
             <thead>
@@ -465,7 +718,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
+              <tr data-cat="ast">
                 <td><strong>Tree-Sitter AST Structural Parsing</strong></td>
                 <td class="col-highlight"><span class="val-positive"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Full AST Grammar</span></td>
                 <td>Partial Heuristics</td>
@@ -473,7 +726,7 @@
                 <td><span class="val-negative"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> None</span></td>
                 <td><span class="val-negative"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Subjective</span></td>
               </tr>
-              <tr>
+              <tr data-cat="ast">
                 <td><strong>Autonomous Git Diff Patch Repairs</strong></td>
                 <td class="col-highlight"><span class="val-positive"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Unified Git Diff</span></td>
                 <td><span class="val-negative"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Generic Advice</span></td>
@@ -481,7 +734,7 @@
                 <td>Inline Suggestions</td>
                 <td><span class="val-negative"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> None</span></td>
               </tr>
-              <tr>
+              <tr data-cat="ast">
                 <td><strong>Dual-Pass Statistical Consensus (ConsJudge)</strong></td>
                 <td class="col-highlight"><span class="val-positive"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Certified &le; 2.0 pts</span></td>
                 <td><span class="val-negative"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Static Rules</span></td>
@@ -489,7 +742,7 @@
                 <td><span class="val-negative"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Single Pass Drift</span></td>
                 <td>High Grader Bias</td>
               </tr>
-              <tr>
+              <tr data-cat="ast">
                 <td><strong>Plagiarism & Template Vector Analysis</strong></td>
                 <td class="col-highlight"><span class="val-positive"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> AST Token Jaccard</span></td>
                 <td>Duplicate Lines Only</td>
@@ -497,7 +750,7 @@
                 <td><span class="val-negative"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> None</span></td>
                 <td>Manual Inspection</td>
               </tr>
-              <tr>
+              <tr data-cat="cloud">
                 <td><strong>5-Repo Sliding Window Batch Pipeline</strong></td>
                 <td class="col-highlight"><span class="val-positive"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 500+ Repos Handled</span></td>
                 <td>Enterprise License ($$$)</td>
@@ -505,7 +758,7 @@
                 <td><span class="val-negative"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> None</span></td>
                 <td>Weeks of Effort</td>
               </tr>
-              <tr>
+              <tr data-cat="trust">
                 <td><strong>Institutional PDF Certification (A4 Landscape)</strong></td>
                 <td class="col-highlight"><span class="val-positive"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Principal & Dean Sealed</span></td>
                 <td><span class="val-negative"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> CSV Export</span></td>
@@ -513,7 +766,7 @@
                 <td><span class="val-negative"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> None</span></td>
                 <td>Manual Paper Signatures</td>
               </tr>
-              <tr>
+              <tr data-cat="cloud">
                 <td><strong>Total Cloud Infrastructure Cost</strong></td>
                 <td class="col-highlight"><span class="val-positive"><svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> $0.00 (65MB RAM)</span></td>
                 <td>$150+/month</td>
@@ -564,6 +817,26 @@
               <span style="font-size: 13px; color: var(--accent-emerald); font-family: var(--font-mono);">Originality: <strong>95.2% AST Clean</strong></span>
               <span style="font-size: 13px; color: var(--accent-cyan); font-family: var(--font-mono);">ConsJudge: <strong>High Confidence</strong></span>
             </div>
+
+            <!-- Interactive Cryptographic Seal Verifier -->
+            <div class="cert-verifier-box">
+              <div class="verifier-input-row">
+                <span class="verifier-label">SHA-256 HASH VERIFICATION:</span>
+                <input type="text" id="certHashInput" class="verifier-input" value="86FE-9D79-HKBKCE-VERIFIED" readonly>
+                <button class="btn btn-cyan btn-sm" id="verifyHashBtn">
+                  <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span>Verify Integrity</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" id="downloadCertBtn">
+                  <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>Simulate 300 DPI PDF</span>
+                </button>
+              </div>
+              <div class="verifier-result-row" id="certVerifyResult" style="display: none;">
+                <span class="live-pulse-dot"></span>
+                <span class="verify-status-text">CRYPTOGRAPHIC INTEGRITY CONFIRMED &bull; DIGITAL SIGNATURE MATCHED &bull; TAMPER STATUS: 100% UNMODIFIED</span>
+              </div>
+            </div>
           </div>
 
           <div class="signatory-columns">
@@ -590,6 +863,11 @@
           <span class="section-label">Questions & Answers</span>
           <h2 class="section-title">Frequently Asked Questions</h2>
           <p class="section-desc">Technical explanations for hackathon judges, academic committees, and engineers.</p>
+        </div>
+
+        <div class="faq-search-wrapper">
+          <svg class="icon-svg icon-sm faq-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="faqSearchInput" class="faq-search-input" placeholder="Search questions (e.g. Tree-Sitter, RAM, ConsJudge, Batch, Certificates)...">
         </div>
 
         <div class="faq-stack">
@@ -749,6 +1027,138 @@
       </div>
     </div>
   </div>
+
+  <!-- Command Palette Modal (Ctrl + K) -->
+  <div class="modal-backdrop command-backdrop" id="commandModal">
+    <div class="command-dialog">
+      <div class="command-input-row">
+        <svg class="icon-svg icon-sm text-cyan" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="commandInput" class="command-search-input" placeholder="Type a section or command (e.g. Cockpit, Agents, ConsJudge, Flask)..." autocomplete="off">
+        <kbd class="kbd-pill">ESC</kbd>
+      </div>
+      <div class="command-list" id="commandList">
+        <div class="command-group-title">NAVIGATION JUMPS</div>
+        <div class="command-item active" data-action="goto" data-target="#cockpit">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">Interactive Simulator Cockpit</span>
+            <span class="cmd-desc">Live telemetry stream, AST syntax tree, and 6-axis radar</span>
+          </div>
+          <kbd class="cmd-shortcut">Enter</kbd>
+        </div>
+        <div class="command-item" data-action="goto" data-target="#agents">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">6-Agent Multi-Agent Core</span>
+            <span class="cmd-desc">LangGraph autonomous cognitive graph & CWE repair</span>
+          </div>
+        </div>
+        <div class="command-item" data-action="goto" data-target="#architecture">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">Distributed System Architecture</span>
+            <span class="cmd-desc">End-to-end blueprint & sequence tiers</span>
+          </div>
+        </div>
+        <div class="command-item" data-action="goto" data-target="#consjudge">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">ConsJudge™ Dual Consensus</span>
+            <span class="cmd-desc">Statistical variance arbitrator & confidence badge</span>
+          </div>
+        </div>
+        <div class="command-item" data-action="goto" data-target="#batch">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">5-Repo Sliding Window Pipeline</span>
+            <span class="cmd-desc">Sequential cohort batch engine with 65MB memory</span>
+          </div>
+        </div>
+        <div class="command-item" data-action="goto" data-target="#credentials">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">Institutional Certificate of Defense</span>
+            <span class="cmd-desc">Tamper-evident 300 DPI A4 landscape credentials</span>
+          </div>
+        </div>
+
+        <div class="command-group-title">LIVE PRESETS & SIMULATIONS</div>
+        <div class="command-item" data-action="preset" data-target="flask">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">Run Simulation: pallets/flask</span>
+            <span class="cmd-desc">Score: 93/100 &bull; Grand Champion Tier</span>
+          </div>
+        </div>
+        <div class="command-item" data-action="preset" data-target="express">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">Run Simulation: expressjs/express</span>
+            <span class="cmd-desc">Score: 91/100 &bull; Architecture Vanguard</span>
+          </div>
+        </div>
+        <div class="command-item" data-action="preset" data-target="hackathon">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">Run Simulation: student-ai-mvp</span>
+            <span class="cmd-desc">Score: 84/100 &bull; CWE-798 patch repair</span>
+          </div>
+        </div>
+
+        <div class="command-group-title">DIRECT APPLICATION ENDPOINTS</div>
+        <div class="command-item" data-action="link" data-target="/">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">Launch Live Web Application</span>
+            <span class="cmd-desc">Primary repository analyzer on Vercel</span>
+          </div>
+        </div>
+        <div class="command-item" data-action="link" data-target="/judges">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">Trophy Hall & Certificate Registry</span>
+            <span class="cmd-desc">337+ Audited repositories & verifiable PDF seals</span>
+          </div>
+        </div>
+        <div class="command-item" data-action="link" data-target="/leaderboard">
+          <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+          <div class="command-item-content">
+            <span class="cmd-title">Global Leaderboard & Cohort Standings</span>
+            <span class="cmd-desc">Compare repositories by ConsJudge statistical rank</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent Node Spec Inspector Modal -->
+  <div class="modal-backdrop" id="agentModal">
+    <div class="modal-surface agent-modal-surface">
+      <div class="modal-header-row">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="agent-icon-badge" id="modalAgentIcon">
+            <svg class="icon-svg icon-sm" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div>
+            <h3 id="modalAgentTitle" style="font-size: 17px; color: var(--text-primary);">AutoReview Security Node</h3>
+            <span class="brand-version" id="modalAgentNodeId">agent_autoreview_security</span>
+          </div>
+        </div>
+        <button class="modal-close-icon" id="closeAgentModalBtn">
+          <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="agent-spec-body" id="modalAgentContent">
+        <!-- Content injected by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Back To Top Button -->
+  <button class="back-to-top-btn" id="backToTopBtn" title="Scroll to top">
+    <svg class="icon-svg" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
 
   <script src="app.js"></script>
 </body>
