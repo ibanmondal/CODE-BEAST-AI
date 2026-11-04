@@ -118,10 +118,10 @@ export default function SettingsPage() {
 
       {/* 2. Navigation Tabs */}
       <ScrollReveal direction="none">
-        <div className="flex items-center gap-2 pb-2 text-xs flex-wrap">
+        <div className="flex items-center gap-2 pb-2 text-xs overflow-x-auto max-w-full scrollbar-none">
           <button
             onClick={() => setActiveTab('api')}
-            className={`flex items-center gap-2 px-4 py-2 font-bold rounded-full transition-all duration-200 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 font-bold rounded-full transition-all duration-200 whitespace-nowrap min-h-[40px] touch-manipulation cursor-pointer ${
               activeTab === 'api'
                 ? 'liquid-btn-primary text-[#040914] shadow-md'
                 : 'bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 shadow-xs'
@@ -133,7 +133,7 @@ export default function SettingsPage() {
 
           <button
             onClick={() => setActiveTab('weights')}
-            className={`flex items-center gap-2 px-4 py-2 font-bold rounded-full transition-all duration-200 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 font-bold rounded-full transition-all duration-200 whitespace-nowrap min-h-[40px] touch-manipulation cursor-pointer ${
               activeTab === 'weights'
                 ? 'liquid-btn-primary text-[#040914] shadow-md'
                 : 'bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 shadow-xs'
@@ -145,7 +145,7 @@ export default function SettingsPage() {
 
           <button
             onClick={() => setActiveTab('toggles')}
-            className={`flex items-center gap-2 px-4 py-2 font-bold rounded-full transition-all duration-200 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 font-bold rounded-full transition-all duration-200 whitespace-nowrap min-h-[40px] touch-manipulation cursor-pointer ${
               activeTab === 'toggles'
                 ? 'liquid-btn-primary text-[#040914] shadow-md'
                 : 'bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 shadow-xs'
@@ -159,7 +159,7 @@ export default function SettingsPage() {
 
       {/* 3. Tab Contents Liquid Glass Card */}
       <ScrollReveal direction="up" distance={20} delay={0.1}>
-        <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)]">
+        <div className="liquid-glass-card rounded-3xl p-4 sm:p-6 lg:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)]">
         
           {/* Tab 1: API Keys */}
           {activeTab === 'api' && (

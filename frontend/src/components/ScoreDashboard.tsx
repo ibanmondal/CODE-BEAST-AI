@@ -208,26 +208,26 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
     <div id="report-dashboard" className="w-full space-y-6 text-white">
       
       {/* 1. Top Executive Header Card with Liquid Glass */}
-      <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] relative">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-          <div className="flex-1 space-y-3">
-            <div className="flex flex-wrap items-center gap-2.5">
+      <div className="liquid-glass-card rounded-3xl p-4 sm:p-6 lg:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] relative">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-6 sm:gap-8">
+          <div className="flex-1 w-full space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-bold px-3 py-1 rounded-full bg-gradient-to-r from-[#BAE6FD] to-[#89CFF0] text-[#040914] shadow-xs">
                 AUDIT COMPLETE
               </span>
               {getConfidenceBadge()}
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            <h2 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
               {report.repoName ? report.repoName : "Repository Evaluation Report"}
             </h2>
 
-            <p className="text-sm text-[#8EA6C8] leading-relaxed max-w-3xl">
+            <p className="text-xs sm:text-sm text-[#8EA6C8] leading-relaxed max-w-3xl">
               {report.executive_summary}
             </p>
 
             {/* Submitter & Team Authorship Credentials */}
-            <div className="bg-[#08132B]/90 border border-[#89CFF0]/25 rounded-2xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs shadow-xs">
+            <div className="bg-[#08132B]/90 border border-[#89CFF0]/25 rounded-2xl p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 text-xs shadow-xs">
               <div>
                 <span className="text-[10px] text-[#8EA6C8] block uppercase font-mono font-medium">Submitter / GitHub</span>
                 <span className="font-mono font-bold text-white flex items-center gap-1.5 mt-0.5 truncate">
@@ -257,10 +257,10 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 pt-2">
               <button 
                 onClick={() => setShowPdfModal(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] hover:opacity-95 rounded-full shadow-md hover:shadow-lg transition-all"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] hover:opacity-95 rounded-full shadow-md hover:shadow-lg transition-all min-h-[44px] touch-manipulation cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Download PDF Report</span>
@@ -276,7 +276,7 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
 
               <button 
                 onClick={handleCopyBadge}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 rounded-full shadow-xs transition-colors"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 hover:bg-[#89CFF0]/10 rounded-full shadow-xs transition-colors min-h-[44px] touch-manipulation cursor-pointer"
               >
                 {copiedBadge ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#89CFF0]" />}
                 <span>{copiedBadge ? "Badge Copied!" : "Copy Markdown Badge"}</span>
@@ -284,11 +284,11 @@ export function ScoreDashboard({ report, startWithChatOpen = false }: ScoreDashb
             </div>
           </div>
 
-          {/* Overall 3D Radial Score Gauge - Highly Visible Obsidian Midnight Card with Baby Blue Glow */}
-          <div className="shrink-0 flex items-center justify-center p-3 bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/35 rounded-2xl shadow-[0_0_30px_rgba(137,207,240,0.15)]">
+          {/* Overall 3D Radial Score Gauge - Centered on Mobile */}
+          <div className="shrink-0 flex items-center justify-center p-3 bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/35 rounded-2xl shadow-[0_0_30px_rgba(137,207,240,0.15)] mx-auto lg:mx-0">
             <ScoreRadial3D 
               score={report.overall_score} 
-              size={150} 
+              size={140} 
               strokeWidth={11}
               label="Consensus" 
             />

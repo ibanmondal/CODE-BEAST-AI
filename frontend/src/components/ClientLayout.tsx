@@ -1,11 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
+import { MobileNav } from "@/components/MobileNav";
 import { ToastProvider } from "@/components/NotificationToast";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
   return (
     <ToastProvider>
       <div className="h-screen flex bg-[#040914] text-white relative overflow-hidden selection:bg-[#58A6FF]/30 selection:text-[#89CFF0]">
@@ -55,17 +58,24 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           </defs>
         </svg>
 
-        {/* Permanent Fixed Left-Hand Navigation Sidebar */}
-        <div className="h-screen shrink-0 z-40 relative">
+        {/* Desktop Left-Hand Navigation Sidebar (Only visible on lg+ screens) */}
+        <div className="h-screen shrink-0 z-40 relative hidden lg:flex">
           <Sidebar />
         </div>
 
-        {/* Main Content Area - Scrollable while sidebar remains permanently anchored */}
+        {/* Mobile App Navigation Suite (Bottom Bar + Slide-Out Drawer) */}
+        <MobileNav 
+          isOpen={isMobileDrawerOpen} 
+          onOpen={() => setIsMobileDrawerOpen(true)} 
+          onClose={() => setIsMobileDrawerOpen(false)} 
+        />
+
+        {/* Main Content Area - Scrollable with bottom padding to protect against mobile bottom bar */}
         <div className="flex-1 flex flex-col h-screen overflow-y-auto min-w-0 relative z-10 scroll-smooth">
-          <Header />
+          <Header onOpenMobileMenu={() => setIsMobileDrawerOpen(true)} />
           
-          {/* Main Content Container */}
-          <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Main Content Container with safe bottom padding for mobile bar */}
+          <main className="flex-1 w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pb-24 lg:pb-8">
             <div className="w-full">
               {children}
             </div>

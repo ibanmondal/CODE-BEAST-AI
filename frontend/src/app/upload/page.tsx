@@ -524,7 +524,7 @@ export default function UploadPage() {
       {/* 2. Active Batch Evaluation Monitor */}
       {activeBatch.length > 0 && (
         <ScrollReveal distance={20} duration={0.4}>
-          <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 border-2 border-[#89CFF0]/30 shadow-[0_20px_50px_rgba(2,6,18,0.85)] space-y-6">
+          <div className="liquid-glass-card rounded-3xl p-4 sm:p-6 lg:p-8 border-2 border-[#89CFF0]/30 shadow-[0_20px_50px_rgba(2,6,18,0.85)] space-y-6">
             
             {/* Monitor Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[#89CFF0]/20">
@@ -551,14 +551,14 @@ export default function UploadPage() {
               <div className="flex items-center gap-2.5 self-start lg:self-auto">
                 <button
                   onClick={fetchHistoryAndSync}
-                  className="p-2 text-[#89CFF0] hover:text-white bg-[#08132B] border border-[#89CFF0]/30 rounded-xl hover:bg-[#89CFF0]/10 transition-colors shadow-xs cursor-pointer"
+                  className="p-2 text-[#89CFF0] hover:text-white bg-[#08132B] border border-[#89CFF0]/30 rounded-xl hover:bg-[#89CFF0]/10 transition-colors shadow-xs cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
                   title="Refresh Statuses"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={handleClearBatch}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-300 bg-rose-950/40 border border-rose-500/30 hover:bg-rose-900/40 rounded-xl transition-colors shadow-xs cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-rose-300 bg-rose-950/40 border border-rose-500/30 hover:bg-rose-900/40 rounded-xl transition-colors shadow-xs cursor-pointer min-h-[40px]"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Clear Monitor</span>
@@ -588,7 +588,7 @@ export default function UploadPage() {
               </div>
 
               {/* 5-Node Window Step Tracker */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 pt-1">
                 {Array.from({ length: 5 }).map((_, stepIdx) => {
                   const globalIdx = (currentChunk - 1) * 5 + stepIdx;
                   const item = activeBatch[globalIdx];

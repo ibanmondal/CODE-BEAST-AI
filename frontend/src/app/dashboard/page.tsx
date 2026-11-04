@@ -229,8 +229,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* Score Progression Trend (8 cols) */}
-          <div className="lg:col-span-8 liquid-glass-card rounded-2xl p-6 shadow-sm flex flex-col justify-between border border-[#89CFF0]/25 bg-[#08132B]/80">
-            <div className="flex items-center justify-between mb-4">
+          <div className="lg:col-span-8 liquid-glass-card rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col justify-between border border-[#89CFF0]/25 bg-[#08132B]/80">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
               <div>
                 <h2 className="text-sm font-bold text-white tracking-tight">
                   Consensus Quality Index Trends
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                   Weekly aggregate of supervisor consensus score trends across repository runs.
                 </span>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 shadow-xs">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#08132B] text-[#89CFF0] border border-[#89CFF0]/30 shadow-xs self-start sm:self-auto">
                 7-Day Rolling Window
               </span>
             </div>
@@ -265,7 +265,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Evaluated Language Distribution (4 cols) */}
-          <div className="lg:col-span-4 liquid-glass-card rounded-2xl p-6 shadow-sm flex flex-col justify-between border border-[#89CFF0]/25 bg-[#08132B]/80">
+          <div className="lg:col-span-4 liquid-glass-card rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col justify-between border border-[#89CFF0]/25 bg-[#08132B]/80">
             <div>
               <h2 className="text-sm font-bold text-white tracking-tight">
                 Ecosystem Distribution
@@ -314,8 +314,8 @@ export default function DashboardPage() {
 
       {/* 4. Recent Repository Evaluations Table with ScrollReveal */}
       <ScrollReveal distance={20} duration={0.5}>
-        <div className="liquid-glass-card rounded-2xl p-6 shadow-sm border border-[#89CFF0]/25 bg-[#08132B]/80">
-          <div className="flex items-center justify-between mb-4">
+        <div className="liquid-glass-card rounded-2xl p-4 sm:p-6 shadow-sm border border-[#89CFF0]/25 bg-[#08132B]/80">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             <div>
               <h2 className="text-sm font-bold text-white tracking-tight">
                 Recent Repository Evaluations
@@ -325,14 +325,14 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <Link href="/reports" className="text-xs font-bold text-[#89CFF0] hover:underline flex items-center gap-1">
+            <Link href="/reports" className="text-xs font-bold text-[#89CFF0] hover:underline flex items-center gap-1 self-start sm:self-auto min-h-[36px]">
               <span>View all reports archive</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto scrollbar-thin">
+            <table className="w-full text-left text-xs min-w-[600px]">
               <thead>
                 <tr className="border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold bg-[#040914]/40">
                   <th className="py-2.5 px-3">Repository</th>

@@ -111,7 +111,7 @@ export default function ReportsPage() {
       ) : (
         /* 3. Reports Directory Table */
         <ScrollReveal direction="up" distance={20} delay={0.1}>
-          <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
+          <div className="liquid-glass-card rounded-3xl p-4 sm:p-6 lg:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-[#89CFF0]/20">
               <h2 className="text-sm font-bold text-white">
                 Archived Audit Records
@@ -122,8 +122,8 @@ export default function ReportsPage() {
             </div>
 
             <div className="border border-[#89CFF0]/20 rounded-2xl overflow-hidden shadow-xs">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto scrollbar-thin">
+                <table className="w-full text-left text-xs min-w-[550px]">
                   <thead className="bg-[#08132B]/80 border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold">
                     <tr>
                       <th className="py-3 px-4">Report Reference</th>

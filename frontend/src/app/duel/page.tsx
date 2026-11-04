@@ -180,11 +180,11 @@ export default function RepoDuelPage() {
 
       {/* 2. Matchmaker Selection Card with Liquid Glass */}
       <ScrollReveal distance={16} duration={0.45}>
-        <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(137,207,240,0.1)] relative border border-[#89CFF0]/25">
-          <div className="grid grid-cols-1 lg:grid-cols-11 gap-6 items-center">
+        <div className="liquid-glass-card rounded-3xl p-4 sm:p-6 lg:p-8 shadow-[0_20px_50px_rgba(137,207,240,0.1)] relative border border-[#89CFF0]/25">
+          <div className="grid grid-cols-1 lg:grid-cols-11 gap-4 sm:gap-6 items-center">
             
             {/* Contender Alpha */}
-            <div className="lg:col-span-5 p-5 bg-[#08132B]/80 backdrop-blur-md border border-[#89CFF0]/25 rounded-2xl space-y-3 shadow-xs">
+            <div className="lg:col-span-5 p-4 sm:p-5 bg-[#08132B]/80 backdrop-blur-md border border-[#89CFF0]/25 rounded-2xl space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#89CFF0] flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#89CFF0]" /> Contender Alpha
@@ -222,14 +222,14 @@ export default function RepoDuelPage() {
             </div>
 
             {/* VS Divider */}
-            <div className="lg:col-span-1 flex flex-col items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#BAE6FD] to-[#89CFF0] text-[#040914] flex items-center justify-center font-bold text-sm shadow-[0_8px_20px_rgba(137,207,240,0.35)]">
+            <div className="lg:col-span-1 flex flex-col items-center justify-center py-1 lg:py-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-[#BAE6FD] to-[#89CFF0] text-[#040914] flex items-center justify-center font-bold text-xs sm:text-sm shadow-[0_8px_20px_rgba(137,207,240,0.35)]">
                 VS
               </div>
             </div>
 
             {/* Contender Beta */}
-            <div className="lg:col-span-5 p-5 bg-[#08132B]/80 backdrop-blur-md border border-[#89CFF0]/25 rounded-2xl space-y-3 shadow-xs">
+            <div className="lg:col-span-5 p-4 sm:p-5 bg-[#08132B]/80 backdrop-blur-md border border-[#89CFF0]/25 rounded-2xl space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#BAE6FD] flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#BAE6FD]" /> Contender Beta

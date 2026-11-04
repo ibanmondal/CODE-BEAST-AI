@@ -519,7 +519,7 @@ export default function HumanAiEvaluationPage() {
 
       {/* 3. Interactive Weight Ratio Slider Bar */}
       <ScrollReveal direction="up" distance={20} delay={0.1}>
-        <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] border border-[#89CFF0]/30 space-y-6">
+        <div className="liquid-glass-card rounded-3xl p-4 sm:p-6 lg:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] border border-[#89CFF0]/30 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="text-xs font-semibold text-[#89CFF0] uppercase tracking-wider mb-1 flex items-center gap-2">
@@ -813,8 +813,8 @@ export default function HumanAiEvaluationPage() {
           </div>
 
           <div className="border border-[#89CFF0]/20 rounded-2xl overflow-hidden shadow-xs bg-[#040914]/40">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="w-full text-left text-xs min-w-[750px]">
                 <thead className="bg-[#08132B]/90 border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold uppercase tracking-wider text-[11px]">
                   <tr>
                     <th className="py-3.5 px-4">Hybrid Rank</th>

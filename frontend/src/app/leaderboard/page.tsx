@@ -164,10 +164,10 @@ export default function LeaderboardPage() {
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="flex items-center gap-3 pt-2 flex-wrap">
+          <div className="flex items-center gap-2.5 pt-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
             <button
               onClick={() => handleTabChange('recent')}
-              className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap min-h-[40px] touch-manipulation ${
                 viewMode === 'recent'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-[#040914] shadow-md font-bold'
                   : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
@@ -180,7 +180,7 @@ export default function LeaderboardPage() {
 
             <button
               onClick={() => handleTabChange('batch')}
-              className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap min-h-[40px] touch-manipulation ${
                 viewMode === 'batch'
                   ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] shadow-md font-bold'
                   : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
@@ -197,7 +197,7 @@ export default function LeaderboardPage() {
 
             <button
               onClick={() => handleTabChange('global')}
-              className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap min-h-[40px] touch-manipulation ${
                 viewMode === 'global'
                   ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] shadow-md font-bold'
                   : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
@@ -320,7 +320,7 @@ export default function LeaderboardPage() {
 
           {/* Standings Table Liquid Glass Card */}
           <ScrollReveal direction="up" distance={20} delay={0.15}>
-            <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
+            <div className="liquid-glass-card rounded-3xl p-4 sm:p-6 lg:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
               <div className="flex items-center justify-between pb-4 border-b border-[#89CFF0]/20">
                 <h2 className="text-sm font-bold text-white">
                   Verified Standings Directory
@@ -340,8 +340,8 @@ export default function LeaderboardPage() {
                 </div>
               ) : (
                 <div className="border border-[#89CFF0]/20 rounded-2xl overflow-hidden shadow-xs">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                  <div className="overflow-x-auto scrollbar-thin">
+                    <table className="w-full text-left text-xs min-w-[550px]">
                       <thead className="bg-[#08132B]/80 border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold">
                         <tr>
                           <th className="py-3 px-4 w-16 text-center">Rank</th>

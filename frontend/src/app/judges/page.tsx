@@ -986,10 +986,10 @@ export default function TrophyHallPage() {
 
           {/* Cohort Tabs (Matching Leaderboard structure) */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full scrollbar-none">
               <button
                 onClick={() => setCohortMode('recent')}
-                className={`px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                className={`px-3.5 sm:px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap min-h-[40px] touch-manipulation ${
                   cohortMode === 'recent'
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-[#040914] font-bold shadow-md'
                     : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
@@ -1002,7 +1002,7 @@ export default function TrophyHallPage() {
 
               <button
                 onClick={() => setCohortMode('batch')}
-                className={`px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                className={`px-3.5 sm:px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap min-h-[40px] touch-manipulation ${
                   cohortMode === 'batch'
                     ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] font-bold shadow-md'
                     : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
@@ -1014,7 +1014,7 @@ export default function TrophyHallPage() {
 
               <button
                 onClick={() => setCohortMode('global')}
-                className={`px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                className={`px-3.5 sm:px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap min-h-[40px] touch-manipulation ${
                   cohortMode === 'global'
                     ? 'bg-gradient-to-r from-[#BAE6FD] via-[#89CFF0] to-[#70C0E8] text-[#040914] font-bold shadow-md'
                     : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
@@ -1026,7 +1026,7 @@ export default function TrophyHallPage() {
 
               <button
                 onClick={() => setCohortMode('minted')}
-                className={`px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                className={`px-3.5 sm:px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap min-h-[40px] touch-manipulation ${
                   cohortMode === 'minted'
                     ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-[#040914] font-bold shadow-md'
                     : 'bg-[#08132B] text-[#8EA6C8] hover:text-white border border-[#89CFF0]/25'
@@ -1320,14 +1320,21 @@ export default function TrophyHallPage() {
 
                 <button
                   onClick={() => setIsCertModalOpen(false)}
-                  className="text-[#8EA6C8] hover:text-white p-1 cursor-pointer"
+                  className="text-[#8EA6C8] hover:text-white p-2 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+                  aria-label="Close Certificate Preview"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
+              {/* Mobile Horizontal Pan Hint */}
+              <div className="sm:hidden flex items-center justify-between px-2 py-1 bg-amber-950/30 border border-amber-500/20 text-[11px] text-amber-300">
+                <span>💡 Swipe horizontally to view full A4 certificate</span>
+                <span className="font-mono text-[10px] text-amber-400 font-bold">A4 LANDSCAPE</span>
+              </div>
+
               {/* AUTHENTIC HIGH-DEFINITION PARCHMENT CERTIFICATE FRAME */}
-              <div className="w-full overflow-x-auto flex justify-center py-2 bg-black/40 p-2 border border-[#89CFF0]/20">
+              <div className="w-full overflow-x-auto flex justify-start sm:justify-center py-2 bg-black/40 p-2 border border-[#89CFF0]/20 scrollbar-thin">
                 <div
                   id="printable-academic-certificate"
                   ref={certRef}
@@ -1478,11 +1485,11 @@ export default function TrophyHallPage() {
               </div>
 
               {/* Action Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 font-sans text-xs">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 font-sans text-xs">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={handleCopyBadge}
-                    className="px-3.5 py-2 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 rounded-none flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="flex-1 sm:flex-initial px-3.5 py-2.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-[#89CFF0] border border-[#89CFF0]/40 rounded-none flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[44px] touch-manipulation"
                   >
                     {copiedBadge ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedBadge ? "Markdown Copied!" : "Copy README Badge"}</span>
@@ -1490,18 +1497,18 @@ export default function TrophyHallPage() {
 
                   <button
                     onClick={handleCopyLinkedIn}
-                    className="px-3.5 py-2 bg-[#08132B] hover:bg-[#89CFF0]/20 text-white border border-[#89CFF0]/40 rounded-none flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="flex-1 sm:flex-initial px-3.5 py-2.5 bg-[#08132B] hover:bg-[#89CFF0]/20 text-white border border-[#89CFF0]/40 rounded-none flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[44px] touch-manipulation"
                   >
                     {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
                     <span>{copiedLink ? "Post Copied!" : "Share on LinkedIn"}</span>
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={handleDownloadPdf}
                     disabled={isGeneratingPdf}
-                    className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#08132B] font-bold rounded-none flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                    className="flex-1 sm:flex-initial px-4 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#08132B] font-bold rounded-none flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50 min-h-[44px] touch-manipulation"
                   >
                     {isGeneratingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                     <span>{isGeneratingPdf ? "Rendering High-Res PDF..." : "Download Official PDF"}</span>
@@ -1509,7 +1516,7 @@ export default function TrophyHallPage() {
 
                   <button
                     onClick={handlePrintCertificate}
-                    className="px-4 py-2 bg-[#08132B] hover:bg-[#0E2248] text-white border border-[#89CFF0]/50 font-bold rounded-none flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                    className="flex-1 sm:flex-initial px-4 py-2.5 bg-[#08132B] hover:bg-[#0E2248] text-white border border-[#89CFF0]/50 font-bold rounded-none flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer min-h-[44px] touch-manipulation"
                   >
                     <Printer className="w-4 h-4 text-[#89CFF0]" />
                     <span>Print Certificate</span>

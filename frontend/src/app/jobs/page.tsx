@@ -119,43 +119,43 @@ export default function JobsPage() {
       </ScrollReveal>
 
       {/* 2. Queue Summary KPI Row with Liquid Glass Cards */}
-      <StaggerContainer staggerDelay={0.08} className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <StaggerContainer staggerDelay={0.08} className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
         <StaggerItem>
-          <div className="liquid-glass-interactive rounded-2xl p-5 shadow-[0_12px_32px_rgba(2,6,18,0.6)] relative overflow-hidden group">
-            <span className="text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider block mb-1">
+          <div className="liquid-glass-interactive rounded-2xl p-3.5 sm:p-5 shadow-[0_12px_32px_rgba(2,6,18,0.6)] relative overflow-hidden group">
+            <span className="text-[10px] sm:text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider block mb-1">
               Total Audits
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-white font-mono">{jobs.length}</span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-white font-mono">{jobs.length}</span>
             <span className="text-[10px] text-[#8EA6C8] block mt-1">Jobs processed</span>
           </div>
         </StaggerItem>
 
         <StaggerItem>
-          <div className="liquid-glass-interactive rounded-2xl p-5 shadow-[0_12px_32px_rgba(2,6,18,0.6)] relative overflow-hidden group">
-            <span className="text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider block mb-1">
+          <div className="liquid-glass-interactive rounded-2xl p-3.5 sm:p-5 shadow-[0_12px_32px_rgba(2,6,18,0.6)] relative overflow-hidden group">
+            <span className="text-[10px] sm:text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider block mb-1">
               Active Runs
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-[#89CFF0] font-mono">{activeCount}</span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#89CFF0] font-mono">{activeCount}</span>
             <span className="text-[10px] text-[#89CFF0] block mt-1">Workers busy</span>
           </div>
         </StaggerItem>
 
         <StaggerItem>
-          <div className="liquid-glass-interactive rounded-2xl p-5 shadow-[0_12px_32px_rgba(2,6,18,0.6)] relative overflow-hidden group">
-            <span className="text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider block mb-1">
+          <div className="liquid-glass-interactive rounded-2xl p-3.5 sm:p-5 shadow-[0_12px_32px_rgba(2,6,18,0.6)] relative overflow-hidden group">
+            <span className="text-[10px] sm:text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider block mb-1">
               Queued Tasks
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-white font-mono">{queuedCount}</span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-white font-mono">{queuedCount}</span>
             <span className="text-[10px] text-[#8EA6C8] block mt-1">Pending dispatch</span>
           </div>
         </StaggerItem>
 
         <StaggerItem>
-          <div className="liquid-glass-interactive rounded-2xl p-5 shadow-[0_12px_32px_rgba(2,6,18,0.6)] relative overflow-hidden group">
-            <span className="text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider block mb-1">
+          <div className="liquid-glass-interactive rounded-2xl p-3.5 sm:p-5 shadow-[0_12px_32px_rgba(2,6,18,0.6)] relative overflow-hidden group">
+            <span className="text-[10px] sm:text-[11px] font-bold text-[#8EA6C8] uppercase tracking-wider block mb-1">
               Completed Verified
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-emerald-400 font-mono">{completedCount}</span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-400 font-mono">{completedCount}</span>
             <span className="text-[10px] text-emerald-400 block mt-1">ConsJudge synthesized</span>
           </div>
         </StaggerItem>
@@ -163,11 +163,11 @@ export default function JobsPage() {
 
       {/* 3. Jobs Table Liquid Glass Card */}
       <ScrollReveal direction="up" distance={20} delay={0.15}>
-        <div className="liquid-glass-card rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
+        <div className="liquid-glass-card rounded-3xl p-4 sm:p-6 lg:p-8 shadow-[0_20px_50px_rgba(2,6,18,0.8)] space-y-6">
           
           {/* Filter Input */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 rounded-full w-full max-w-sm focus-within:border-[#89CFF0] focus-within:ring-2 focus-within:ring-[#89CFF0]/20 transition-all shadow-inner">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-2.5 px-4 py-2 bg-[#08132B]/90 backdrop-blur-md border border-[#89CFF0]/25 rounded-full w-full sm:max-w-sm focus-within:border-[#89CFF0] focus-within:ring-2 focus-within:ring-[#89CFF0]/20 transition-all shadow-inner min-h-[44px]">
               <Search className="w-4 h-4 text-[#8EA6C8] shrink-0" />
               <input
                 type="text"
@@ -184,8 +184,8 @@ export default function JobsPage() {
 
           {/* Table Container with Frosted Glass Borders */}
           <div className="border border-[#89CFF0]/20 rounded-2xl overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="w-full text-left text-xs min-w-[550px]">
                 <thead className="bg-[#08132B]/80 border-b border-[#89CFF0]/20 text-[#8EA6C8] font-semibold">
                   <tr>
                     <th className="py-3 px-4">Job ID</th>
